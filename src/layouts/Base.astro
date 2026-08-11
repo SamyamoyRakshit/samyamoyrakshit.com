@@ -1,0 +1,121 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { seo } from '../config/site';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  type?: 'website' | 'article';
+  publishedTime?: Date;
+  modifiedTime?: Date;
+  isHome?: boolean;
+  noindex?: boolean;
+  /** Pages that paint Bengali above the fold — see BaseHead.astro. */
+  preloadBengali?: boolean;
+}
+
+const props = Astro.props;
+---
+
+<!doctype html>
+<html lang={seo.language}>
+  <head>
+    <BaseHead {...props} />
+  </head>
+  <body>
+    <a href="#main" class="skip-link">Skip to content</a>
+    <Header />
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>
+
+<style>
+  main:focus {
+    outline: none;
+  }
+</style>
+
+<script>
+  /**
+   * Links that leave the site open in a new tab; links that stay on it don't.
+   *
+   * Applied here, in the base layout, so it covers every page — including
+   * links written inside Markdown posts, which have no way to set `target`
+   * themselves.
+   *
+   * Three things beyond just setting `target`:
+   *
+   * 1. `rel="noopener noreferrer"` — without `noopener` the opened page gets a
+   *    handle on this one via `window.opener` and can navigate it somewhere
+   *    else. Modern browsers imply it for `_blank`, but older ones don't.
+   *
+   * 2. A "(opens in a new tab)" note for screen readers. A new tab with no
+   *    warning is disorienting if you can't see it happen — the back button
+   *    stops working and there's no explanation.
+   *
+   * 3. Only http/https links to another origin. `mailto:`, `tel:`, in-page
+   *    anchors, downloads and internal pages are all left alone, so normal
+   *    navigation still replaces the page as expected.
+   *
+   * Without JavaScript these links still work — they just open in the same
+   * tab, which is the standard behaviour rather than a broken one.
+   */
+  function markExternalLinks() {
+    const origin = window.location.origin;
+
+    for (const link of document.querySelectorAll<HTMLAnchorElement>('a[href]')) {
+      if (link.dataset.extChecked !== undefined) continue;
+      link.dataset.extChecked = '';
+
+      let url: URL;
+      try {
+        url = new URL(link.href);
+      } catch {
+        continue; // not a resolvable URL
+      }
+
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') continue;
+      if (link.hasAttribute('download')) continue;
+
+      /* Same-origin PAGES are left alone — navigating the site should replace
+         the page, not spawn tabs. Same-origin DOCUMENTS are not pages: a
+         certificate or a résumé opened in place replaces the whole site with a
+         PDF viewer, and the reader has to find their way back. Those get the
+         same treatment as an external link, including the screen-reader note,
+         so the behaviour is defined here and not hand-written per component. */
+      const isDocument = /\.(pdf|png|jpe?g|webp|gif|svg|zip)$/i.test(url.pathname);
+      if (url.origin === origin && !isDocument) continue;
+
+      link.target = '_blank';
+
+      const rel = new Set((link.rel ?? '').split(/\s+/).filter(Boolean));
+      rel.add('noopener');
+      rel.add('noreferrer');
+      link.rel = [...rel].join(' ');
+
+      const NOTE = 'opens in a new tab';
+      const existingLabel = link.getAttribute('aria-label');
+
+      if (existingLabel) {
+        if (!existingLabel.toLowerCase().includes(NOTE)) {
+          link.setAttribute('aria-label', `${existingLabel} (${NOTE})`);
+        }
+      } else {
+        const note = document.createElement('span');
+        note.className = 'sr-only';
+        note.textContent = ` (${NOTE})`;
+        link.appendChild(note);
+      }
+    }
+  }
+
+  markExternalLinks();
+  document.addEventListener('astro:after-swap', markExternalLinks);
+</script>

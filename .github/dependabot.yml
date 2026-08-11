@@ -1,0 +1,23 @@
+# Dependency updates.
+#
+# A static site has no server to attack, so the realistic supply-chain risk
+# here is a compromised or vulnerable build-time package rather than anything
+# reaching a visitor. Monthly is the right cadence for that: weekly on a
+# personal site produces noise that gets ignored, which is worse than not
+# having the alerts at all.
+#
+# Minor and patch updates are grouped into one pull request so a month's
+# housekeeping is a single review, while majors arrive separately because they
+# are the ones that need reading.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch

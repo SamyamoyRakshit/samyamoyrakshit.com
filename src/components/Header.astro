@@ -1,0 +1,226 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+import { identity, nav, features, filled } from '../config/site';
+import { getWork, getBlogPosts } from '../lib/content';
+
+/**
+ * The masthead bar. Sticky, because the homepage runs ~4,500px and
+ * /experience/ ~5,000px — without it a reader at the foot of either has to
+ * scroll the whole way back for the navigation or the theme toggle.
+ *
+ * Sticky, not clever: no hide-on-scroll-down, which needs JavaScript, and no
+ * frosted backdrop, which this design rules out. A solid `--paper` ground is
+ * what keeps text legible as it passes underneath.
+ *
+ * Routes with no content hide themselves, so the navigation never promises a
+ * page that isn't there.
+ *
+ * The identity is set as type, not drawn. The monogram exists as the tab icon,
+ * but beside a name already spelled out it states the same thing twice, and it
+ * would be the only boxed element in a bar built from one hairline. Where the
+ * full name will not fit, the first name stands in.
+ */
+
+const [work, posts] = await Promise.all([getWork(), getBlogPosts()]);
+
+const available = new Set<string>();
+available.add('/experience/');
+if (features.work && work.length > 0) available.add('/projects/');
+if (features.blog && posts.length > 0) available.add('/blog/');
+
+/**
+ * The résumé sits in the navigation rather than buried in the footer, because
+ * a recruiter looks for it in exactly one place and this is it. It appears the
+ * moment `identity.resumeUrl` points at something — drop a PDF in `public/`.
+ */
+const resume = filled(identity.resumeUrl);
+
+const links: { label: string; href: string }[] = [
+  ...nav.filter((item) => available.has(item.href)),
+  ...(resume ? [{ label: 'Résumé', href: resume }] : []),
+];
+
+const path = Astro.url.pathname;
+const isCurrent = (href: string) =>
+  href === '/' ? path === '/' : path === href || path.startsWith(href);
+---
+
+<header class="masthead-bar">
+  <div class="shell masthead-bar__inner">
+    {
+      /* The full name, on every page including the homepage. It is set twice on
+        the homepage — once here, once as the <h1> — and that is fine. Anything
+        cleverer in this slot reads as a rendering fault. */
+    }
+    <a href="/" class="wordmark label" aria-label={`${identity.name} — home`}>
+      <span class="wordmark__full">{identity.name}</span>
+      <span class="wordmark__short" aria-hidden="true">{identity.shortName}</span>
+    </a>
+
+    <nav aria-label="Primary">
+      <ul class="nav">
+        {
+          links.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                class="nav__link label"
+                aria-current={isCurrent(item.href) ? 'page' : undefined}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+        {
+          features.themeToggle && (
+            <li class="nav__toggle">
+              <ThemeToggle />
+            </li>
+          )
+        }
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .masthead-bar {
+    position: sticky;
+    top: 0;
+    /* Above the cards, below the skip link (z-index 100 in global.css). */
+    z-index: 20;
+    /* Opaque, not translucent. Content scrolls underneath this. */
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .masthead-bar__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 2rem;
+    padding-block: 0.35rem;
+    /* Kept in step with --header-h, which scroll-padding-top is derived from. */
+    min-height: var(--header-h);
+  }
+
+  /* A hairline is enough separation while the page is at rest, and at the top
+     of the homepage it is the right amount — the bar should sit flush against
+     the hero, not float above it. Once the page has moved, text passing under
+     a 1px line on the same ground reads as clipped rather than layered, so the
+     bar earns a soft edge.
+
+     Carried on a pseudo-element and animated as opacity, because only
+     transform and opacity are ever animated here — a box-shadow keyframe would
+     repaint the bar on every frame of a scroll. Progressive enhancement: the
+     un-animated state is the plain hairline, which is complete and correct, so
+     Firefox (no scroll timelines in stable) gets a finished header. */
+  .masthead-bar::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 -1px 0;
+    height: 1px;
+    box-shadow: var(--shadow-card);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .masthead-bar::after {
+        /* The duration is nominal — a scroll timeline drives progress from the
+           range below, not from a clock — but it MUST be written, and it must
+           be a `var()`.
+
+           The CSS minifier folds `animation-timeline` into the `animation`
+           shorthand whenever it can resolve every part of it, emitting
+           `animation: linear both bar-edge scroll(root)`. `animation-timeline`
+           is not a component of that shorthand — it was in an early draft and
+           was removed — so the browser discards the whole declaration and the
+           animation silently never runs. A literal duration does not help;
+           `auto` is dropped and the fold still happens. A custom property
+           cannot be resolved at build time, so the minifier leaves both
+           declarations alone. This is exactly why `.reveal` in global.css
+           works and a hand-written copy of it would not. */
+        animation: bar-edge var(--dur-reveal) linear both;
+        animation-timeline: scroll(root block);
+        /* Fully on by the time the hero's first line has left the viewport. */
+        animation-range: 0 6rem;
+      }
+    }
+  }
+
+  @keyframes bar-edge {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .wordmark {
+    color: var(--ink);
+    letter-spacing: 0.18em;
+    transition: color var(--dur-hover) var(--ease);
+    padding-block: 0.5rem;
+  }
+  .wordmark:hover {
+    color: var(--accent);
+  }
+
+  .wordmark__short {
+    display: none;
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 0.4rem + 2vw, 2.25rem);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav__link {
+    position: relative;
+    display: inline-block;
+    padding-block: 0.9rem;
+    color: var(--ink-muted);
+    transition: color var(--dur-hover) var(--ease);
+  }
+  .nav__link:hover {
+    color: var(--accent);
+  }
+
+  /* The current page is marked with a rule, not a colour — the accent stays
+     reserved for things you can act on. */
+  .nav__link[aria-current='page'] {
+    color: var(--ink);
+  }
+  .nav__link[aria-current='page']::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0.55rem;
+    height: 1px;
+    background: var(--ink);
+  }
+
+  .nav__toggle {
+    display: flex;
+  }
+
+  /* Narrow enough that the full name and the navigation cannot share a line. */
+  @media (max-width: 30rem) {
+    .wordmark__full {
+      display: none;
+    }
+    .wordmark__short {
+      display: inline;
+    }
+  }
+</style>

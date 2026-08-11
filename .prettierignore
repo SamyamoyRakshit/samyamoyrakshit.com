@@ -1,0 +1,21 @@
+# Build output and generated files
+dist/
+.astro/
+node_modules/
+package-lock.json
+
+# Binary build inputs
+og-fonts/
+public/
+
+# Posts and project entries are prose, not code. Formatting them risks
+# rewriting Markdown that renders deliberately — maths delimiters, tables,
+# hard line breaks — for no benefit, since nothing here is parsed as source.
+src/content/
+
+# The design tokens in this file are laid out as an aligned column so that a
+# value which has drifted from its neighbours is visible at a glance. Prettier
+# collapses that alignment to single spaces, which removes the only reason the
+# block is readable. Everything else in the file is ordinary CSS and is
+# formatted by hand to match.
+src/styles/global.css

@@ -1,0 +1,137 @@
+---
+import { epigraph } from '../config/site';
+
+/**
+ * The Bengali couplet under the masthead on /blog/.
+ *
+ * A band, not a card: it is page furniture rather than one of a list of
+ * comparable items, so it recedes onto `--paper-sunken` and runs full-bleed
+ * instead of taking a border, a radius and a shadow. Rendered on the index
+ * only — repeating it above every post would turn a statement into wallpaper.
+ *
+ * Bengali only. No translation and no romanised attribution: both explain the
+ * couplet to a reader who cannot read it, which turns it into an exhibit with
+ * a caption.
+ *
+ * Set as a verse extract sits on a letterpress page:
+ *
+ *   1. The block is centred, the lines inside it are not — `width: fit-content`
+ *      plus `margin-inline: auto`, never `text-align: center`. Centring each
+ *      line individually is a greeting-card habit, not a book one.
+ *   2. The vertical padding is generous because the air around set verse is
+ *      part of it.
+ *   3. The attribution hangs right, under the verse.
+ *   4. `।।` is a double danda, the mark closing a stanza, and it is the whole
+ *      terminal ornament. No rules above or below — the header supplies the
+ *      hairline over this band and the band supplies its own under it.
+ *
+ * Two Bengali-specific type rules, both easy to get wrong:
+ *
+ *   1. Set in `--font-bengali`. Inter carries no Bengali glyphs, so the body
+ *      face would leave the script to whatever the reader's OS supplies.
+ *   2. Never letter-spaced. The matra is one continuous headstroke across a
+ *      word and tracking cuts it into pieces, so the `.label` treatment used
+ *      for every other credit line on the site must not be applied here.
+ *
+ * `lang` on the verse and the name selects the shaping rules and makes a
+ * screen reader switch to a Bengali voice.
+ */
+
+const lines = epigraph.lines.filter(Boolean);
+---
+
+{
+  lines.length > 0 && (
+    <div class="epigraph">
+      <div class="shell epigraph__inner">
+        <blockquote class="epigraph__quote">
+          <p class="epigraph__verse" lang={epigraph.lang}>
+            {lines.map((line) => (
+              <span class="epigraph__line">{line}</span>
+            ))}
+          </p>
+
+          <footer class="epigraph__by">
+            <cite class="epigraph__author" lang={epigraph.lang}>
+              {epigraph.author}
+            </cite>
+          </footer>
+        </blockquote>
+      </div>
+    </div>
+  )
+}
+
+<style>
+  .epigraph {
+    background: var(--paper-sunken);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  /* The field the verse is given. Generous, but the first version of this was
+     too generous by half — 60px of padding over 1.75 leading made a 286px band
+     for two short lines, and the couplet read as two separate lines rather
+     than one thing. 36px desktop / 24px phone. */
+  .epigraph__inner {
+    padding-block: clamp(1.5rem, 1.15rem + 1.4vw, 2.25rem);
+  }
+
+  /* Sized by its own longest line and centred in the band, so the emptiness
+     either side is composition rather than leftover. `fit-content`, NOT
+     `text-align: center` — the lines inside must stay flush left. */
+  .epigraph__quote {
+    margin: 0 auto;
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  .epigraph__verse {
+    margin: 0;
+    font-family: var(--font-bengali);
+    font-weight: 400;
+    font-size: var(--text-2xl);
+    /* Bengali stacks more above and below the baseline than Latin does — the
+       reph and the matra above, jophola and hasanta below — so it needs more
+       leading than Inter's 1.6 for body text. But this is a two-line stanza,
+       not a paragraph, and the lines have to hold together as one utterance.
+       Ladder rendered at 1.75 / 1.55 / 1.45 / 1.35 and compared: 1.75 pulls the
+       couplet into two unrelated lines, 1.35 starts crowding the আ-kar against
+       the matra beneath it. 1.45 is where it reads as a couplet. */
+    line-height: 1.45;
+    letter-spacing: normal;
+    color: var(--ink);
+  }
+
+  .epigraph__line {
+    display: block;
+  }
+
+  /* Hangs to the right of the verse block, under it. Set in the Bengali face
+     as a whole line, dash included — Tiro Bangla's latin subset covers the em
+     dash, and a credit line drawn half in Inter and half in Tiro is the same
+     two-faces-in-one-line problem the latin subset exists to solve. */
+  .epigraph__by {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: baseline;
+    gap: 0.35rem 0.6rem;
+    margin-top: 0.75rem;
+    font-family: var(--font-bengali);
+    color: var(--ink-muted);
+  }
+
+  .epigraph__by::before {
+    content: '\2014';
+  }
+
+  .epigraph__author {
+    font-family: var(--font-bengali);
+    /* <cite> is italic by default. Tiro Bangla does ship an italic, but a
+       slanted Bengali is a Latin idea imposed on the script and it is not what
+       a credit line in a Bengali book looks like. */
+    font-style: normal;
+    font-size: var(--text-base);
+    letter-spacing: normal;
+  }
+</style>

@@ -1,0 +1,65 @@
+{
+  "name": "samyamoy-rakshit",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal site of Samyamoy Rakshit — professional work, machine learning papers implemented from scratch, and writing.",
+  "keywords": [
+    "astro",
+    "personal-website",
+    "portfolio",
+    "blog",
+    "static-site",
+    "typescript"
+  ],
+  "homepage": "https://samyamoyrakshit.com",
+  "author": {
+    "name": "Samyamoy Rakshit",
+    "email": "samyamoyrakshit@gmail.com",
+    "url": "https://samyamoyrakshit.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SamyamoyRakshit/samyamoyrakshit.com.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SamyamoyRakshit/samyamoyrakshit.com/issues"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check": "astro check",
+    "check:contrast": "node scripts/check-contrast.mjs",
+    "check:content": "node scripts/check-content.mjs",
+    "check:build": "node scripts/check-build.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "verify": "npm run format:check && npm run check:contrast && npm run check && npm run build && npm run check:build && npm run check:content"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^7.0.5",
+    "@astrojs/rss": "^4.0.19",
+    "@astrojs/sitemap": "^3.7.3",
+    "@resvg/resvg-js": "^2.6.2",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.1.6",
+    "katex": "^0.18.1",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
+    "satori": "^0.29.0",
+    "sharp": "^0.35.3",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.5",
+    "prettier": "^3.9.6",
+    "prettier-plugin-astro": "^0.14.1",
+    "typescript": "^5.9.3"
+  }
+}

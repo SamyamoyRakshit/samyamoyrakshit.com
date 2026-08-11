@@ -1,0 +1,339 @@
+---
+import Base from '../../layouts/Base.astro';
+import Section from '../../components/Section.astro';
+import { getScratchBuilds, getWriteupIds } from '../../lib/content';
+import { identity, scratchProject } from '../../config/site';
+
+/**
+ * The record of the rebuilds — built to the same pattern as /experience/.
+ *
+ * One box per paper, the way one box per role works next door: the heading is
+ * the thing itself, the line under it is where it came from, and then the
+ * numbers, the bullets and the stack. `papers-from-scratch` sits where the
+ * employer's name sits, because that is what it is — the one repository all
+ * three live in. It is not a link: the Source link inside each box already
+ * goes to that paper's own folder, which is a more useful destination than the
+ * repo root.
+ *
+ * The Markdown bodies in src/content/work/ are not rendered here or anywhere
+ * else — they are drafts of the posts. An index is for deciding what to read,
+ * so the narrative belongs in a post and there are no /projects/<id>/ pages.
+ *
+ * Each box carries `id={entry.id}` so the homepage can link straight to it.
+ */
+const builds = await getScratchBuilds();
+
+/**
+ * Each box's Blog link goes to that paper's own post, so a reader who clicks
+ * Blog on the BERT box lands on the BERT write-up rather than on an index they
+ * then have to search. Matched by filename — see getWriteupIds.
+ */
+const writeups = await getWriteupIds();
+const writeupHref = (id: string) => (writeups.has(id) ? `/blog/${id}/` : '/blog/');
+
+/** Fall back to the title with its ", from scratch" tail removed. */
+const heading = (entry: (typeof builds)[number]) =>
+  entry.data.short ?? entry.data.title.replace(/,\s*from scratch\s*$/i, '');
+
+/**
+ * PyTorch symbols set as code rather than prose. `nn.Transformer` and
+ * `nn.MultiheadAttention` are not jargon here, they are the evidence: "rebuilt
+ * from scratch" is an assertion anyone can make, and naming the two APIs that
+ * would have made it untrue is what backs it up.
+ */
+const SYMBOL = /(nn\.[A-Za-z_]\w*)/;
+/* Both sentences here. The homepage prints only the first — see the note in
+   src/config/site.ts. */
+const noteParts = `${scratchProject.summary} ${scratchProject.detail}`.split(
+  new RegExp(SYMBOL.source, 'g')
+);
+---
+
+<Base
+  title="Projects"
+  description={`Published models rebuilt from the paper by ${identity.name}, on one laptop.`}
+>
+  <Section title="Projects" level="h1">
+    <p class="preamble">
+      {noteParts.map((part) => (SYMBOL.test(part) ? <code>{part}</code> : part))}
+    </p>
+
+    {
+      builds.length > 0 ? (
+        <ol class="builds">
+          {builds.map((entry) => (
+            <li class="build" id={entry.id}>
+              <h2 class="build__title">{heading(entry)}</h2>
+              <p class="build__repo">{scratchProject.name}</p>
+
+              {entry.data.paper && (
+                <p class="build__cite">
+                  {entry.data.paper.url ? (
+                    <a href={entry.data.paper.url} class="build__paper-link">
+                      <cite>{entry.data.paper.title}</cite>
+                    </a>
+                  ) : (
+                    <cite>{entry.data.paper.title}</cite>
+                  )}
+                  <span class="build__sep" aria-hidden="true">
+                    ·
+                  </span>
+                  <span class="tnum">
+                    {entry.data.paper.authors}, {entry.data.paper.year}
+                  </span>
+                </p>
+              )}
+
+              <p class="build__summary">{entry.data.summary}</p>
+
+              {entry.data.specs.length > 0 && (
+                <dl class="build__specs tnum">
+                  {entry.data.specs.map((spec) => (
+                    <div class="build__spec">
+                      <dt>{spec.label}</dt>
+                      <dd>{spec.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+
+              {/* role="list" is not redundant: this <ul> sets `list-style: none`,
+                and Safari drops list semantics from a list with no marker, so
+                VoiceOver stops announcing "list, 3 items". The role puts them
+                back. The comment sits out here rather than inside the `&&`
+                group below because `{...}` in that position parses as an object
+                literal, not a comment — it costs 18 type errors. */}
+              {entry.data.highlights.length > 0 && (
+                <ul class="build__points" role="list">
+                  {entry.data.highlights.map((point) => (
+                    <li>{point}</li>
+                  ))}
+                </ul>
+              )}
+
+              {entry.data.stack.length > 0 && (
+                <ul class="build__stack">
+                  {entry.data.stack.map((item) => (
+                    <li class="tag">{item}</li>
+                  ))}
+                </ul>
+              )}
+
+              {/* Blog goes to this paper's own post, Source to this paper's own
+                folder — so no two boxes produce the same pair of links. */}
+              <div class="build__links">
+                <a href={writeupHref(entry.id)} class="label build__link">
+                  Blog
+                </a>
+                {entry.data.links.repo && (
+                  <a href={entry.data.links.repo} class="label build__link">
+                    Source
+                  </a>
+                )}
+              </div>
+            </li>
+          ))}
+        </ol>
+      ) : import.meta.env.DEV ? (
+        /* Development only. A live page must never address its own maintainer. */
+        <p class="empty">
+          Nothing here yet. Add a Markdown file with <code>kind: scratch</code> to
+          <code>src/content/work/</code> and it will appear.
+        </p>
+      ) : null
+    }
+  </Section>
+</Base>
+
+<style>
+  .preamble {
+    color: var(--ink-muted);
+    max-width: var(--measure);
+    margin-bottom: clamp(1.5rem, 1.2rem + 1.2vw, 2.25rem);
+  }
+  /* Full-strength ink against the muted prose around it — the symbols are the
+     point of the sentence. No chip: this sits in a paragraph. */
+  .preamble code {
+    color: var(--ink);
+  }
+
+  .builds {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1rem, 0.75rem + 1vw, 1.6rem);
+  }
+
+  /* Deliberately the same chrome as .role on /experience/. Single column,
+     though — the left column there is a date, and the equivalent here would be
+     the paper's year, which would read as a sort key on a list that is ordered
+     by which result carries most (2019, 2017, 2021). The year is in the
+     citation instead, where it is plainly an attribute of the paper. */
+  .build {
+    padding: clamp(1.4rem, 1.1rem + 1.4vw, 2.1rem) clamp(1.25rem, 1rem + 1.2vw, 1.9rem);
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    /* Arriving by fragment is handled once in global.css — see the note on
+       .role in experience.astro. */
+  }
+
+  /* Confirm the jump landed, exactly as .role:target does — a reader arriving
+     from the homepage needs to see which of three boxes they were sent to. */
+  .build:target {
+    border-color: var(--accent);
+  }
+
+  .build__title {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  /* Where the employer's name sits on /experience/. */
+  .build__repo {
+    margin-top: 0.35rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--ink);
+  }
+
+  .build__cite {
+    margin-top: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: 1.5;
+    color: var(--ink-faint);
+  }
+  .build__cite cite {
+    font-style: normal;
+  }
+
+  .build__paper-link {
+    text-decoration: underline;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.2em;
+    transition:
+      color var(--dur-hover) var(--ease),
+      text-decoration-color var(--dur-hover) var(--ease);
+  }
+  .build__paper-link:hover {
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+  }
+
+  .build__sep {
+    margin-inline: 0.5em;
+  }
+
+  .build__summary {
+    margin-top: 0.9rem;
+    color: var(--ink-muted);
+    max-width: var(--measure);
+  }
+
+  /* The figures. What a reader who knows the paper stops on, so it is mono,
+     tabular, and given its own line rather than folded into a sentence. */
+  .build__specs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 2rem;
+    margin: 1.1rem 0 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+  }
+
+  .build__spec {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+  .build__spec dt {
+    color: var(--ink-faint);
+    font-size: 0.85em;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .build__spec dd {
+    margin: 0;
+    color: var(--ink);
+  }
+
+  /* Disc markers, matching .engagement__points next door.
+
+     These were em dashes. Two measured reasons they are not any more. The
+     indent was 19.2px and an em dash in Inter is 17.7px wide, leaving a 1.5px
+     gap — so the marker butted straight into the text and read as "—86.5%".
+     And every one of these bullets contains an em dash in its own sentence,
+     which made the marker indistinguishable from the punctuation. A disc is
+     never used as punctuation, which is exactly what a marker needs. */
+  .build__points {
+    list-style: none;
+    margin: 1.1rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    max-width: var(--measure);
+  }
+
+  .build__points li {
+    position: relative;
+    padding-left: 1.15rem;
+    color: var(--ink);
+    line-height: 1.6;
+  }
+
+  .build__points li::before {
+    content: '\2022';
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--ink-faint);
+  }
+
+  .build__stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    list-style: none;
+    margin: 1.1rem 0 0;
+    padding: 0;
+  }
+
+  .build__links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem 1.1rem;
+    margin-top: 1.1rem;
+  }
+
+  .build__link {
+    color: var(--ink-faint);
+    text-decoration: underline;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.25em;
+    padding-block: 0.35rem;
+    transition:
+      color var(--dur-hover) var(--ease),
+      text-decoration-color var(--dur-hover) var(--ease);
+  }
+  .build__link:hover {
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+  }
+
+  .empty {
+    color: var(--ink-faint);
+    border-top: 1px solid var(--rule);
+    padding-top: 1.25rem;
+  }
+  .empty code {
+    color: var(--ink-muted);
+  }
+</style>

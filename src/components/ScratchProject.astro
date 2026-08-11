@@ -1,0 +1,242 @@
+---
+import type { WorkEntry } from '../lib/content';
+import { scratchProject } from '../config/site';
+
+/**
+ * papers-from-scratch on the homepage — the short form of /projects/.
+ *
+ * The repository's framing is a lead block; each replication is a card under
+ * it. Three sibling cards with no lead would read as three separate efforts
+ * when they are one repository, and folding the three into a single card makes
+ * each a paragraph that cannot be clicked.
+ *
+ * A card because each one navigates. `.row-link` puts the anchor's hit area
+ * over the whole card and `.row:has(.row-link)` takes the accent on its border
+ * — the same treatment a role on this page gets, for the same reason: the box
+ * is two lines of a much longer thing, so the whole box should be the way in.
+ *
+ * **One destination per card.** No Blog, no Source, no link on the citation.
+ * All three exist on /projects/, one click away, and putting them here would
+ * be four competing targets inside a box whose whole surface is already a
+ * link — plus three "Blog" links on the homepage pointing at the same index.
+ * The repo itself is reachable from the lead block.
+ */
+interface Props {
+  entries: WorkEntry[];
+}
+
+const { entries } = Astro.props;
+
+/** `short:` if the file sets one, else the title minus its ", from scratch". */
+const heading = (entry: WorkEntry) =>
+  entry.data.short ?? entry.data.title.replace(/,\s*from scratch\s*$/i, '');
+
+/**
+ * PyTorch symbols in the summary, set as code rather than prose.
+ *
+ * `nn.Transformer` and `nn.MultiheadAttention` are not jargon here, they are
+ * the evidence: "rebuilt from scratch" is an assertion anyone can make, and
+ * naming the two APIs that would have made it untrue is what backs it up. Mono
+ * marks them as literal symbols so a reader who knows PyTorch stops on them.
+ *
+ * Done by pattern rather than by putting markup in src/config/site.ts, which
+ * stays plain text. Outside `.prose` a bare <code> gets no background chip, so
+ * this is a change of face only — no boxes speckling the paragraph.
+ */
+const SYMBOL = /(nn\.[A-Za-z_]\w*)/;
+const summaryParts = scratchProject.summary.split(new RegExp(SYMBOL.source, 'g'));
+---
+
+<div class="lead">
+  <p class="lead__repo">
+    <a href={scratchProject.repo} class="lead__repo-link">{scratchProject.name}</a>
+    <span class="lead__tagline">{scratchProject.tagline}</span>
+  </p>
+  <p class="lead__summary">
+    {summaryParts.map((part) => (SYMBOL.test(part) ? <code>{part}</code> : part))}
+  </p>
+</div>
+
+<ol class="builds">
+  {
+    entries.map((entry) => (
+      <li class="row build">
+        {/* Straight to this rebuild's box on /projects/, not to the top of the
+          page — "All three in full" beside the section heading already covers
+          that. The box there confirms the jump with an accent border on
+          :target. */}
+        <h3 class="build__title">
+          <a href={`/projects/#${entry.id}`} class="row-link build__link">
+            {heading(entry)}
+          </a>
+        </h3>
+
+        {/* Plain text, not a link to the paper. The citation is the evidence and
+          it is printed in full, so nothing is hidden — but the arXiv link is a
+          second destination inside a card that already navigates, and it is on
+          the /projects/ box a click away. */}
+        {entry.data.paper && (
+          <p class="build__cite">
+            <cite>{entry.data.paper.title}</cite>
+            <span class="build__sep" aria-hidden="true">
+              ·
+            </span>
+            <span class="tnum">
+              {entry.data.paper.authors}, {entry.data.paper.year}
+            </span>
+          </p>
+        )}
+
+        <p class="build__summary">{entry.data.summary}</p>
+
+        {entry.data.specs.length > 0 && (
+          <dl class="build__specs tnum">
+            {entry.data.specs.map((spec) => (
+              <div class="build__spec">
+                <dt>{spec.label}</dt>
+                <dd>{spec.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  /* The lead is not a card. Nesting cards inside a card is one level too many
+     — the same rule /experience/ follows for an engagement inside a role. */
+  .lead {
+    margin-bottom: clamp(1.1rem, 0.85rem + 1vw, 1.6rem);
+  }
+
+  .lead__repo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+  }
+
+  .lead__repo-link {
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-decoration: underline;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.25em;
+    transition:
+      color var(--dur-hover) var(--ease),
+      text-decoration-color var(--dur-hover) var(--ease);
+  }
+  .lead__repo-link:hover {
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+  }
+
+  .lead__tagline {
+    font-size: var(--text-sm);
+    color: var(--ink-faint);
+  }
+
+  .lead__summary {
+    margin-top: 0.5rem;
+    color: var(--ink-muted);
+    max-width: var(--measure);
+  }
+
+  /* Full-strength ink against the muted prose around it — the symbols are the
+     point of the sentence. No background: this sits in a paragraph, and a chip
+     per symbol would read as two boxes rather than two names. */
+  .lead__summary code {
+    color: var(--ink);
+  }
+
+  /* Ordered in the markup because they ARE ordered — BERT first is a judgement
+     about which result carries most — but the numbers are not shown, because a
+     reader does not need to be told it is a list. */
+  .builds {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Block, not the .row grid: this card is a single stacked column, and a grid
+     gap would fight the margins below. */
+  .build {
+    display: block;
+  }
+
+  .build__title {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    line-height: 1.3;
+  }
+
+  /* Underlined, like a role's title on this page. The objection to underlining
+     it before was that the citation directly beneath carried one too; that
+     citation is no longer a link, so this is the only one in the card. */
+  .build__link {
+    text-decoration: underline;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.25em;
+    transition:
+      color var(--dur-hover) var(--ease),
+      text-decoration-color var(--dur-hover) var(--ease);
+  }
+  .row:hover .build__link,
+  .row:focus-within .build__link {
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+  }
+
+  .build__cite {
+    margin-top: 0.35rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: 1.5;
+    color: var(--ink-faint);
+  }
+  .build__cite cite {
+    font-style: normal;
+  }
+
+  .build__sep {
+    margin-inline: 0.5em;
+  }
+
+  .build__summary {
+    margin-top: 0.55rem;
+    color: var(--ink-muted);
+    font-size: var(--text-sm);
+    max-width: 60ch;
+  }
+
+  /* The figures. This is what a reader who knows the papers stops on, so it is
+     mono, tabular, and given its own line rather than folded into a sentence. */
+  .build__specs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.6rem;
+    margin: 0.8rem 0 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+  }
+
+  .build__spec {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+  .build__spec dt {
+    color: var(--ink-faint);
+    font-size: 0.85em;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .build__spec dd {
+    margin: 0;
+    color: var(--ink);
+  }
+</style>

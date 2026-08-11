@@ -1,0 +1,193 @@
+---
+import { Font } from 'astro:assets';
+import { identity, seo, socials, isPlaceholder } from '../config/site';
+
+/**
+ * Everything that goes in <head>: metadata, social cards, structured data,
+ * fonts, and the pre-paint theme script.
+ *
+ * Pages pass only what differs. Sensible defaults come from src/config/site.ts.
+ */
+interface Props {
+  title: string;
+  description?: string;
+  /** Absolute or root-relative path to the social share image. */
+  image?: string;
+  /** 'website' for pages, 'article' for blog posts. */
+  type?: 'website' | 'article';
+  publishedTime?: Date;
+  modifiedTime?: Date;
+  /** Set true on the homepage so the title isn't suffixed twice. */
+  isHome?: boolean;
+  /** Opt a page out of search indexing (e.g. 404). */
+  noindex?: boolean;
+  /**
+   * Preload the Bengali face. Set only by pages that actually paint Bengali
+   * above the fold — today that is /blog/ and its epigraph. See the note by
+   * the <Font> tags below.
+   */
+  preloadBengali?: boolean;
+}
+
+const {
+  title,
+  description = seo.description,
+  image = '/og/default.png',
+  type = 'website',
+  publishedTime,
+  modifiedTime,
+  isHome = false,
+  noindex = false,
+  preloadBengali = false,
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL(image, Astro.site);
+const fullTitle = isHome ? title : `${title} · ${seo.titleSuffix}`;
+
+// Placeholders must never reach a real crawler.
+const safeDescription = isPlaceholder(description)
+  ? `The personal site of ${identity.name}.`
+  : description;
+
+const sameAs = socials.map((s) => s.href).filter((href) => !isPlaceholder(href));
+const jobTitle = isPlaceholder(identity.role) ? undefined : identity.role;
+
+/**
+ * A single JSON-LD @graph rather than several stacked <script> blocks, so the
+ * Person and the WebSite are explicitly linked by @id. This is what assistants
+ * and search engines read to answer "who is this".
+ */
+const graph: Record<string, unknown>[] = [
+  {
+    '@type': 'Person',
+    '@id': `${Astro.site}#person`,
+    name: identity.name,
+    url: Astro.site?.toString(),
+    ...(jobTitle ? { jobTitle } : {}),
+    ...(sameAs.length ? { sameAs } : {}),
+  },
+  {
+    '@type': 'WebSite',
+    '@id': `${Astro.site}#website`,
+    url: Astro.site?.toString(),
+    name: identity.name,
+    description: safeDescription,
+    inLanguage: seo.language,
+    publisher: { '@id': `${Astro.site}#person` },
+  },
+];
+
+if (type === 'article') {
+  graph.push({
+    '@type': 'BlogPosting',
+    '@id': `${canonical}#article`,
+    headline: title,
+    description: safeDescription,
+    url: canonical.toString(),
+    image: ogImage.toString(),
+    ...(publishedTime ? { datePublished: publishedTime.toISOString() } : {}),
+    ...(modifiedTime ? { dateModified: modifiedTime.toISOString() } : {}),
+    author: { '@id': `${Astro.site}#person` },
+    isPartOf: { '@id': `${Astro.site}#website` },
+  });
+}
+
+const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="generator" content={Astro.generator} />
+
+<title>{fullTitle}</title>
+<meta name="description" content={safeDescription} />
+<link rel="canonical" href={canonical} />
+{noindex && <meta name="robots" content="noindex, follow" />}
+
+<!-- The browser chrome matches the paper, in both themes -->
+<meta name="theme-color" content="#ecebe9" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0e1114" media="(prefers-color-scheme: dark)" />
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="sitemap" href="/sitemap-index.xml" />
+<link
+  rel="alternate"
+  type="application/rss+xml"
+  title={`${identity.name} — Blog`}
+  href={new URL('rss.xml', Astro.site)}
+/>
+
+<!-- Open Graph -->
+<meta property="og:type" content={type} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={safeDescription} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={ogImage} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:site_name" content={identity.name} />
+<meta property="og:locale" content={seo.locale} />
+{
+  publishedTime && (
+    <meta property="article:published_time" content={publishedTime.toISOString()} />
+  )
+}
+{
+  modifiedTime && (
+    <meta property="article:modified_time" content={modifiedTime.toISOString()} />
+  )
+}
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={safeDescription} />
+<meta name="twitter:image" content={ogImage} />
+
+{
+  seo.googleSiteVerification && (
+    <meta name="google-site-verification" content={seo.googleSiteVerification} />
+  )
+}
+
+<!-- Self-hosted, subset, preloaded, with fallback metrics to prevent shift -->
+<Font cssVariable="--f-sans" preload />
+
+<Font cssVariable="--f-mono" />
+
+<!--
+  Bengali. Declared on every page, downloaded on almost none: the @font-face
+  carries a Bengali `unicode-range`, so the browser fetches the file only where
+  a Bengali character is actually painted — today that is /blog/ alone, and
+  every other page pays a few hundred bytes of CSS and nothing else.
+
+  Preloaded only where a page says it needs it. Astro sets `font-display: swap`
+  on every face, so without a preload the epigraph paints first in whatever
+  Bengali font the operating system has and then swaps, at a different size,
+  in the first thing you see on the page. The preload is a second-wave request
+  otherwise, because the browser cannot know the glyph is needed until layout.
+-->
+<Font cssVariable="--f-bengali" preload={preloadBengali} />
+
+<script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
+
+<!--
+  Applies the saved theme before first paint. Inline and synchronous on
+  purpose: any deferral here is a visible flash of the wrong colour scheme.
+  With no stored choice we set nothing, so `color-scheme: light dark` keeps
+  following the operating system.
+-->
+<script is:inline>
+  (() => {
+    try {
+      const stored = localStorage.getItem('theme');
+      if (stored === 'light' || stored === 'dark') {
+        document.documentElement.dataset.theme = stored;
+      }
+    } catch {
+      /* private mode, blocked storage — the OS preference still applies */
+    }
+  })();
+</script>

@@ -1,0 +1,63 @@
+# build output
+dist/
+# generated types
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# environment variables
+.env
+.env.*
+!.env.example
+
+# host CLIs
+.vercel/
+.netlify/
+.wrangler/
+
+# Claude Code — local tooling, deliberately not published. CLAUDE.md and the
+# skills/agents under .claude/ are how the site is worked on, not part of what
+# it is. Contribution is recorded in the commit trailer instead.
+#
+# NOTE: like the personal files below, these now live on one machine only.
+# CLAUDE.md holds design decisions that the source comments summarise but do
+# not fully replace — keep a copy off this disk.
+.claude/
+CLAUDE.md
+
+# VS Code, as an allowlist rather than a blocklist. extensions.json and
+# launch.json describe the PROJECT — which extension to install, how to start
+# the dev server — so they belong to anyone who clones it. Everything else in
+# here is personal or worse: settings.json collects individual preferences,
+# and sftp.json / ftp-sync.json are a well-known way people commit deployment
+# credentials by accident. Listing what is allowed means a file nobody
+# anticipated is excluded by default.
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# personal, local-only files — source material and working notes, not part of
+# the published site or the public repo. RESUME.md carries a phone number and
+# an email in plain text; WEBSITE-CONTEXT.md names clients that must never
+# appear on the site. The résumé the site actually links to is
+# public/resume.pdf, which is deliberately NOT ignored.
+#
+# NOTE: being ignored means these exist on one machine only and are not backed
+# up by pushing. Keep a copy somewhere else.
+RESUME.md
+RUN.md
+WEBSITE-CONTEXT.md
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+*.swp

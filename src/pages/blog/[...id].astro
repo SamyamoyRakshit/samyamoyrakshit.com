@@ -1,0 +1,349 @@
+---
+import { render } from 'astro:content';
+import { Image } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import {
+  getBlogPosts,
+  getSeries,
+  formatDate,
+  isoDate,
+  readingTime,
+  tagSlug,
+} from '../../lib/content';
+// Only the pages that can contain maths pay for the stylesheet.
+import 'katex/dist/katex.min.css';
+
+// Left un-annotated on purpose: Astro infers the page's prop types from what
+// this returns, and an explicit GetStaticPaths annotation erases that.
+export async function getStaticPaths() {
+  const posts = await getBlogPosts();
+  // Posts are newest-first, so the *next* thing to read is the one after this
+  // in the array — older. Handing someone the next post at the moment they
+  // finish one is the difference between a reader and a visitor.
+  return posts.map((entry, i) => ({
+    params: { id: entry.id },
+    props: { entry, next: posts[i + 1] ?? null, prev: posts[i - 1] ?? null },
+  }));
+}
+
+const { entry, next, prev } = Astro.props;
+const { title, description, pubDate, updatedDate, tags, cover, coverAlt, series } =
+  entry.data;
+const { Content } = await render(entry);
+
+const parts = series ? await getSeries(series.name) : [];
+---
+
+<Base
+  title={title}
+  description={description}
+  type="article"
+  image={`/og/blog-${entry.id}.png`}
+  publishedTime={pubDate}
+  modifiedTime={updatedDate}
+>
+  <article class="shell post">
+    <a href="/blog/" class="label post__back">
+      <span aria-hidden="true">&#8592;</span> Blog
+    </a>
+
+    <header class="post__header">
+      <h1 class="post__title">{title}</h1>
+
+      <div class="post__meta">
+        <time class="label tnum" datetime={isoDate(pubDate)}>
+          {formatDate(pubDate)}
+        </time>
+        <span class="label">{readingTime(entry.body)}</span>
+        {updatedDate && <span class="label">Updated {formatDate(updatedDate)}</span>}
+      </div>
+
+      {
+        tags.length > 0 && (
+          <ul class="post__tags">
+            {tags.map((tag) => (
+              <li>
+                <a href={`/blog/tags/${tagSlug(tag)}/`} class="tag tag-link">
+                  {tag}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </header>
+
+    {
+      cover && (
+        <figure class="post__cover">
+          <Image
+            src={cover}
+            alt={coverAlt ?? ''}
+            widths={[640, 960, 1280]}
+            sizes="(min-width: 68ch) 68ch, 100vw"
+            loading="eager"
+            fetchpriority="high"
+          />
+        </figure>
+      )
+    }
+
+    <div class="prose post__body">
+      <Content />
+    </div>
+
+    {
+      parts.length > 1 && (
+        <nav class="series" aria-label={`All parts of ${series!.name}`}>
+          <p class="label series__name">{series!.name}</p>
+          <ol class="series__list">
+            {parts.map((part) => {
+              const current = part.id === entry.id;
+              return (
+                <li class="series__item">
+                  <span class="series__num label tnum" aria-hidden="true">
+                    {String(part.data.series!.part).padStart(2, '0')}
+                  </span>
+                  {current ? (
+                    <span class="series__current" aria-current="true">
+                      {part.data.title}
+                    </span>
+                  ) : (
+                    <a href={`/blog/${part.id}/`} class="series__link">
+                      {part.data.title}
+                    </a>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
+      )
+    }
+
+    {
+      (next || prev) && (
+        <nav class="post__onward" aria-label="More posts">
+          {next && (
+            <a href={`/blog/${next.id}/`} class="onward">
+              <span class="label onward__dir">Read next</span>
+              <span class="onward__title">{next.data.title}</span>
+              <span class="onward__desc">{next.data.description}</span>
+            </a>
+          )}
+          {prev && (
+            <a href={`/blog/${prev.id}/`} class="onward onward--newer">
+              <span class="label onward__dir">More recent</span>
+              <span class="onward__title">{prev.data.title}</span>
+              <span class="onward__desc">{prev.data.description}</span>
+            </a>
+          )}
+        </nav>
+      )
+    }
+  </article>
+</Base>
+
+<style>
+  .post {
+    padding-block: clamp(2rem, 1.2rem + 3vw, 4rem);
+  }
+
+  .post__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    color: var(--ink-faint);
+    padding-block: 0.6rem;
+    min-height: 44px;
+    transition: color var(--dur-hover) var(--ease);
+  }
+  .post__back:hover {
+    color: var(--accent);
+  }
+
+  .post__header {
+    margin-top: 1.5rem;
+    padding-bottom: 1.75rem;
+    border-bottom: 1px solid var(--rule);
+    max-width: var(--measure);
+  }
+
+  .post__title {
+    font-size: var(--text-4xl);
+    max-width: 20ch;
+  }
+
+  .post__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.5rem;
+    margin-top: 1.25rem;
+  }
+
+  .post__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    list-style: none;
+    margin: 1.25rem 0 0;
+    padding: 0;
+  }
+
+  .post__cover {
+    margin-top: 2.5rem;
+    max-width: var(--measure);
+  }
+  .post__cover :global(img) {
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    width: 100%;
+  }
+
+  .post__body {
+    margin-top: clamp(2rem, 1.5rem + 2vw, 3rem);
+  }
+
+  /* A series contents list. Numbered, because this genuinely is a sequence —
+     the one place on the site where numbering carries information. */
+  .series {
+    margin-top: clamp(2.5rem, 2rem + 2vw, 4rem);
+    padding: clamp(1.25rem, 1rem + 1vw, 1.9rem);
+    border: 1px solid var(--rule);
+    background: var(--paper-raised);
+    max-width: var(--measure);
+  }
+
+  .series__name {
+    color: var(--ink-faint);
+  }
+
+  .series__list {
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .series__item {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .series__num {
+    color: var(--ink-faint);
+  }
+
+  .series__link {
+    text-decoration: underline;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.18em;
+    transition:
+      color var(--dur-hover) var(--ease),
+      text-decoration-color var(--dur-hover) var(--ease);
+  }
+  .series__link:hover {
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+  }
+
+  .series__current {
+    color: var(--ink-faint);
+  }
+
+  .post__onward {
+    display: grid;
+    gap: 1px;
+    margin-top: clamp(3rem, 2rem + 4vw, 5rem);
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+  @media (min-width: 48rem) {
+    .post__onward {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* The newest post has no "more recent" and the oldest has no "read next",
+       so this nav often holds one card, not two. The grid paints --rule and
+       lets a 1px gap show through as the hairline between cards — which means
+       an empty second column is not empty, it is a large grey slab. Collapse
+       to one column when there is only one card. */
+    .post__onward:has(> :only-child) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .onward {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: clamp(1.25rem, 1rem + 1vw, 1.9rem);
+    background: var(--paper);
+    transition: background-color var(--dur-hover) var(--ease);
+  }
+  .onward:hover {
+    background: var(--paper-raised);
+  }
+
+  .onward__dir {
+    color: var(--ink-faint);
+  }
+
+  .onward__title {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    transition: color var(--dur-hover) var(--ease);
+  }
+  .onward:hover .onward__title {
+    color: var(--accent);
+  }
+
+  .onward__desc {
+    font-size: var(--text-sm);
+    color: var(--ink-muted);
+    line-height: 1.5;
+  }
+</style>
+
+<script>
+  /**
+   * Gives every heading in a post a linkable anchor.
+   *
+   * Astro already generates the `id` attributes, so the anchors are only for
+   * getting a link out — someone quoting one section of a long post can point
+   * at exactly that section. Hidden until hover or keyboard focus.
+   *
+   * Done in the browser rather than with a Markdown plugin because Astro 7's
+   * native pipeline would need the whole remark/rehype processor swapped back
+   * in for this alone. Roughly 400 bytes, on blog posts only.
+   */
+  function addHeadingAnchors() {
+    const headings = document.querySelectorAll<HTMLElement>(
+      '.prose h2[id], .prose h3[id], .prose h4[id]'
+    );
+
+    for (const heading of headings) {
+      if (heading.querySelector('.heading-anchor')) continue;
+
+      const anchor = document.createElement('a');
+      anchor.className = 'heading-anchor';
+      anchor.href = `#${heading.id}`;
+      anchor.textContent = '#';
+      anchor.setAttribute(
+        'aria-label',
+        `Link to this section: ${heading.textContent?.trim() ?? ''}`
+      );
+      heading.appendChild(anchor);
+    }
+  }
+
+  addHeadingAnchors();
+  document.addEventListener('astro:after-swap', addHeadingAnchors);
+</script>

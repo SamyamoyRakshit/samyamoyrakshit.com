@@ -1,0 +1,151 @@
+---
+/**
+ * Theme control.
+ *
+ * The icon shows what you will GET if you press it — sun while the page is
+ * dark, moon while it is light.
+ *
+ * Both icons are rendered into the HTML and CSS decides which one is visible,
+ * using the same `prefers-color-scheme` / `data-theme` logic as the palette.
+ * That means the correct icon is painted on the very first frame, with no
+ * JavaScript involved — there is no flash of the wrong glyph on load.
+ *
+ * With no stored choice the site follows the operating system. The first press
+ * stores an explicit preference, and it is remembered from then on.
+ */
+---
+
+<button
+  id="theme-toggle"
+  type="button"
+  class="theme-toggle"
+  aria-label="Switch colour theme"
+>
+  <svg
+    class="theme-icon theme-icon--sun"
+    viewBox="0 0 24 24"
+    width="18"
+    height="18"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.4"
+    stroke-linecap="round"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="4.25"></circle>
+    <path
+      d="M12 2.6v2.1M12 19.3v2.1M4.4 4.4l1.5 1.5M18.1 18.1l1.5 1.5M2.6 12h2.1M19.3 12h2.1M4.4 19.6l1.5-1.5M18.1 5.9l1.5-1.5"
+    ></path>
+  </svg>
+
+  <svg
+    class="theme-icon theme-icon--moon"
+    viewBox="0 0 24 24"
+    width="18"
+    height="18"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M20.2 14.1A8.4 8.4 0 0 1 9.9 3.8a8.4 8.4 0 1 0 10.3 10.3Z"></path>
+  </svg>
+</button>
+
+<style>
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    color: var(--ink-faint);
+    /* WCAG 2.2 target size, without visually enlarging the glyph */
+    min-width: 44px;
+    min-height: 44px;
+    transition: color var(--dur-hover) var(--ease);
+  }
+  .theme-toggle:hover {
+    color: var(--accent);
+  }
+
+  .theme-icon {
+    display: none;
+  }
+
+  /* Light is showing -> offer the moon. This is the default, and also the
+     state when the user has explicitly chosen light. */
+  .theme-icon--moon {
+    display: block;
+  }
+
+  /* Dark is showing -> offer the sun. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) .theme-icon--moon {
+      display: none;
+    }
+    :root:not([data-theme='light']) .theme-icon--sun {
+      display: block;
+    }
+  }
+  :root[data-theme='dark'] .theme-icon--moon {
+    display: none;
+  }
+  :root[data-theme='dark'] .theme-icon--sun {
+    display: block;
+  }
+  :root[data-theme='light'] .theme-icon--moon {
+    display: block;
+  }
+  :root[data-theme='light'] .theme-icon--sun {
+    display: none;
+  }
+</style>
+
+<script>
+  type Theme = 'light' | 'dark';
+
+  /** What the page is actually showing right now. */
+  function active(): Theme {
+    const chosen = document.documentElement.dataset.theme;
+    if (chosen === 'light' || chosen === 'dark') return chosen;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+
+  /** Sharpen the label from the generic server-rendered one. */
+  function label(button: HTMLElement) {
+    const next = active() === 'dark' ? 'light' : 'dark';
+    button.setAttribute('aria-label', `Switch to ${next} theme`);
+  }
+
+  function init() {
+    const button = document.getElementById('theme-toggle');
+    if (!button) return;
+
+    label(button);
+
+    button.addEventListener('click', () => {
+      const next: Theme = active() === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      try {
+        localStorage.setItem('theme', next);
+      } catch {
+        /* storage blocked — the choice just won't persist */
+      }
+      label(button);
+    });
+
+    // Keep the label honest if the OS flips while the page is open and the
+    // visitor has not chosen a theme of their own.
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (!document.documentElement.dataset.theme) label(button);
+    });
+  }
+
+  init();
+  document.addEventListener('astro:after-swap', init);
+</script>

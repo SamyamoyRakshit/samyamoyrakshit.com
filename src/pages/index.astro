@@ -1,0 +1,289 @@
+---
+import Base from '../layouts/Base.astro';
+import Masthead from '../components/Masthead.astro';
+import Section from '../components/Section.astro';
+import ScratchProject from '../components/ScratchProject.astro';
+import PostRow from '../components/PostRow.astro';
+import {
+  seo,
+  features,
+  career,
+  roleId,
+  education,
+  toolkit,
+  isPlaceholder,
+  filledList,
+} from '../config/site';
+import { getScratchBuilds, getRecentPosts } from '../lib/content';
+
+/**
+ * One page that answers the whole question.
+ *
+ * Everything a reader needs is set out here in full — the rebuilds with their
+ * numbers, the roles with what they were, the writing. The other pages go
+ * deeper; none of them hold anything back that belongs here. Nobody should
+ * have to click to find out whether this person is worth reading.
+ */
+const [scratch, posts] = await Promise.all([getScratchBuilds(), getRecentPosts(3)]);
+
+const roles = (
+  import.meta.env.DEV
+    ? career
+    : career.filter((role) => ![role.title, role.org].some(isPlaceholder))
+).slice(0, 3);
+
+// One hue per group, cycled — so the colour sorts the list rather than
+// decorating it. Four hues, defined and contrast-checked in global.css.
+const HUES = ['tag--sky', 'tag--mint', 'tag--amber', 'tag--violet'] as const;
+
+const groups = toolkit
+  .map((group, i) => ({
+    ...group,
+    items: filledList(group.items),
+    hue: HUES[i % HUES.length],
+  }))
+  .filter((group) => group.items.length > 0 && !isPlaceholder(group.heading));
+
+const showScratch = features.work && scratch.length > 0;
+const showBlog = features.blog && posts.length > 0;
+---
+
+<Base title={seo.homeTitle} isHome>
+  <Masthead />
+
+  {
+    roles.length > 0 && (
+      <Section title="Experience" moreHref="/experience/" moreLabel="Full record">
+        <ol class="stints">
+          {roles.map((role) => (
+            <li class="row stint">
+              <span class="label stint__when tnum">
+                {role.start}&#8202;&#8211;&#8202;{role.end ?? 'present'}
+              </span>
+              <div>
+                <h3 class="stint__title">
+                  {/* Straight to this role on /experience/, not to the top of
+                    it. "Full record" below already covers the whole page; a
+                    reader who wants THIS role's bullets should not have to
+                    find it again after landing.
+
+                    `row-link` extends the hit area over the whole card via an
+                    inset ::before. It stays a single real anchor, so the
+                    accessible name, the context menu and middle-click all
+                    behave — it is the hit area that grows, not the link count.
+                    Safe here because the card holds no other link; if one is
+                    ever added it needs to sit above the overlay, which
+                    `.row a:not(.row-link)` in global.css already handles. */}
+                  <a href={`/experience/#${roleId(role)}`} class="row-link stint__link">
+                    {role.title}
+                  </a>{' '}
+                  <span class="stint__org">· {role.org}</span>
+                </h3>
+                {role.note && <p class="stint__note">{role.note}</p>}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </Section>
+    )
+  }
+
+  {
+    /* No note on Projects. The lead block's tagline and summary directly
+      beneath said the same thing in two more ways — one repository, three
+      papers, one laptop, three times over. Experience carries no note. */
+  }
+  {
+    showScratch && (
+      <Section title="Projects" moreHref="/projects/" moreLabel="All three in full">
+        <ScratchProject entries={scratch} />
+      </Section>
+    )
+  }
+
+  {
+    education.length > 0 && (
+      <Section title="Education">
+        <ul class="education">
+          {education.map((entry) => (
+            <li class="row education__row">
+              <span class="label education__when tnum">{entry.period}</span>
+              <div>
+                <h3 class="education__qualification">{entry.qualification}</h3>
+                <p class="education__org">
+                  {entry.href ? (
+                    <a href={entry.href} class="link">
+                      {entry.institution}
+                    </a>
+                  ) : (
+                    entry.institution
+                  )}
+                </p>
+                {entry.note && <p class="education__note">{entry.note}</p>}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </Section>
+    )
+  }
+
+  {
+    /* No `note` on Writing. Each row already carries the post's own title and
+      description, so a line describing the section in general said less than
+      the three lines directly under it. */
+  }
+  {
+    showBlog && (
+      <Section title="Writing" moreHref="/blog/" moreLabel="All posts">
+        {posts.map((entry) => (
+          <PostRow entry={entry} />
+        ))}
+      </Section>
+    )
+  }
+
+  {
+    groups.length > 0 && (
+      <Section
+        title="Skills"
+        note="Everything here is something I have shipped with or trained with."
+      >
+        <div class="skills">
+          {groups.map((group) => (
+            <div class="skills__group">
+              <p class="label skills__heading">{group.heading}</p>
+              <ul class="skills__items">
+                {group.items.map((item) => (
+                  <li class={`tag tag--lead ${group.hue}`}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </Section>
+    )
+  }
+</Base>
+
+<style>
+  .stints {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .stint {
+    grid-template-columns: 1fr;
+    gap: 0.4rem;
+  }
+  @media (min-width: 40rem) {
+    .stint {
+      grid-template-columns: 12rem minmax(0, 1fr);
+      gap: 0 clamp(1rem, 0.5rem + 1.5vw, 2rem);
+    }
+  }
+
+  .stint__when {
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+
+  .stint__title {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    line-height: 1.3;
+  }
+
+  .stint__link {
+    text-decoration: underline;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.22em;
+    transition:
+      color var(--dur-hover) var(--ease),
+      text-decoration-color var(--dur-hover) var(--ease);
+  }
+  .stint__link:hover {
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+  }
+
+  .stint__org {
+    color: var(--ink-muted);
+    font-weight: 400;
+  }
+
+  .stint__note {
+    margin-top: 0.45rem;
+    color: var(--ink-muted);
+    font-size: var(--text-sm);
+    max-width: 60ch;
+  }
+
+  /* Skills as chips grouped by heading — not bars, not rings, not percentages.
+     Nobody is 85% good at PyTorch and everyone knows it. */
+  .skills {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  @media (min-width: 46rem) {
+    .skills {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.75rem 2.5rem;
+    }
+  }
+
+  .skills__heading {
+    color: var(--ink-faint);
+  }
+
+  .skills__items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    list-style: none;
+    margin: 0.7rem 0 0;
+    padding: 0;
+  }
+
+  .education {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .education__row {
+    grid-template-columns: 1fr;
+    gap: 0.4rem;
+  }
+  @media (min-width: 40rem) {
+    .education__row {
+      grid-template-columns: 12rem minmax(0, 1fr);
+      gap: 0 clamp(1rem, 0.5rem + 1.5vw, 2rem);
+    }
+  }
+
+  .education__when {
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+
+  .education__qualification {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    line-height: 1.3;
+  }
+
+  .education__org {
+    margin-top: 0.2rem;
+    color: var(--ink);
+  }
+
+  .education__note {
+    margin-top: 0.4rem;
+    color: var(--ink-muted);
+    font-size: var(--text-sm);
+    max-width: 54ch;
+  }
+</style>

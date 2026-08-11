@@ -1,0 +1,147 @@
+---
+import { Image } from 'astro:assets';
+import type { BlogEntry } from '../lib/content';
+import { formatDate, isoDate, readingTime, tagSlug } from '../lib/content';
+
+interface Props {
+  entry: BlogEntry;
+  /** Hide the description on dense index pages. */
+  compact?: boolean;
+  /**
+   * The heading level for the post title, which depends on what wraps it.
+   *
+   * Default h3 is right on the homepage, where the row sits under a "Writing"
+   * <h2>. On /blog/ and /blog/tags/<tag>/ the section heading IS the <h1>, so
+   * an h3 there skips a level and the page's outline reads as though a heading
+   * went missing. That matters more than usual here: the cards carry several
+   * links each, so heading navigation is how a screen-reader user skims the
+   * list without tabbing through every tag.
+   */
+  level?: 'h2' | 'h3';
+}
+
+const { entry, compact = false, level = 'h3' } = Astro.props;
+const { title, description, pubDate, tags, draft, cover, coverAlt } = entry.data;
+const href = `/blog/${entry.id}/`;
+const Heading = level;
+---
+
+<article class="row post-row">
+  <div class="post-row__main">
+    <Heading class="row-title">
+      <a href={href} class="row-link">{title}</a>
+      {draft && <span class="post-row__draft label">draft</span>}
+    </Heading>
+
+    {!compact && <p class="post-row__desc">{description}</p>}
+
+    <div class="post-row__meta">
+      <time class="label tnum" datetime={isoDate(pubDate)}>
+        {formatDate(pubDate)}
+      </time>
+      {
+        /* Telling someone what a post costs them is the cheapest way to get it
+          read. An unlabelled wall of text is the thing people bounce off. */
+      }
+      <span class="label post-row__time">{readingTime(entry.body)}</span>
+      {
+        tags.length > 0 && (
+          <ul class="post-row__tags">
+            {/* Each tag goes to its own page. Safe inside a card whose whole
+              surface is already a link: global.css gives `.row a:not(.row-link)`
+              a z-index above the .row-link overlay, so these stay clickable and
+              the rest of the card still opens the post. */}
+            {tags.map((tag) => (
+              <li>
+                <a href={`/blog/tags/${tagSlug(tag)}/`} class="tag tag-link">
+                  {tag}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </div>
+  </div>
+
+  {
+    cover && (
+      <a href={href} class="post-row__thumb" tabindex="-1" aria-hidden="true">
+        <Image src={cover} alt={coverAlt ?? ''} width={280} densities={[1, 2]} />
+      </a>
+    )
+  }
+</article>
+
+<style>
+  .post-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.6rem 1.25rem;
+  }
+
+  @media (min-width: 60rem) {
+    .post-row:has(.post-row__thumb) {
+      grid-template-columns: minmax(0, 1fr) 12rem;
+    }
+  }
+
+  .post-row__desc {
+    margin-top: 0.5rem;
+    color: var(--ink-muted);
+    max-width: 56ch;
+    font-size: var(--text-base);
+  }
+
+  /* Date, cost, subject — the three things somebody uses to decide, on one
+     line rather than scattered around the row. */
+  .post-row__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 1.1rem;
+    margin-top: 0.9rem;
+    color: var(--ink-faint);
+  }
+
+  .post-row__time {
+    color: var(--ink-faint);
+  }
+
+  .post-row__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .post-row__thumb {
+    display: block;
+    border: 1px solid var(--rule);
+    overflow: hidden;
+    margin-top: 1rem;
+    max-width: 18rem;
+  }
+  .post-row__thumb img {
+    width: 100%;
+    height: auto;
+    transition: transform var(--dur-reveal) var(--ease);
+  }
+  .row:hover .post-row__thumb img {
+    transform: scale(1.03);
+  }
+
+  @media (min-width: 60rem) {
+    .post-row__thumb {
+      margin-top: 0.35rem;
+      max-width: none;
+    }
+  }
+
+  .post-row__draft {
+    color: var(--ink-faint);
+    vertical-align: middle;
+    margin-left: 0.6rem;
+  }
+</style>

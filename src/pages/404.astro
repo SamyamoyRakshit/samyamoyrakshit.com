@@ -1,0 +1,66 @@
+---
+import Base from '../layouts/Base.astro';
+import { getWork, getBlogPosts } from '../lib/content';
+
+/**
+ * Only offer routes that exist. A 404 that sends you to another empty page is
+ * worse than the 404.
+ */
+const [work, posts] = await Promise.all([getWork(), getBlogPosts()]);
+---
+
+<Base title="Not found" description="That page does not exist." noindex>
+  <div class="shell notfound">
+    <span class="label notfound__code">Error 404</span>
+    <h1 class="notfound__title">There&#8217;s nothing at this address.</h1>
+    <p class="notfound__body">The link may be old, or the page may have been renamed.</p>
+    <div class="notfound__actions">
+      <a href="/" class="btn">Home</a>
+      {
+        work.length > 0 && (
+          <a href="/projects/" class="btn">
+            Projects
+          </a>
+        )
+      }
+      {
+        posts.length > 0 && (
+          <a href="/blog/" class="btn">
+            Writing
+          </a>
+        )
+      }
+    </div>
+  </div>
+</Base>
+
+<style>
+  .notfound {
+    padding-block: clamp(4rem, 2rem + 10vw, 10rem);
+    max-width: 44rem;
+  }
+
+  .notfound__code {
+    color: var(--ink-faint);
+  }
+
+  .notfound__title {
+    font-size: var(--text-4xl);
+    margin-top: 1.25rem;
+    max-width: 16ch;
+  }
+
+  .notfound__body {
+    margin-top: 1.5rem;
+    color: var(--ink-muted);
+    font-size: var(--text-lg);
+    max-width: 48ch;
+  }
+
+  .notfound__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2.5rem;
+  }
+</style>

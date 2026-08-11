@@ -1,0 +1,290 @@
+---
+import Base from '../layouts/Base.astro';
+import Section from '../components/Section.astro';
+import { identity, career, roleId, isPlaceholder } from '../config/site';
+
+/**
+ * The record, set out in full.
+ *
+ * Every bullet is on this page. Nothing is behind a "read more" — a reader
+ * deciding whether to talk to you should be able to finish in one scroll,
+ * and the numbers are the whole argument, so they are not going to be hidden
+ * one navigation away from the person who came here to find them.
+ */
+
+const roles = import.meta.env.DEV
+  ? career
+  : career.filter((role) => ![role.title, role.org].some(isPlaceholder));
+---
+
+<Base
+  title="Experience"
+  description={`Where ${identity.name} has worked, and what he built there.`}
+>
+  <Section title="Experience" level="h1">
+    <ol class="roles">
+      {
+        roles.map((role) => (
+          <li class="role" id={roleId(role)}>
+            <div class="role__when">
+              <span class="label tnum">
+                {role.start}&#8202;&#8211;&#8202;{role.end ?? 'present'}
+              </span>
+              {role.type && <span class="label role__type">{role.type}</span>}
+            </div>
+
+            <div class="role__body">
+              <h2 class="role__title">{role.title}</h2>
+              <p class="role__org">
+                {role.href ? (
+                  <a href={role.href} class="link">
+                    {role.org}
+                  </a>
+                ) : (
+                  role.org
+                )}
+                {role.location && <span class="role__location">{role.location}</span>}
+              </p>
+
+              {role.award && (
+                <p class="role__award">
+                  {role.award}
+                  {/* Labelled "Certificate" rather than linking the sentence:
+                    the reader should know they are opening a document, not
+                    another page of the site. Base.astro handles the new-tab
+                    and rel attributes for every external link. */}
+                  {role.awardHref && (
+                    <>
+                      {' '}
+                      <a href={role.awardHref} class="link role__award-proof">
+                        Certificate
+                      </a>
+                    </>
+                  )}
+                </p>
+              )}
+
+              {role.projects && role.projects.length > 0 && (
+                <div class="role__projects">
+                  {role.projects.map((project) => (
+                    <article class="engagement">
+                      <h3 class="engagement__name">{project.name}</h3>
+
+                      <p class="engagement__context">
+                        {project.client && (
+                          <span class="engagement__client">{project.client}</span>
+                        )}
+                        {project.period && (
+                          <span class="engagement__period tnum">{project.period}</span>
+                        )}
+                      </p>
+
+                      {project.summary && (
+                        <p class="engagement__summary">{project.summary}</p>
+                      )}
+
+                      {/* role="list" restores the semantics `list-style: none`
+                        strips in Safari — see the note in projects/index.astro. */}
+                      <ul class="engagement__points" role="list">
+                        {project.bullets.map((bullet) => (
+                          <li>{bullet}</li>
+                        ))}
+                      </ul>
+
+                      {project.tech && project.tech.length > 0 && (
+                        <ul class="engagement__tech">
+                          {project.tech.map((item) => (
+                            <li class="tag">{item}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </Section>
+</Base>
+
+<style>
+  .roles {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1rem, 0.75rem + 1vw, 1.6rem);
+  }
+
+  .role {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: clamp(1.4rem, 1.1rem + 1.4vw, 2.1rem) clamp(1.25rem, 1rem + 1.2vw, 1.9rem);
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    /* No scroll-margin-top here. Arriving by fragment is handled once for the
+       whole site by `scroll-padding-top` on <html> in global.css, which clears
+       the sticky header as well as leaving air above the card. Setting both
+       adds them together and drops the target another 2rem down the page. */
+  }
+
+  /* Confirm the jump landed. Without this a reader who follows a link from the
+     homepage sees a page that looks the same as if they had clicked "Full
+     record", with no signal which of three cards they were sent to. Border
+     only, so nothing moves and no text contrast changes. */
+  .role:target {
+    border-color: var(--accent);
+  }
+
+  @media (min-width: 52rem) {
+    .role {
+      grid-template-columns: 12rem minmax(0, 1fr);
+      gap: 0 clamp(1rem, 0.5rem + 1.5vw, 2rem);
+    }
+  }
+
+  /* align-content, not just align-items: the grid cell is as tall as the
+     whole role, and a wrapping flex container stretches its lines to fill —
+     which pushed the FULL TIME chip to the bottom of the column. */
+  .role__when {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    align-content: flex-start;
+    gap: 0.5rem 0.75rem;
+  }
+  .role__when .label {
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+
+  .role__type {
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-pill);
+    padding: 0.18rem 0.6rem;
+    background: var(--paper-sunken);
+    color: var(--ink-faint);
+  }
+
+  .role__title {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  .role__org {
+    margin-top: 0.35rem;
+    color: var(--ink);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem 0.75rem;
+  }
+
+  .role__location {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--ink-faint);
+  }
+
+  .role__award {
+    margin-top: 0.9rem;
+    padding: 0.6rem 0.9rem;
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    background: var(--accent-soft);
+    color: var(--ink);
+    font-size: var(--text-sm);
+    max-width: var(--measure);
+  }
+
+  .role__award-proof {
+    white-space: nowrap;
+  }
+
+  .role__projects {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1.4rem, 1.1rem + 1vw, 2rem);
+    margin-top: 1.6rem;
+  }
+
+  /* Each engagement is separated by a rule rather than nested in its own card:
+     two levels of card is one level too many, and the role card already tells
+     you where the group starts and stops. */
+  .engagement {
+    max-width: var(--measure);
+  }
+  .engagement + .engagement {
+    padding-top: clamp(1.4rem, 1.1rem + 1vw, 2rem);
+    border-top: 1px solid var(--rule);
+  }
+
+  .engagement__name {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .engagement__context {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 1.25rem;
+    margin-top: 0.35rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--ink-faint);
+  }
+
+  .engagement__summary {
+    margin-top: 0.75rem;
+    color: var(--ink-muted);
+  }
+
+  /* The bullets. Set in the reading face at full body size, because this is
+     the part of the page people actually came for. */
+  .engagement__points {
+    list-style: none;
+    margin: 0.9rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .engagement__points li {
+    position: relative;
+    padding-left: 1.15rem;
+    color: var(--ink);
+    line-height: 1.6;
+  }
+
+  /* A disc, not an em dash — see the note on .build__points in
+     src/pages/projects/index.astro. These two lists are the same object and
+     must not drift apart. */
+  .engagement__points li::before {
+    content: '\2022';
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--ink-faint);
+  }
+
+  .engagement__tech {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+  }
+</style>

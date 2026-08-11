@@ -1,0 +1,202 @@
+---
+import { identity, footer, activeSocials, filled } from '../config/site';
+import { formatDate, isoDate } from '../lib/content';
+import { lastUpdated } from '../lib/updated';
+
+/**
+ * The colophon.
+ *
+ * Ends the page the way a printed index ends: a rule, the contact, the
+ * production notes, nothing else. No back-to-top button, no version stamp,
+ * no social icon buttons — the links are set as words because words are what
+ * the rest of the site is made of.
+ */
+
+const email = filled(identity.email);
+const links = activeSocials();
+
+/**
+ * The invitation only appears if there is somewhere to send a reply. A site
+ * that asks to be contacted and then lists no address reads as unfinished —
+ * which, at that point, it is.
+ */
+const cta = email || links.length > 0 ? filled(footer.callToAction) : undefined;
+const year = new Date().getFullYear();
+const source = footer.showSourceLink ? filled(footer.sourceUrl) : undefined;
+---
+
+<footer class="colophon">
+  <div class="shell">
+    <div class="colophon__grid">
+      <div class="colophon__contact">
+        {cta && <p class="colophon__cta">{cta}</p>}
+
+        {
+          email && (
+            <a href={`mailto:${email}`} class="colophon__email">
+              {email}
+            </a>
+          )
+        }
+
+        {
+          links.length > 0 && (
+            <ul class="colophon__links">
+              {links.map((social) => (
+                <li>
+                  <a
+                    href={social.href}
+                    class="colophon__link label"
+                    rel="me noopener"
+                    target="_blank"
+                    aria-label={`${identity.shortName} on ${social.network}`}
+                  >
+                    {social.label}
+                    <span class="colophon__arrow" aria-hidden="true">
+                      &#8599;
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      </div>
+
+      <div class="colophon__meta">
+        <p class="label">&copy; {year} {identity.name}</p>
+
+        {
+          /* A date, not a list of tools. "Built with Astro" is on every
+            generated portfolio and answers nothing; this answers the question
+            a personal site is silently asked — is the person still here. In
+            a <time> so it is machine-readable, and tabular so the digits line
+            up with the year above. See src/lib/updated.ts for where it comes
+            from and why there is no version number. */
+        }
+        <p class="colophon__updated">
+          <time class="label tnum" datetime={isoDate(lastUpdated)}>
+            Updated {formatDate(lastUpdated)}
+          </time>
+        </p>
+        {
+          source && (
+            <a
+              href={source}
+              class="label colophon__source"
+              rel="noopener"
+              target="_blank"
+            >
+              Source
+            </a>
+          )
+        }
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .colophon {
+    border-top: 1px solid var(--rule);
+    margin-top: var(--section-gap);
+    padding-block: clamp(2.5rem, 1.8rem + 3vw, 4.5rem);
+  }
+
+  .colophon__grid {
+    display: grid;
+    gap: clamp(2rem, 1rem + 4vw, 4rem);
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 48rem) {
+    .colophon__grid {
+      grid-template-columns: 1fr auto;
+      align-items: end;
+    }
+    .colophon__meta {
+      text-align: right;
+    }
+  }
+
+  .colophon__cta {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    max-width: 22ch;
+    text-wrap: balance;
+    margin-bottom: 1.1rem;
+  }
+
+  .colophon__email {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    color: var(--ink);
+    background-image: linear-gradient(var(--accent), var(--accent));
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 100% 1px;
+    padding-bottom: 0.15em;
+    transition:
+      background-size var(--dur-hover) var(--ease),
+      color var(--dur-hover) var(--ease);
+  }
+  .colophon__email:hover {
+    color: var(--accent);
+    background-size: 100% 2px;
+  }
+
+  .colophon__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.6rem;
+    list-style: none;
+    margin: 1.75rem 0 0;
+    padding: 0;
+  }
+
+  .colophon__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+    padding-block: 0.5rem;
+    min-height: 44px;
+    transition: color var(--dur-hover) var(--ease);
+  }
+  .colophon__link:hover {
+    color: var(--accent);
+  }
+
+  .colophon__arrow {
+    font-size: 0.9em;
+    transition: transform var(--dur-hover) var(--ease);
+  }
+  .colophon__link:hover .colophon__arrow {
+    transform: translate(1px, -1px);
+  }
+
+  .colophon__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    align-items: start;
+  }
+  @media (min-width: 48rem) {
+    .colophon__meta {
+      align-items: end;
+    }
+  }
+
+  .colophon__updated {
+    color: var(--ink-faint);
+  }
+
+  .colophon__source {
+    transition: color var(--dur-hover) var(--ease);
+    padding-block: 0.5rem;
+  }
+  .colophon__source:hover {
+    color: var(--accent);
+  }
+</style>

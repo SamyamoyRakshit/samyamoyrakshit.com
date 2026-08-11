@@ -1,0 +1,75 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Section from '../../../components/Section.astro';
+import PostRow from '../../../components/PostRow.astro';
+import { getTagIndex } from '../../../lib/content';
+import { identity } from '../../../config/site';
+
+/**
+ * One page per blog tag: every post carrying it, newest first.
+ *
+ * Reachable only by clicking a tag — there is no tag index page and no tag
+ * navigation in the header. That is deliberate. A reader arrives here because
+ * they just read something and want more of the same, which is exactly the
+ * moment the page is useful; a list of every tag on the site answers a
+ * question nobody is asking, and would be a fifth thing in the header.
+ *
+ * BLOG TAGS ONLY. The stack lists on /projects/ and /experience/ use the same
+ * `.tag` class but are not linked and have no pages here — they describe one
+ * box each, and a page listing "every role that used PySpark" would have one
+ * entry on it forever.
+ *
+ * Left un-annotated on purpose: Astro infers this page's props from what
+ * getStaticPaths returns, and an explicit GetStaticPaths annotation erases it.
+ */
+export async function getStaticPaths() {
+  const tags = await getTagIndex();
+  return tags.map((group) => ({
+    params: { tag: group.slug },
+    props: { group },
+  }));
+}
+
+const { group } = Astro.props;
+const count = group.posts.length;
+---
+
+<Base
+  title={`Posts tagged ${group.label}`}
+  description={`${count} ${count === 1 ? 'post' : 'posts'} tagged ${group.label} by ${identity.name}.`}
+>
+  <div class="shell tagpage__top">
+    <a href="/blog/" class="label tagpage__back">
+      <span aria-hidden="true">&#8592;</span> Blog
+    </a>
+  </div>
+
+  <Section
+    title={group.label}
+    level="h1"
+    note={`${count} ${count === 1 ? 'post' : 'posts'}`}
+  >
+    {/* h2, not the default h3: the tag name above is this page's h1. */}
+    {group.posts.map((entry) => <PostRow entry={entry} level="h2" />)}
+  </Section>
+</Base>
+
+<style>
+  /* Matches the back link on a post page — same affordance, same position, so
+     arriving here from a tag feels like the same kind of place as a post. */
+  .tagpage__top {
+    margin-bottom: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+  }
+
+  .tagpage__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    min-height: 44px;
+    color: var(--ink-faint);
+    transition: color var(--dur-hover) var(--ease);
+  }
+  .tagpage__back:hover {
+    color: var(--accent);
+  }
+</style>

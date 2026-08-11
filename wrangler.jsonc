@@ -1,0 +1,32 @@
+{
+  // Cloudflare Workers Static Assets.
+  //
+  // Cloudflare no longer offers Pages for new projects, so this site deploys as
+  // a Worker that serves nothing but the built files. There is no `main` entry:
+  // with `assets` and no script, Cloudflare serves `dist/` straight from its
+  // edge cache and the Worker itself never executes, so the request never costs
+  // CPU time and the free tier's request limit is the only thing that applies.
+  //
+  // `public/_headers` still works here — Workers Static Assets reads the same
+  // `_headers` and `_redirects` files Pages did, so the security headers and
+  // cache rules carry over unchanged. `vercel.json` is the third copy of that
+  // config and stays in the repo so the site can move hosts without rework;
+  // if you change one, change all three.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "samyamoyrakshit-com",
+  "compatibility_date": "2026-08-11",
+  "assets": {
+    "directory": "./dist",
+
+    // Astro builds directory-style URLs (`/blog/post/index.html`), and
+    // "auto-trailing-slash" is what resolves `/blog/post/` to that file. It is
+    // the default, written out because getting it wrong 404s every page but
+    // the homepage.
+    "html_handling": "auto-trailing-slash",
+
+    // Serve the real 404 page for unmatched routes, rather than Cloudflare's
+    // generic one. The site's own 404 keeps the header, the navigation and the
+    // theme, so a mistyped URL still looks like the site.
+    "not_found_handling": "404-page",
+  },
+}

@@ -122,53 +122,10 @@ red — a check that has never failed is not known to work.
 
 ## Troubleshooting
 
-### `npm run dev` exits immediately
-
-```
-Dev server process exited before becoming ready.
-```
-
-Astro 7 runs the dev server as a **detached background process**, so the real
-error never reaches the terminal — it goes to `.astro/dev.log`:
-
-```bash
-astro dev logs        # or just read .astro/dev.log
-```
-
-The usual cause is a stale font cache. Astro caches the Google Fonts file URLs,
-Google rotates them when it re-cuts a subset, and the cached URL starts
-returning 404 — which kills the dev server while it is computing fallback
-metrics:
-
-```
-[CannotFetchFontFile] …/jetbrainsmono/v24/…BYUjKPxDcwgknk-4.woff2
-Caused by: Response was not successful, received status code 404
-```
-
-Fix:
-
-```bash
-rm -rf .astro && npm run dev
-```
-
-`npm run build` is unaffected — it re-resolves fonts each time — so a deploy is
-never at risk from this.
-
-### A Markdown change doesn't show up
-
-Rendered Markdown is cached in `.astro/`, and changing `markdown.*` options in
-`astro.config.mjs` does **not** invalidate it. The old HTML keeps being served
-and the change looks like it silently failed. Delete `.astro/` and rebuild
-before concluding anything about a Markdown config change.
-
-### `npm install` fails with `EPERM: operation not permitted`
-
-```
-EPERM: operation not permitted, unlink '…/lightningcss.win32-x64-msvc.node'
-```
-
-A running dev server holds a lock on that binary on Windows. Stop it first
-(`astro dev stop`, or Ctrl-C), then install.
+Known failure modes and their fixes are in
+**[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** — the dev server exiting with no
+usable error, a Markdown change that will not appear, `EPERM` on install. Each
+entry leads with the message you would actually see.
 
 ## Licence
 

@@ -1,0 +1,25 @@
+# Line endings are normalised to LF in the repository AND in the working tree
+# on every platform.
+#
+# `text=auto` alone only normalises what git stores; on Windows, core.autocrlf
+# still converts to CRLF on checkout. Prettier's endOfLine defaults to "lf", so
+# a Windows clone fails `npm run format:check` on every file — and that is the
+# first step of `npm run verify`, which is also the deploy command. `eol=lf`
+# pins the checkout too, so the repo behaves identically everywhere.
+* text=auto eol=lf
+
+# Binary files: never touched, never diffed as text.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.webp  binary
+*.ico   binary
+*.pdf   binary
+*.ttf   binary
+*.otf   binary
+*.woff  binary
+*.woff2 binary
+
+# Generated. Collapsed in diffs and excluded from language statistics, so the
+# repo is reported as the language it is written in rather than as its lockfile.
+package-lock.json linguist-generated=true

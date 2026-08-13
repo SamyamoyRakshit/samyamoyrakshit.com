@@ -1,0 +1,10 @@
+The LICENSE in this repository (MIT) covers the source code only.
+
+The written content of this site (the words in src/config/site.ts and in
+src/content/) and the visual design as a whole belong to Samyamoy Rakshit and
+are not covered by the MIT grant. Please don't redeploy this as your own
+personal site.
+
+The bundled fonts in og-fonts/ are third-party and carry their own licences:
+Newsreader and IBM Plex Mono are both released under the SIL Open Font License
+1.1, which permits this use.

@@ -134,4 +134,5 @@ system, the build-time OG generator and the audit scripts are free to reuse.
 
 The **written content** (everything in `src/content/`, the copy in
 `src/config/site.ts`) and the **photograph** are not covered by it, and remain
-my copyright. Please don't redeploy this as your own site.
+my copyright. Please don't redeploy this as your own site. See
+[NOTICE](NOTICE) for the full carve-out, including third-party font licences.

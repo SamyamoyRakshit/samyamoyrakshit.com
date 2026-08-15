@@ -76,9 +76,13 @@ const isCurrent = (href: string) =>
     </a>
 
     {
-      /* Labelled "Menu", not three bare lines. Unlabelled hamburgers measure
-        worse for first-time visitors and for anyone over about 40, and the
-        word costs 34px on a row with 112px to spare.
+      /* Icon only, and the name lives in `aria-label` where it costs nothing.
+        The written word "Menu" was built here and removed: the theme toggle
+        sitting immediately beside it is a bare icon, and one labelled control
+        next to one unlabelled one is what reads as unconsidered. The research
+        that argues for the label measures first-time and less web-fluent
+        visitors, and it is answered by the accessible name rather than by
+        painting the word on the bar.
 
         No `hidden` attribute and no JavaScript needed to render it correctly:
         CSS shows this only when `data-js` is on <html>, which the pre-paint
@@ -89,7 +93,8 @@ const isCurrent = (href: string) =>
     <button
       id="nav-toggle"
       type="button"
-      class="nav-toggle label"
+      class="nav-toggle"
+      aria-label="Menu"
       aria-expanded="false"
       aria-controls="primary-nav"
     >
@@ -119,7 +124,6 @@ const isCurrent = (href: string) =>
       >
         <path d="M5.5 5.5l13 13M18.5 5.5l-13 13"></path>
       </svg>
-      <span>Menu</span>
     </button>
 
     <nav aria-label="Primary" class="masthead-bar__nav" id="primary-nav">
@@ -194,15 +198,18 @@ const isCurrent = (href: string) =>
 
   /* Hidden everywhere except a phone with JavaScript — see the media query at
      the foot of this file. */
+  /* Same box as the theme toggle beside it — 44px square, glyph centred, no
+     border. The two have to be the same object at a glance. */
   .nav-toggle {
     display: none;
     align-items: center;
-    gap: 0.45rem;
+    justify-content: center;
+    min-width: 44px;
     min-height: 44px;
-    padding: 0 0.15rem;
+    padding: 0;
     background: none;
     border: 0;
-    color: var(--ink-muted);
+    color: var(--ink-faint);
     cursor: pointer;
     transition: color var(--dur-hover) var(--ease);
   }

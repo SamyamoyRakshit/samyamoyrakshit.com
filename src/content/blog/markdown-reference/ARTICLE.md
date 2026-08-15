@@ -178,6 +178,10 @@ Nothing needs a unique name across the whole site — two posts can both have a
 `loss-curve.png` — and deleting the post's folder deletes its pictures with it.
 A cover works the same way: `cover: ./images/cover.png` in the frontmatter.
 
+Which comes out like this:
+
+![A terracotta temple floodlit in saffron, amber and green against a deep blue night sky](./images/temple.png)
+
 Astro converts it to modern formats, generates the right sizes for different
 screens, and sets width and height so the page doesn't jump while it loads.
 Images get a hairline border to match the rest of the page.

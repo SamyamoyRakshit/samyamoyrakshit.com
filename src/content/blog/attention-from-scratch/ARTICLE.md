@@ -305,7 +305,12 @@ def forward(self, x):
 
 Attention is **permutation-invariant**. To the raw mechanism, "dog bites man" and "man bites dog" are identical bags of vectors. Positional encoding injects word *order*. The paper's formula:
 
-$$PE(pos, 2i) = \sin\left(\frac{pos}{10000^{2i/d_{model}}}\right), \quad PE(pos, 2i+1) = \cos\left(\frac{pos}{10000^{2i/d_{model}}}\right)$$
+$$
+\begin{aligned}
+PE_{(pos,\, 2i)}   &= \sin\!\left(\frac{pos}{10000^{\,2i/d_{model}}}\right) \\[4pt]
+PE_{(pos,\, 2i+1)} &= \cos\!\left(\frac{pos}{10000^{\,2i/d_{model}}}\right)
+\end{aligned}
+$$
 
 Each position gets a vector where **even dimensions are sines and odd dimensions are cosines**, each at a different frequency. Low dimensions oscillate fast (fine local position); high dimensions oscillate slowly (coarse global position). It is, quite literally, **binary counting in continuous form** — the same idea as how the bits of a binary number flip at different rates:
 

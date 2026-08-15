@@ -491,10 +491,73 @@ const parts = series ? await getSeries(series.name) : [];
     }
   }
 
+  /**
+   * A copy button on every code block.
+   *
+   * The site's rule is that a copy button is for a string a person cannot
+   * reasonably select by hand — a token, a hash, a clone URL, a code block —
+   * and not for something short and selectable like an email address, where it
+   * only duplicates what the browser already does. These qualify twice over:
+   * they are long, they are multi-line, and since they now scroll rather than
+   * wrap, part of what you are trying to select is off the right-hand edge
+   * while you drag.
+   *
+   * Built here rather than in the Markdown pipeline because the button is
+   * useless without JavaScript, so there is nothing for the HTML to carry.
+   * The wrapper is added here for the same reason: `pre` is the scroll
+   * container, so a button positioned inside it would slide away with the code.
+   */
+  function addCopyButtons() {
+    const COPY =
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5.5A1.5 1.5 0 0 1 6.5 4H15"/></svg>';
+    const DONE =
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg>';
+
+    for (const pre of document.querySelectorAll<HTMLElement>('.prose pre')) {
+      if (pre.parentElement?.classList.contains('code-block')) continue;
+
+      const wrap = document.createElement('div');
+      wrap.className = 'code-block';
+      pre.replaceWith(wrap);
+      wrap.append(pre);
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'code-copy';
+      // The label carries the state, so the icon never has to be the only
+      // thing saying whether it worked.
+      button.innerHTML = `${COPY}<span class="sr-only">Copy code</span>`;
+
+      let revert: ReturnType<typeof setTimeout>;
+
+      button.addEventListener('click', async () => {
+        const code = pre.textContent ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+          button.innerHTML = `${DONE}<span class="sr-only">Copied</span>`;
+          button.dataset.copied = '';
+        } catch {
+          // Denied permission, or an insecure context. Say so rather than
+          // showing a tick for something that did not happen.
+          button.innerHTML = `${COPY}<span class="sr-only">Copying failed — select the code and copy it</span>`;
+        }
+        clearTimeout(revert);
+        revert = setTimeout(() => {
+          button.innerHTML = `${COPY}<span class="sr-only">Copy code</span>`;
+          delete button.dataset.copied;
+        }, 2200);
+      });
+
+      wrap.append(button);
+    }
+  }
+
   addHeadingAnchors();
   syncScrollableTables();
+  addCopyButtons();
   document.addEventListener('astro:after-swap', () => {
     addHeadingAnchors();
     syncScrollableTables();
+    addCopyButtons();
   });
 </script>

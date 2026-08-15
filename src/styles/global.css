@@ -126,6 +126,15 @@
      the thing it is offsetting cannot drift. */
   --post-bar-h:  3.5rem;
 
+  /* The contents panel. One number, three users: the panel's own width, the
+     padding the page takes on when the panel is pinned open beside it, and the
+     breakpoint arithmetic in PostToc that decides where "pinned" stops being
+     possible. 19rem rather than something roomier because it is a list of
+     headings, not a column of prose — MDN's runs about 250px and react.dev's
+     about 200px. `84vw` is the phone cap: a drawer that reaches the far edge
+     gives no sense of the page still being there behind it. */
+  --toc-w:       min(19rem, 84vw);
+
   /* Motion.
      One easing ladder, one duration ladder, used everywhere. The numbers are
      deliberate: UI motion over ~300ms reads sluggish, and exits run faster
@@ -928,10 +937,70 @@
     background: var(--code-bg);
     border: 1px solid var(--rule);
     border-radius: var(--radius);
-    padding: 1.15rem 1.25rem;
+    /* The right side is wider than the left to clear the copy button. Code
+       scrolls under it once a line runs long — unavoidable, and what every
+       implementation of this does — but the first line, which is where a
+       shell command or a comment usually sits, is never obscured at rest. */
+    padding: 1.15rem 3.4rem 1.15rem 1.25rem;
     overflow-x: auto;
     font-size: var(--text-sm);
     line-height: 1.6;
+  }
+
+  /* The copy button and the box that holds it.
+
+     The wrapper exists because `pre` is the scroll container: a button
+     positioned inside it would ride away to the left the moment anyone
+     scrolled a long line. The wrapper does not scroll, so the button stays.
+
+     Always visible, never revealed on hover. Hover reveal looks tidier in a
+     screenshot and fails on every touch device, where there is no hover to
+     reveal it with — which is most of the readers of a page that has just been
+     rebuilt around the phone. So it is quiet instead of hidden: --ink-faint on
+     the code ground, taking the accent only when it is pointed at. */
+  .prose .code-block {
+    position: relative;
+  }
+
+  .prose .code-copy {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* 28px of ink on a 44px target: the button is small so it does not sit on
+       the code like a label, but it is hit like anything else on the page. */
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    margin: -8px;
+    background: none;
+    border: 0;
+    color: var(--ink-faint);
+    cursor: pointer;
+    transition: color var(--dur-hover) var(--ease);
+  }
+  .prose .code-copy::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-sm);
+    background: var(--code-bg);
+    transition: border-color var(--dur-hover) var(--ease);
+  }
+  .prose .code-copy svg {
+    position: relative;
+  }
+  .prose .code-copy:hover {
+    color: var(--accent);
+  }
+  .prose .code-copy:hover::before {
+    border-color: var(--accent);
+  }
+  .prose .code-copy[data-copied] {
+    color: var(--accent);
   }
 
   /* On a phone, code gets the whole screen.
@@ -955,7 +1024,12 @@
       margin-inline: calc(-1 * var(--gutter));
       border-inline: 0;
       border-radius: 0;
-      padding-inline: var(--gutter);
+      /* The clearance for the copy button comes down here but does not go
+         away. The whole point of the bleed is to buy characters back, and
+         3.4rem of them on a 390px screen is most of what it bought; 2.6rem
+         still keeps the first line clear of the button. */
+      padding-left: var(--gutter);
+      padding-right: 2.6rem;
     }
   }
 

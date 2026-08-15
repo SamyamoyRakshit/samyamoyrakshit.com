@@ -302,26 +302,34 @@ const enough = entries.length >= 4;
 
   /* --- With JavaScript: the panel ------------------------------------- */
 
+  /* On the left, and it enters from the left.
+     It was on the right first, which is where a drawer usually goes because a
+     drawer is usually a menu you are dismissing. This is not that — it is the
+     structure of the document, and in a left-to-right language the structure
+     of a document is read down its left edge. Every documentation site
+     measured for this puts navigation there for the same reason. Coming in
+     from the right also meant it arrived travelling against the reading
+     direction, which is the wrong way for something you are about to read. */
   :root[data-js] .toc__panel {
     position: fixed;
     inset-block: 0;
-    right: 0;
+    left: 0;
     z-index: 60;
-    width: min(23rem, 86vw);
+    width: var(--toc-w);
     margin: 0;
     padding: 1.15rem 1.15rem 2rem;
     border: 0;
-    border-left: 1px solid var(--rule);
+    border-right: 1px solid var(--rule);
     border-radius: 0;
     box-shadow: var(--shadow-lift);
     overflow-y: auto;
     /* A flick that reaches the end of this list must not carry on and scroll
        the article underneath it. */
     overscroll-behavior: contain;
-    /* Off to the right and out of the tab order until it is opened. The
-       script also sets `inert`, which is what actually takes it out; this is
-       the visual half. */
-    transform: translateX(100%);
+    /* Out of sight and out of the tab order until it is opened. The script
+       also sets `inert`, which is what actually takes it out; this is the
+       visual half. */
+    transform: translateX(-100%);
     visibility: hidden;
   }
 
@@ -378,6 +386,37 @@ const enough = entries.length >= 4;
     }
   }
 
+  /* --- Pinned: the panel stays, and the article moves over ------------- */
+
+  /* Above 78rem the panel stops being a drawer and becomes a column.
+     It is no longer modal — no scrim, nothing inerted — and the page gets
+     padded by exactly its width, so the article sits beside it rather than
+     underneath it. That is what makes "keep the contents up while I read"
+     a real option rather than a promise the layout breaks.
+
+     Below 78rem there is not enough width for both: at 1248px the panel takes
+     304px and leaves the reading column 37px of margin, which is the last
+     width where the two genuinely coexist. Narrower than that the panel covers
+     the article, so it goes back to being a drawer that closes when you pick
+     a section — which is what MDN, react.dev and docs.astro.build all do at
+     phone widths, for the same reason.
+
+     `padding` is not on the motion ladder and is not animated: the column
+     arrives in its new place immediately. A reading column sliding sideways
+     under the reader is worse than one that has simply moved. */
+  @media (min-width: 78rem) {
+    :root[data-js] body[data-toc-open] {
+      padding-inline-start: var(--toc-w);
+    }
+    :root[data-js] body[data-toc-open] .toc__scrim {
+      display: none;
+    }
+    /* Nothing is covered, so nothing needs lifting off the page. */
+    :root[data-js] body[data-toc-open] .toc__panel {
+      box-shadow: none;
+    }
+  }
+
   /* The list is the whole content of the panel, so it can afford to be a
      little larger than it is as a block on the page. */
   :root[data-js] .toc__list {
@@ -417,12 +456,27 @@ const enough = entries.length >= 4;
 
     const isOpen = () => document.body.hasAttribute('data-toc-open');
 
+    /* The one thing that decides how the panel behaves.
+       Wide enough and it sits beside the article: not modal, nothing inerted,
+       and it stays put when a section is picked, because the reader can see
+       both. Narrower and it covers the article, so it is modal and it closes
+       on the way to the section — leaving it up would mean tapping a heading
+       and watching nothing happen. The number matches the media query in the
+       stylesheet; both come from --toc-w. */
+    const beside = window.matchMedia('(min-width: 78rem)');
+
     const open = () => {
       document.body.setAttribute('data-toc-open', '');
       toggle.setAttribute('aria-expanded', 'true');
       panel.removeAttribute('inert');
-      for (const el of rest) el.setAttribute('inert', '');
-      closeButton?.focus();
+
+      if (!beside.matches) {
+        for (const el of rest) el.setAttribute('inert', '');
+        // Focus is pulled in only when the panel is a modal. Pinned open it is
+        // one more region of an ordinary page, and stealing focus from
+        // whatever the reader was doing would be wrong.
+        closeButton?.focus();
+      }
 
       /* Open where the reader is, not at the top.
          Thirty-six entries is four panel-heights. Someone who opens this at
@@ -440,6 +494,14 @@ const enough = entries.length >= 4;
       for (const el of rest) el.removeAttribute('inert');
       panel.setAttribute('inert', '');
     };
+
+    /* Crossing the breakpoint with the panel open changes what it is. Going
+       narrow, an un-inerted page behind a covering panel is a keyboard trap;
+       going wide, a page left inert is unusable. Re-applying the open state is
+       the whole fix. */
+    beside.addEventListener('change', () => {
+      if (isOpen()) open();
+    });
 
     // Shut and out of the tab order until asked for.
     panel.setAttribute('inert', '');
@@ -461,12 +523,17 @@ const enough = entries.length >= 4;
       }
     });
 
-    // A contents link jumps within the page that is already open, so nothing
-    // navigates and the panel would otherwise sit over the answer. Focus is
-    // NOT pulled back to the button here — the browser is moving it to the
-    // heading, which is where the reader asked to go.
+    /* Picking a section closes the panel only when the panel is covering the
+       article. Pinned open beside it, it stays — reading with the contents up
+       is the reader's call to make, and the only way to unmake it is the
+       control they used to open it.
+
+       Focus is not pulled back to the button either way: the browser is moving
+       it to the heading, which is where they asked to go. */
     for (const link of panel.querySelectorAll('.toc__link')) {
-      link.addEventListener('click', () => close());
+      link.addEventListener('click', () => {
+        if (!beside.matches) close();
+      });
     }
 
     /* --- Where am I ---------------------------------------------------

@@ -203,18 +203,28 @@ Typeset at build time by KaTeX. Inline maths goes between single dollars:
 scaled dot-product attention divides by $\sqrt{d_k}$ to keep the softmax out of
 its saturated region.
 
-Display maths goes between double dollars on their own lines:
+Display maths goes between double dollars **on their own lines**:
 
 $$
 \mathrm{Attention}(Q, K, V) = \mathrm{softmax}\!\left(\frac{QK^{\top}}{\sqrt{d_k}}\right)V
 $$
+
+"On their own lines" is the whole rule and it is easy to miss. Written on one
+line — `$$ ... $$` with the formula between them — remark-math reads it as
+*inline* maths, not display maths. It still renders, so nothing looks broken in
+the build: what you get is a formula set at inline size, with fractions
+squeezed into the line's own height so the numerator and denominator almost
+touch, and free to wrap across lines mid-equation. It looks like KaTeX failing
+rather than like markup being wrong, which is why it can sit in a post for a
+while. Put the fences on their own lines and it becomes a centred block that
+scrolls instead of wrapping.
 
 Multi-line derivations work too, and scroll inside their own box if they are
 wider than the column:
 
 $$
 \begin{aligned}
-\mathrm{MultiHead}(Q,K,V) &= \mathrm{Concat}(\mathrm{head}_1, \dots, \mathrm{head}_h)\,W^{O} \
+\mathrm{MultiHead}(Q,K,V) &= \mathrm{Concat}(\mathrm{head}_1, \dots, \mathrm{head}_h)\,W^{O} \\
 \mathrm{head}_i &= \mathrm{Attention}(QW_i^{Q},\, KW_i^{K},\, VW_i^{V})
 \end{aligned}
 $$

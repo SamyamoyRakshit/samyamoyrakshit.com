@@ -119,6 +119,13 @@
      bar's own min-height. Change it in one place or the anchors go wrong. */
   --header-h:    3.5rem;
 
+  /* The article's own sticky row — "← Blog" and the Contents control. Declared
+     here for the same reason --header-h is: `scroll-padding-top` has to clear
+     both bars or every heading a contents link jumps to lands underneath the
+     second one. The row sets its own min-height from this, so the offset and
+     the thing it is offsetting cannot drift. */
+  --post-bar-h:  3.5rem;
+
   /* Motion.
      One easing ladder, one duration ladder, used everywhere. The numbers are
      deliberate: UI motion over ~300ms reads sluggish, and exits run faster
@@ -269,6 +276,16 @@
        it is layout, not animation, and it has to hold when smooth scrolling
        is off. */
     scroll-padding-top: calc(var(--header-h) + 1.5rem);
+  }
+
+  /* A blog post long enough to have a contents panel puts a second sticky row
+     under the masthead, so every anchor has to clear both. `.toc__toggle` only
+     renders on those pages and only with the script that makes the row stick,
+     so the selector tests for exactly the condition that creates the problem.
+     The panel's scroll tracking reads this same computed value to decide which
+     section counts as current — one number, two uses. */
+  :root[data-js]:has(.toc__toggle) {
+    scroll-padding-top: calc(var(--header-h) + var(--post-bar-h) + 1.5rem);
   }
 
   @media (prefers-reduced-motion: no-preference) {

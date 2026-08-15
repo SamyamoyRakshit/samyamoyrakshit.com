@@ -12,48 +12,6 @@ draft: false
 
 [Source on GitHub](https://github.com/SamyamoyRakshit/papers-from-scratch/tree/main/transformer)
 
----
-
-## Table of Contents
-
-- **[Introduction](#introduction)**
-- **[Why build it from scratch — and why on a 16GB Mac?](#why-build-it-from-scratch--and-why-on-a-16gb-mac)**
-- **[The Transformer in one breath](#the-transformer-in-one-breath)**
-- **[What changed (and what was refused to change)](#what-changed-and-what-was-refused-to-change)**
-- **[Project structure — and the build order](#project-structure--and-the-build-order)**
-- **[Setting up and running](#setting-up-and-running)**
-- **[Part 1 — How the Transformer actually works](#part-1--how-the-transformer-actually-works)**
-  - [1.1 Embeddings: the mysterious √d_model](#11-embeddings-the-mysterious-d_model)
-  - [1.2 Positional encoding: telling the model *where* each word is](#12-positional-encoding-telling-the-model-where-each-word-is)
-  - [1.3 Relative position: the property that makes sinusoids special](#13-relative-position-the-property-that-makes-sinusoids-special)
-  - [1.4 Self-attention: the heart, with a worked example](#14-self-attention-the-heart-with-a-worked-example)
-  - [1.5 Multi-head attention: the same idea, eight times in parallel](#15-multi-head-attention-the-same-idea-eight-times-in-parallel)
-  - [1.6 Masking: padding masks, causal masks, and the NaN that lives in them](#16-masking-padding-masks-causal-masks-and-the-nan-that-lives-in-them)
-  - [1.7 Layer normalization: stabilizing each token independently](#17-layer-normalization-stabilizing-each-token-independently)
-  - [1.8 The position-wise feed-forward network](#18-the-position-wise-feed-forward-network)
-  - [1.9 How the encoder works](#19-how-the-encoder-works)
-  - [1.10 How the decoder works: masked self-attention + cross-attention](#110-how-the-decoder-works-masked-self-attention--cross-attention)
-  - [1.11 Putting it together: the full model and weight tying](#111-putting-it-together-the-full-model-and-weight-tying)
-- **[Part 2 — The training objective: label smoothing, KL divergence, and why it OOM'd](#part-2--the-training-objective-label-smoothing-kl-divergence-and-why-it-oomd)**
-  - [2.1 Label smoothing — the idea](#21-label-smoothing--the-idea)
-  - [2.2 Why KL divergence (and why it equals cross-entropy)](#22-why-kl-divergence-and-why-it-equals-cross-entropy)
-  - [2.3 Why KL failed *here* — and why cross-entropy won](#23-why-kl-failed-here--and-why-cross-entropy-won)
-  - [2.4 The learning-rate schedule nobody can skip](#24-the-learning-rate-schedule-nobody-can-skip)
-- **[Part 3 — Data: teaching it Bengali](#part-3--data-teaching-it-bengali)**
-- **[Part 4 — Training on 16GB: the war stories](#part-4--training-on-16gb-the-war-stories)**
-  - [War story 1 — The memory ceiling](#war-story-1--the-memory-ceiling)
-  - [War story 2 — The NaN at epoch 4](#war-story-2--the-nan-at-epoch-4)
-  - [War story 3 — Surviving crashes](#war-story-3--surviving-crashes)
-- **[Part 5 — Production-grade infrastructure on a laptop](#part-5--production-grade-infrastructure-on-a-laptop)**
-- **[Part 6 — Inference: beam search, and the model that stops too soon](#part-6--inference-beam-search-and-the-model-that-stops-too-soon)**
-- **[Part 7 — Evaluation: the numbers, told honestly](#part-7--evaluation-the-numbers-told-honestly)**
-- **[Findings you won't find in a tutorial](#findings-you-wont-find-in-a-tutorial)**
-- **[What to do differently](#what-to-do-differently)**
-- **[Future scope](#future-scope)**
-- **[Conclusion](#conclusion)**
-- **[References](#references)**
-
----
 
 ## Introduction
 

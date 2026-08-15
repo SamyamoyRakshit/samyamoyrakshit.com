@@ -2,6 +2,7 @@
 import { render } from 'astro:content';
 import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
+import PostToc from '../../components/PostToc.astro';
 import {
   getBlogPosts,
   getSeries,
@@ -29,7 +30,7 @@ export async function getStaticPaths() {
 const { entry, next, prev } = Astro.props;
 const { title, description, pubDate, updatedDate, tags, cover, coverAlt, series } =
   entry.data;
-const { Content } = await render(entry);
+const { Content, headings } = await render(entry);
 
 const parts = series ? await getSeries(series.name) : [];
 ---
@@ -43,9 +44,20 @@ const parts = series ? await getSeries(series.name) : [];
   modifiedTime={updatedDate}
 >
   <article class="shell post">
-    <a href="/blog/" class="label post__back">
-      <span aria-hidden="true">&#8592;</span> Blog
-    </a>
+    {
+      /* The article's own bar: where you came from on the left, where you can
+         go inside the piece on the right. It sticks under the masthead once
+         there is a contents panel to open, because a control for jumping
+         around a 55-minute read is worth nothing if it only exists at the top
+         of it. On a post short enough not to have contents it is a plain row
+         and does not stick — one line of "← Blog" is not worth pinning. */
+    }
+    <div class="post__bar">
+      <a href="/blog/" class="label post__back">
+        <span aria-hidden="true">&#8592;</span> Blog
+      </a>
+      <PostToc headings={headings} part="control" />
+    </div>
 
     <header class="post__header">
       <h1 class="post__title">{title}</h1>
@@ -87,6 +99,14 @@ const parts = series ? await getSeries(series.name) : [];
         </figure>
       )
     }
+
+    {
+      /* Under the title and the cover, which is where a contents list belongs
+         and where the hand-written one used to be. With JavaScript this is
+         lifted straight out to <body> and becomes the panel; this position is
+         what a reader without it gets. */
+    }
+    <PostToc headings={headings} part="panel" />
 
     <div class="prose post__body">
       <Content />
@@ -188,6 +208,31 @@ const parts = series ? await getSeries(series.name) : [];
     .post {
       --gutter: 1rem;
     }
+  }
+
+  /* Sticky only when it carries the contents control, and only with the script
+     that makes that control do anything. `:has()` is the test, so the rule and
+     the reason cannot drift apart: no panel, no reason to pin the row.
+
+     It bleeds to the edges of .post and paints --paper, because a sticky row
+     over transparent ground has article text sliding through it. Below the
+     masthead in the stack (20) and well below the panel itself (60). */
+  .post__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  :root[data-js] .post__bar:has(.toc__toggle) {
+    position: sticky;
+    top: var(--header-h);
+    z-index: 10;
+    min-height: var(--post-bar-h);
+    margin-inline: calc(-1 * var(--gutter));
+    padding-inline: var(--gutter);
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
   }
 
   .post__back {

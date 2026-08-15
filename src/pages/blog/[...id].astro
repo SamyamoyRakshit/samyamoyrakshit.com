@@ -217,11 +217,26 @@ const parts = series ? await getSeries(series.name) : [];
      It bleeds to the edges of .post and paints --paper, because a sticky row
      over transparent ground has article text sliding through it. Below the
      masthead in the stack (20) and well below the panel itself (60). */
+  /* Both controls sit at the left end, and the right end is left empty.
+
+     The Contents button was at the far right while the panel it opens comes in
+     from the far left, so the thing you pressed and the thing that happened
+     were at opposite ends of the screen. A control belongs on the side of the
+     effect it causes — pinned open on a wide screen it is a sidebar toggle,
+     and a sidebar toggle sits against its sidebar.
+
+     "← Blog" keeps the first position rather than being swapped to the right
+     to rebalance the row. It is the back link, top-left is where a back link
+     is looked for, and a bar that is honestly empty on one side is better than
+     one balanced by putting a familiar control somewhere unfamiliar. */
   .post__bar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+    justify-content: flex-start;
+    /* Enough that a bordered button does not look stuck to the words beside
+       it — the back link has no box of its own, so the two would otherwise
+       read as one control at 390px. */
+    gap: clamp(1rem, 0.6rem + 1.4vw, 1.5rem);
   }
 
   :root[data-js] .post__bar:has(.toc__toggle) {

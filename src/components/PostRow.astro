@@ -79,9 +79,12 @@ const Heading = level;
     gap: 0.6rem 1.25rem;
   }
 
+  /* `auto`, not a fixed column: the frame is only as wide as the picture
+     needs, so a portrait figure gives its unused width back to the text
+     instead of sitting in the middle of an empty 12rem lane. */
   @media (min-width: 60rem) {
     .post-row:has(.post-row__thumb) {
-      grid-template-columns: minmax(0, 1fr) 12rem;
+      grid-template-columns: minmax(0, 1fr) auto;
     }
   }
 
@@ -116,16 +119,32 @@ const Heading = level;
     padding: 0;
   }
 
+  /* A cover here is a figure, not a photograph: the Transformer architecture
+     is 1142×1266, a loss curve is wide and short. Two things follow.
+
+     The height is capped, because a portrait cover sized by its own
+     proportions makes the card twice as tall as the words in it and the
+     index stops being scannable — which is the whole reason the thumbnail is
+     there. The cap sits below the height of the shortest card's text, so the
+     picture never sets the card's height.
+
+     The frame is `fit-content`, so it hugs whatever shape comes out of that.
+     A fixed box was tried and is wrong in both directions: `contain` leaves
+     bars down the sides of a portrait figure, and `cover` crops a diagram,
+     which throws away the half that carried the point. */
   .post-row__thumb {
     display: block;
+    width: fit-content;
     border: 1px solid var(--rule);
+    border-radius: var(--radius-sm);
     overflow: hidden;
     margin-top: 1rem;
-    max-width: 18rem;
   }
   .post-row__thumb img {
-    width: 100%;
-    height: auto;
+    display: block;
+    width: auto;
+    max-width: 18rem;
+    max-height: 12rem;
     transition: transform var(--dur-reveal) var(--ease);
   }
   .row:hover .post-row__thumb img {
@@ -134,8 +153,17 @@ const Heading = level;
 
   @media (min-width: 60rem) {
     .post-row__thumb {
+      /* .row is baseline-aligned; the frame belongs at the top of the card.
+         `end` so that if the auto column ever resolves wider than the
+         picture, the slack falls between the two columns rather than showing
+         as a gap against the card's right edge. */
+      align-self: start;
+      justify-self: end;
       margin-top: 0.35rem;
-      max-width: none;
+    }
+    .post-row__thumb img {
+      max-width: 12rem;
+      max-height: 10rem;
     }
   }
 

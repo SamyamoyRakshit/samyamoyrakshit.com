@@ -145,7 +145,12 @@ const parts = series ? await getSeries(series.name) : [];
 </Base>
 
 <style>
+  /* .shell is 78rem, but every block inside a post is capped at the reading
+     measure, so the article sat against the left edge with a third of the
+     page empty beside it. Narrowing the shell to the measure centres the
+     column — `.shell` already carries margin-inline: auto. */
   .post {
+    max-width: var(--measure);
     padding-block: clamp(2rem, 1.2rem + 3vw, 4rem);
   }
 

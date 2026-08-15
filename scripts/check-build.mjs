@@ -177,11 +177,20 @@ function withoutCode(html) {
   for (const dir of ['blog', 'work']) {
     const d = join(src, dir);
     if (!existsSync(d)) continue;
-    for (const f of await readdir(d)) {
+    // Recursive because a blog post is src/content/blog/<name>/ARTICLE.md. A
+    // flat readdir here would find no files at all and report "0 drafts" —
+    // a green tick meaning nothing, which is worse than a red one.
+    for (const f of await readdir(d, { recursive: true })) {
       if (!/\.mdx?$/.test(f)) continue;
       const body = await readFile(join(d, f), 'utf8');
       const fm = body.split(/^---$/m)[1] ?? '';
-      if (/^\s*draft:\s*true\s*$/m.test(fm)) drafts.push(f.replace(/\.mdx?$/, ''));
+      // Same id the content collection derives: path minus extension, minus
+      // the ARTICLE filename. Windows hands back backslashes.
+      const id = f
+        .replace(/\\/g, '/')
+        .replace(/\.mdx?$/, '')
+        .replace(/\/ARTICLE$/i, '');
+      if (/^\s*draft:\s*true\s*$/m.test(fm)) drafts.push(id);
     }
   }
   const bad = [];

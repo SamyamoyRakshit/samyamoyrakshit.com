@@ -5,15 +5,20 @@ import { z } from 'astro/zod';
 /**
  * Content collections.
  *
- * Each project and each blog post is one Markdown file. Adding a file is the
- * whole operation — there is no registry to update and no component to write.
+ *   src/content/work/<name>.md            -> a box on /projects/, anchored #<name>
+ *   src/content/blog/<name>/ARTICLE.md    -> a post at /blog/<name>/, and the RSS feed
+ *   src/content/blog/<name>/images/       -> the pictures that post uses
  *
- *   src/content/work/<name>.md   -> a box on /projects/, anchored #<name>
- *   src/content/blog/<name>.md   -> a post at /blog/<name>/, and the RSS feed
+ * A post is a folder, not a file. A post with eight screenshots in it and a
+ * post with none look the same from outside, nothing has to be named
+ * `bert-attention-heads-layer-3.png` to stay unique against every other post's
+ * files, and deleting a post deletes its pictures with it rather than leaving
+ * them behind for nobody to dare remove. The cost is one extra directory per
+ * post, which is why the file is called ARTICLE.md — in a list of open editor
+ * tabs, five files called `index.md` are indistinguishable.
  *
- * Note the asymmetry: work entries have no page of their own. Their Markdown
- * bodies are never rendered — the frontmatter drives the box on /projects/ and
- * the body is the draft of the post.
+ * Work entries stay one file each: they are frontmatter, and their bodies are
+ * never rendered anywhere. Give one a folder on the day it needs a picture.
  *
  * The schemas are enforced at build time, so a mistyped or missing field fails
  * the build with the exact file and field name rather than shipping a broken
@@ -122,7 +127,32 @@ const work = defineCollection({
 });
 
 const blog = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blog' }),
+  loader: glob({
+    /**
+     * Only ARTICLE files are posts. Everything else in the folder — the
+     * images, a notes file, a half-written second draft — is ignored rather
+     * than published, which is what makes the folder safe to keep things in.
+     */
+    pattern: '**/ARTICLE.{md,mdx}',
+    base: './src/content/blog',
+
+    /**
+     * The folder name is the id, so the URL is /blog/<folder>/ and nothing
+     * downstream had to change: `getWriteupIds()` still matches a post to its
+     * rebuild by name, and the existing posts keep the URLs they were
+     * published at.
+     */
+    generateId: ({ entry }) => {
+      const id = entry.replace(/\/ARTICLE\.mdx?$/i, '');
+      if (id === entry) {
+        throw new Error(
+          `src/content/blog/${entry} is not in a folder. A post is ` +
+            'src/content/blog/<name>/ARTICLE.md — see CONTENT.md.'
+        );
+      }
+      return id;
+    },
+  }),
   schema: ({ image }) =>
     z.object({
       title: z.string(),

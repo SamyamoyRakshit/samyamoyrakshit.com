@@ -63,8 +63,8 @@ export async function getRecentPosts(limit = 3): Promise<BlogEntry[]> {
 /**
  * The ids of posts that exist, for linking a rebuild to its write-up.
  *
- * Matched by filename, not by a config field: `src/content/work/bert-from-scratch.md`
- * is written up by `src/content/blog/bert-from-scratch.md`. A convention has
+ * Matched by name, not by a config field: `src/content/work/bert-from-scratch.md`
+ * is written up by `src/content/blog/bert-from-scratch/`. A convention has
  * nothing to keep in sync — rename or delete the post and the link follows by
  * itself, where a `writeup:` field in frontmatter would quietly rot.
  *

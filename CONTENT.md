@@ -1,8 +1,9 @@
 # Adding content
 
-Two kinds of content, one Markdown file each. Drop the file in the right folder
-and it appears everywhere it should — index page, homepage, sitemap, RSS,
-`llms.txt`, and its own generated share image. There is no list to update.
+Two kinds of content. A project is one Markdown file; a post is a folder. Put
+it in the right place and it appears everywhere it should — index page,
+homepage, sitemap, RSS, `llms.txt`, and its own generated share image. There is
+no list to update.
 
 If a field is wrong or missing, `npm run build` tells you the exact file and
 field rather than shipping a broken page.
@@ -124,7 +125,33 @@ interesting, it belongs here and not only in the body.
 
 ## A post
 
-Create `src/content/blog/<name>.md`.
+A post is a folder, not a file:
+
+```
+src/content/blog/
+└── why-i-stopped-using-orms/
+    ├── ARTICLE.md          the post — this is what publishes
+    └── images/             every picture it uses
+        └── query-plan.png
+```
+
+The folder name is the URL: `/blog/why-i-stopped-using-orms/`. Keep it
+lowercase, hyphenated and undated. **Only `ARTICLE.md` publishes** — anything
+else you leave in the folder is ignored by the build, so it is a safe place for
+notes, a second draft, or the raw data behind a chart.
+
+Reference a picture relatively and Astro converts it to modern formats,
+generates the sizes different screens need, and sets width and height so the
+page doesn't jump while it loads:
+
+```markdown
+![A real description of what the image shows](./images/query-plan.png)
+```
+
+Because each post owns its pictures, nothing needs a name unique across the
+whole site — two posts can each have a `loss-curve.png` — and deleting a post
+deletes its pictures with it. A cover is the same path in the frontmatter:
+`cover: ./images/cover.png`.
 
 ```markdown
 ---

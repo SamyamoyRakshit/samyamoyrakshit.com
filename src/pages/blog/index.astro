@@ -29,8 +29,9 @@ const posts = await getBlogPosts();
       ) : import.meta.env.DEV ? (
         /* Development only. A live page must never address its own maintainer. */
         <p class="empty">
-          Nothing published yet. Add a Markdown file to
-          <code>src/content/blog/</code> and it will appear here and in the feed.
+          Nothing published yet. Add
+          <code>src/content/blog/&lt;name&gt;/ARTICLE.md</code> and it will appear here
+          and in the feed.
         </p>
       ) : null
     }

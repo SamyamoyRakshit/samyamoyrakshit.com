@@ -138,6 +138,17 @@
 :root[data-theme="light"] { color-scheme: light; }
 :root[data-theme="dark"]  { color-scheme: dark; }
 
+/* Below 30rem the links do not fit beside the name, so they either collapse
+   behind the "Menu" button (scripted, one row) or wrap to a second row (no
+   script). `scroll-padding-top` is derived from this token, so it has to match
+   whichever the reader actually got — otherwise every deep-linked heading
+   (`/experience/#<roleId>`, `/projects/#<id>`) parks underneath the bar on the
+   devices with the least screen to spare. See Header.astro. */
+@media (max-width: 30rem) {
+  :root            { --header-h: 5.75rem; }  /* two rows */
+  :root[data-js]   { --header-h: 3.5rem;  }  /* one row, links behind Menu */
+}
+
 /* ---------------------------------------------------------------------------
    2 - TAILWIND THEME
    `@theme inline` emits `var(--token)` into utilities instead of baking the

@@ -45,6 +45,25 @@ const ICON: Record<string, string> = {
 
 <div class="hero">
   <div class="shell hero__inner">
+    {
+      /* Before the words in the source, so a phone gets it above the name
+        without needing `order`. The wide layout puts it back in the second
+        column by grid placement. */
+    }
+    <div class="hero__figure">
+      <div class="portrait">
+        <Image
+          class="portrait__img"
+          src={portrait}
+          alt={filled(identity.portraitAlt) ?? `${identity.name}`}
+          widths={[240, 320, 480, 640]}
+          sizes="(min-width: 60rem) 22rem, 8.5rem"
+          loading="eager"
+          fetchpriority="high"
+        />
+      </div>
+    </div>
+
     <div class="hero__words">
       <h1 class="masthead hero__name">{identity.name}</h1>
 
@@ -91,20 +110,6 @@ const ICON: Record<string, string> = {
           </div>
         )
       }
-    </div>
-
-    <div class="hero__figure">
-      <div class="portrait">
-        <Image
-          class="portrait__img"
-          src={portrait}
-          alt={filled(identity.portraitAlt) ?? `${identity.name}`}
-          widths={[320, 480, 640]}
-          sizes="(min-width: 60rem) 22rem, (min-width: 30rem) 60vw, 78vw"
-          loading="eager"
-          fetchpriority="high"
-        />
-      </div>
     </div>
   </div>
 
@@ -188,16 +193,27 @@ const ICON: Record<string, string> = {
     mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
   }
 
+  /* Wide: two columns, photograph in the second.
+     Narrow: stacked, photograph first — see the media query further down. */
   .hero__inner {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: clamp(2.25rem, 1.5rem + 3vw, 4rem);
-    align-items: center;
+    display: block;
   }
 
   @media (min-width: 60rem) {
     .hero__inner {
+      display: grid;
       grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      gap: clamp(2.25rem, 1.5rem + 3vw, 4rem);
+      align-items: center;
+    }
+    /* Source order is figure → words, so both need placing. */
+    .hero__words {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    .hero__figure {
+      grid-column: 2;
+      grid-row: 1;
     }
   }
 
@@ -235,16 +251,6 @@ const ICON: Record<string, string> = {
     align-items: center;
     gap: 1.25rem;
     margin-top: clamp(1.75rem, 1.4rem + 1.2vw, 2.4rem);
-  }
-
-  .hero__portrait {
-    flex: none;
-    width: clamp(3.25rem, 2.75rem + 2vw, 4.25rem);
-    aspect-ratio: 1;
-    border-radius: var(--radius-pill);
-    object-fit: cover;
-    border: 2px solid var(--paper-raised);
-    box-shadow: var(--shadow-card);
   }
 
   .hero__socials {
@@ -291,7 +297,12 @@ const ICON: Record<string, string> = {
   .hero__figure {
     margin: 0;
     justify-self: center;
-    width: 100%;
+  }
+
+  @media (min-width: 60rem) {
+    .hero__figure {
+      width: 100%;
+    }
   }
 
   /* The photograph.
@@ -319,6 +330,28 @@ const ICON: Record<string, string> = {
     border: 1px solid var(--rule);
     background: var(--paper-raised);
     box-shadow: var(--shadow-lift);
+  }
+
+  /* The photograph goes above the name, not beside it.
+     Beside was tried and is wrong here: "Samyamoy Rakshit" is ~300px at the
+     heading size against 320px of screen, so a photograph on that line breaks
+     the name in half and the largest thing on the page ends up the most
+     cramped. It works on sites that float a portrait into body copy because
+     the text beside it is body copy; here it is a 36px heading.
+
+     karpathy.ai — the reference this site is built against — stacks it the
+     same way, photograph first: `#dpic { grid-column: span 12 }` above
+     `#ddesc`, and only sets them side by side above 992px. */
+  @media (max-width: 59.9375rem) {
+    .hero__figure {
+      margin-bottom: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+    }
+    /* Left, with everything else. Centring it would make it the one element
+       in the block not set from the same margin. */
+    .portrait {
+      width: clamp(6.5rem, 5rem + 7vw, 8.5rem);
+      margin-inline: 0;
+    }
   }
 
   .colophon-strip {

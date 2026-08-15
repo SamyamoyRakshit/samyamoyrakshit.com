@@ -167,11 +167,20 @@ Hidden content, revealed on click. Useful for long asides and appendices.
 
 ## Images
 
-Put the image file in the same folder as the post and reference it relatively:
+Every post is a folder with an `images/` directory in it. Drop the file there
+and reference it relatively:
 
 ```markdown
-![A real description of what the image shows](./screenshot.png)
+![A real description of what the image shows](./images/screenshot.png)
 ```
+
+Nothing needs a unique name across the whole site — two posts can both have a
+`loss-curve.png` — and deleting the post's folder deletes its pictures with it.
+A cover works the same way: `cover: ./images/cover.png` in the frontmatter.
+
+Which comes out like this:
+
+![A terracotta temple floodlit in saffron, amber and green against a deep blue night sky](./images/temple.png)
 
 Astro converts it to modern formats, generates the right sizes for different
 screens, and sets width and height so the page doesn't jump while it loads.

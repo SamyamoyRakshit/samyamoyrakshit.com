@@ -53,7 +53,7 @@ than shipping.
 ```
 src/config/site.ts        identity, career, education, toolkit, SEO
 src/content/work/*.md     one rebuilt paper per file
-src/content/blog/*.md     one post per file
+src/content/blog/*/       one post per folder: ARTICLE.md plus its images/
 src/styles/global.css     the whole design system: colour, type, motion
 src/components/           presentational pieces
 src/pages/                routes, plus the OG image generator
@@ -65,7 +65,8 @@ og-fonts/                 TTFs used to draw share images at build time
 
 Adding content is one Markdown file — no registry to update, no code to touch.
 `src/content/work/<name>.md` becomes a box on `/projects/`;
-`src/content/blog/<name>.md` becomes a post and enters the RSS feed. Both
+`src/content/blog/<name>/ARTICLE.md` becomes a post and enters the RSS feed,
+with any pictures it uses in `src/content/blog/<name>/images/` beside it. Both
 support `draft: true`, which shows in dev and is excluded from the build.
 [CONTENT.md](CONTENT.md) has the frontmatter reference.
 

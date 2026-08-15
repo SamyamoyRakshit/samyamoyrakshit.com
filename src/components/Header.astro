@@ -20,24 +20,23 @@ import { getWork, getBlogPosts } from '../lib/content';
  * would be the only boxed element in a bar built from one hairline. Where the
  * full name will not fit, the first name stands in.
  *
- * On a phone the bar is TWO rows and the links stay visible — there is no
- * hamburger, deliberately. Measured at 360px, the widest phone case: the three
- * labels plus the toggle come to 279px and the wordmark to 72px, against 320px
- * of content width. They cannot share a line, and the ways of making them fit
- * (dropping the tracking, setting the links in Inter, shrinking the name to
- * initials) all land within a few pixels of the limit and break again on a
- * 320px screen. So the bar wraps — but it wraps on purpose: the wordmark and
- * the toggle take the two ends of the first row, the links hold the second.
+ * Below 30rem the links collapse behind a "Menu" button, because they cannot
+ * share a line with the name: measured at 360px the three labels and the
+ * theme toggle come to 279px and the wordmark to 72px, against 320px of
+ * content width. Every way of shrinking them to fit lands within a few pixels
+ * of the limit and breaks again on a 320px screen.
  *
- * A disclosure button was the obvious alternative and is the wrong one here.
- * Three destinations is under every threshold at which hiding navigation pays
- * for itself, hidden navigation measurably reduces the chance a reader visits
- * any of it, and it would need a script, a focus trap, an Escape handler and a
- * scroll lock to do properly. It also contradicts the one rule this site is
- * built on — nothing worth reading sits behind a click — and a slide-out panel
- * is the single most transplantable component on the web, which is the failure
- * the brief names outright. The bar costs ~92px of a phone screen. Three links
- * a reader can see and hit is worth 92px.
+ * Worth knowing that this is a considered trade rather than the default: with
+ * three destinations the research runs the other way. NN/g put the threshold
+ * at four links or fewer shown, and measured hidden navigation costing over
+ * 20% of discoverability. The alternative built here first was two visible
+ * rows, which is what the site owner looked at and rejected. Two things pay
+ * some of that cost back — the button is labelled with the word "Menu", which
+ * measures better than three bare lines, and the panel is a real disclosure
+ * rather than a hidden drawer.
+ *
+ * If the bar ever loses the theme toggle, re-measure: the links alone fit on
+ * one line at 360px and the button stops being necessary.
  */
 
 const [work, posts] = await Promise.all([getWork(), getBlogPosts()]);
@@ -76,7 +75,54 @@ const isCurrent = (href: string) =>
       <span class="wordmark__short" aria-hidden="true">{identity.shortName}</span>
     </a>
 
-    <nav aria-label="Primary" class="masthead-bar__nav">
+    {
+      /* Labelled "Menu", not three bare lines. Unlabelled hamburgers measure
+        worse for first-time visitors and for anyone over about 40, and the
+        word costs 34px on a row with 112px to spare.
+
+        No `hidden` attribute and no JavaScript needed to render it correctly:
+        CSS shows this only when `data-js` is on <html>, which the pre-paint
+        script in BaseHead sets. Without JavaScript the button never appears
+        and the links stay visible in two rows — the fallback is the finished
+        page, not a dead end. */
+    }
+    <button
+      id="nav-toggle"
+      type="button"
+      class="nav-toggle label"
+      aria-expanded="false"
+      aria-controls="primary-nav"
+    >
+      <svg
+        class="nav-toggle__icon nav-toggle__icon--open"
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17"></path>
+      </svg>
+      <svg
+        class="nav-toggle__icon nav-toggle__icon--close"
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M5.5 5.5l13 13M18.5 5.5l-13 13"></path>
+      </svg>
+      <span>Menu</span>
+    </button>
+
+    <nav aria-label="Primary" class="masthead-bar__nav" id="primary-nav">
       <ul class="nav">
         {
           links.map((item) => (
@@ -144,6 +190,34 @@ const isCurrent = (href: string) =>
 
   .masthead-bar__toggle {
     display: flex;
+  }
+
+  /* Hidden everywhere except a phone with JavaScript — see the media query at
+     the foot of this file. */
+  .nav-toggle {
+    display: none;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 44px;
+    padding: 0 0.15rem;
+    background: none;
+    border: 0;
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition: color var(--dur-hover) var(--ease);
+  }
+  .nav-toggle:hover {
+    color: var(--accent);
+  }
+
+  .nav-toggle__icon--close {
+    display: none;
+  }
+  .nav-toggle[aria-expanded='true'] .nav-toggle__icon--open {
+    display: none;
+  }
+  .nav-toggle[aria-expanded='true'] .nav-toggle__icon--close {
+    display: block;
   }
 
   /* A hairline is enough separation while the page is at rest, and at the top
@@ -270,32 +344,116 @@ const isCurrent = (href: string) =>
   }
 
   @media (max-width: 30rem) {
-    /* Two rows, composed rather than wrapped. `flex-basis: 100%` on the nav
-       forces the break at a predictable place instead of leaving it to
-       whichever label happens to overflow first, and the toggle takes the
-       right end of the first row so both rows run edge to edge. Reordering is
-       safe for the keyboard: source order is still wordmark → links → toggle,
-       which is also the order they read left-to-right, top-to-bottom. */
     .masthead-bar__inner {
       padding-block: 0;
       row-gap: 0;
     }
+
+    /* Theme first, menu at the far right where a thumb expects it. */
     .masthead-bar__toggle {
       order: 2;
       margin-left: auto;
     }
-    .masthead-bar__nav {
+    .nav-toggle {
       order: 3;
+    }
+    .masthead-bar__nav {
+      order: 4;
       flex-basis: 100%;
       margin-left: 0;
     }
 
-    /* Spread across the full width. Left-aligned, the row stopped two-thirds
-       of the way over and left a hole at the right margin, which read as an
-       overflow rather than a decision — the row above it already runs edge to
-       edge, and this one has to answer it. */
-    .nav {
+    :root[data-js] .nav-toggle {
+      display: inline-flex;
+    }
+
+    /* Collapsed only when there is a button to open it again. */
+    :root[data-js] .masthead-bar__nav {
+      display: none;
+    }
+    :root[data-js] .masthead-bar[data-open] .masthead-bar__nav {
+      display: block;
+      border-top: 1px solid var(--rule);
+    }
+
+    /* Open, the links stack as full-width rows — the whole width is the tap
+       target, which is the point of opening a panel at all. Without
+       JavaScript this same block lays them out in a row across the bar. */
+    :root[data-js] .nav {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      padding-bottom: 0.4rem;
+    }
+    :root[data-js] .nav__link {
+      display: block;
+      padding-block: 0.85rem;
+    }
+
+    /* No JavaScript: two rows, and the links spread to both margins so the
+       row reads as composed rather than as an overflow. */
+    :root:not([data-js]) .nav {
       justify-content: space-between;
     }
   }
 </style>
+
+<script>
+  /**
+   * The phone menu.
+   *
+   * Everything here is an addition to a page that already works: the button
+   * only exists because `data-js` is set before paint, and the panel is only
+   * collapsed under the same condition. If this script fails to run, the
+   * links are simply visible.
+   *
+   * `aria-expanded` on the button is the single source of truth for the state
+   * — the icon swap and the panel both key off it — so there is no second
+   * copy to fall out of step.
+   */
+  function initNav() {
+    const bar = document.querySelector<HTMLElement>('.masthead-bar');
+    const button = document.getElementById('nav-toggle');
+    if (!bar || !button) return;
+
+    const isOpen = () => button.getAttribute('aria-expanded') === 'true';
+
+    const close = () => {
+      bar.removeAttribute('data-open');
+      button.setAttribute('aria-expanded', 'false');
+    };
+
+    const open = () => {
+      bar.setAttribute('data-open', '');
+      button.setAttribute('aria-expanded', 'true');
+    };
+
+    button.addEventListener('click', () => (isOpen() ? close() : open()));
+
+    // Escape is the expected way out of anything that opened over the page.
+    // Focus goes back to the button, otherwise it is left nowhere.
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && isOpen()) {
+        close();
+        button.focus();
+      }
+    });
+
+    // Tapping a link normally navigates and the panel goes with the page. It
+    // does not when the target is the page you are already on, which would
+    // otherwise leave the panel sitting open over the answer.
+    for (const link of bar.querySelectorAll('.nav__link')) {
+      link.addEventListener('click', close);
+    }
+
+    // Rotating to landscape can cross the breakpoint, which would strand the
+    // panel open with no button left to close it.
+    const wide = window.matchMedia('(min-width: 30.0625rem)');
+    wide.addEventListener('change', () => {
+      if (wide.matches) close();
+    });
+  }
+
+  initNav();
+  document.addEventListener('astro:after-swap', initNav);
+</script>

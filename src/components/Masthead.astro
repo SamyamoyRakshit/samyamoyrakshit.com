@@ -46,9 +46,9 @@ const ICON: Record<string, string> = {
 <div class="hero">
   <div class="shell hero__inner">
     {
-      /* Before the words in the source, which is what lets it float on a
-        narrow screen — a float only pushes content that comes after it. The
-        wide layout puts it back in the second column by grid placement. */
+      /* Before the words in the source, so a phone gets it above the name
+        without needing `order`. The wide layout puts it back in the second
+        column by grid placement. */
     }
     <div class="hero__figure">
       <div class="portrait">
@@ -57,7 +57,7 @@ const ICON: Record<string, string> = {
           src={portrait}
           alt={filled(identity.portraitAlt) ?? `${identity.name}`}
           widths={[240, 320, 480, 640]}
-          sizes="(min-width: 60rem) 22rem, (min-width: 30rem) 13rem, 7rem"
+          sizes="(min-width: 60rem) 22rem, 8.5rem"
           loading="eager"
           fetchpriority="high"
         />
@@ -193,13 +193,10 @@ const ICON: Record<string, string> = {
     mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
   }
 
-  /* Two layouts, not one stacked version of the other.
-     Wide: two columns, the photograph in the second.
-     Narrow: the photograph sits in the text and the words wrap round it, the
-     way a portrait sits in a printed column. Stacking it instead put a square
-     the full width of the screen between the reader and the page. */
+  /* Wide: two columns, photograph in the second.
+     Narrow: stacked, photograph first — see the media query further down. */
   .hero__inner {
-    display: flow-root; /* contains the float below */
+    display: block;
   }
 
   @media (min-width: 60rem) {
@@ -335,18 +332,24 @@ const ICON: Record<string, string> = {
     box-shadow: var(--shadow-lift);
   }
 
-  /* The name sets beside the photograph and the statement runs on under it.
-     Sized so the name breaks over two lines next to it rather than colliding
-     with it: ~104px against 320px of text at 360px, leaving ~195px, and
-     "Samyamoy" is ~158px. Stacking it instead put a square the full width of
-     the screen between the reader and the first sentence. */
+  /* The photograph goes above the name, not beside it.
+     Beside was tried and is wrong here: "Samyamoy Rakshit" is ~300px at the
+     heading size against 320px of screen, so a photograph on that line breaks
+     the name in half and the largest thing on the page ends up the most
+     cramped. It works on sites that float a portrait into body copy because
+     the text beside it is body copy; here it is a 36px heading.
+
+     karpathy.ai — the reference this site is built against — stacks it the
+     same way, photograph first: `#dpic { grid-column: span 12 }` above
+     `#ddesc`, and only sets them side by side above 992px. */
   @media (max-width: 59.9375rem) {
     .hero__figure {
-      float: right;
-      margin: 0.25rem 0 1rem clamp(1rem, 0.5rem + 2vw, 2rem);
+      margin-bottom: clamp(1.25rem, 1rem + 1vw, 1.75rem);
     }
+    /* Left, with everything else. Centring it would make it the one element
+       in the block not set from the same margin. */
     .portrait {
-      width: clamp(6.5rem, 4rem + 11vw, 13rem);
+      width: clamp(6.5rem, 5rem + 7vw, 8.5rem);
       margin-inline: 0;
     }
   }

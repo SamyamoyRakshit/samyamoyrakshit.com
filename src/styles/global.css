@@ -138,16 +138,15 @@
 :root[data-theme="light"] { color-scheme: light; }
 :root[data-theme="dark"]  { color-scheme: dark; }
 
-/* Below 30rem the masthead wraps to two rows — the wordmark and the theme
-   toggle on the first, the links on the second — because the three labels and
-   the name cannot share a line on a phone. See Header.astro for the
-   measurements. The bar is then ~92px rather than 56px, and this token has to
-   follow it: `scroll-padding-top` is derived from it, so leaving it at 3.5rem
-   would park every deep-linked heading (`/experience/#<roleId>`,
-   `/projects/#<id>`) underneath the bar on exactly the devices where a reader
-   has the least screen to spare. */
+/* Below 30rem the links do not fit beside the name, so they either collapse
+   behind the "Menu" button (scripted, one row) or wrap to a second row (no
+   script). `scroll-padding-top` is derived from this token, so it has to match
+   whichever the reader actually got — otherwise every deep-linked heading
+   (`/experience/#<roleId>`, `/projects/#<id>`) parks underneath the bar on the
+   devices with the least screen to spare. See Header.astro. */
 @media (max-width: 30rem) {
-  :root { --header-h: 5.75rem; }
+  :root            { --header-h: 5.75rem; }  /* two rows */
+  :root[data-js]   { --header-h: 3.5rem;  }  /* one row, links behind Menu */
 }
 
 /* ---------------------------------------------------------------------------

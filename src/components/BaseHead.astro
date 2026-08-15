@@ -181,6 +181,14 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
 -->
 <script is:inline>
   (() => {
+    /* Marks the document as scripted before anything paints. The header's
+       menu button and its collapsed panel are both gated on this, so a
+       visitor without JavaScript keeps the navigation visible instead of
+       being shown a button that could never open. Setting it here rather
+       than from the header's own script is what stops the links flashing
+       on screen and then collapsing. */
+    document.documentElement.dataset.js = '';
+
     try {
       const stored = localStorage.getItem('theme');
       if (stored === 'light' || stored === 'dark') {

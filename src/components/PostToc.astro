@@ -312,12 +312,16 @@ const enough = entries.length >= 4;
      direction, which is the wrong way for something you are about to read. */
   :root[data-js] .toc__panel {
     position: fixed;
-    inset-block: 0;
+    /* Below the masthead, not behind it. Full-height would put the panel over
+       the wordmark, which sits inside a shell that starts well left of the
+       reading column on a wide screen. */
+    top: var(--header-h);
+    bottom: 0;
     left: 0;
     z-index: 60;
     width: var(--toc-w);
     margin: 0;
-    padding: 1.15rem 1.15rem 2rem;
+    padding: 0 1.15rem 2rem;
     border: 0;
     border-right: 1px solid var(--rule);
     border-radius: 0;
@@ -331,6 +335,22 @@ const enough = entries.length >= 4;
        visual half. */
     transform: translateX(-100%);
     visibility: hidden;
+  }
+
+  /* The panel's own header stays while the sections move under it.
+     Thirty-six entries is four panel-heights of scrolling, and the way out —
+     the close button — was at the top of all of it. A list you have to scroll
+     back up to escape from is a small trap. It bleeds to the panel's edges so
+     the hairline under it runs the full width, and it carries the panel's own
+     ground so entries disappear behind it rather than showing through. */
+  :root[data-js] .toc__head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    margin-inline: -1.15rem;
+    padding: 0.95rem 1.15rem 0.8rem;
+    background: var(--paper-raised);
+    border-bottom: 1px solid var(--rule);
   }
 
   :root[data-js] .toc__close {
@@ -386,32 +406,61 @@ const enough = entries.length >= 4;
     }
   }
 
-  /* --- Pinned: the panel stays, and the article moves over ------------- */
+  /* --- Wide: the panel moves into the margin that is already there ----- */
 
-  /* Above 78rem the panel stops being a drawer and becomes a column.
-     It is no longer modal — no scrim, nothing inerted — and the page gets
-     padded by exactly its width, so the article sits beside it rather than
-     underneath it. That is what makes "keep the contents up while I read"
-     a real option rather than a promise the layout breaks.
+  /* Above 80rem the panel stops being a drawer and becomes a column, and it
+     takes the empty space to the left of the reading column rather than
+     pushing the page over to make new space. The article does not move at all
+     — it is centred, and it stays exactly where it was.
 
-     Below 78rem there is not enough width for both: at 1248px the panel takes
-     304px and leaves the reading column 37px of margin, which is the last
-     width where the two genuinely coexist. Narrower than that the panel covers
-     the article, so it goes back to being a drawer that closes when you pick
-     a section — which is what MDN, react.dev and docs.astro.build all do at
-     phone widths, for the same reason.
+     That empty space is real and it is measured. `.post` is centred and its
+     width stops growing once --text-base caps, so the margin either side grows
+     with the viewport: 191px of it at 1280, 261px at 1440, 500px at 1920.
+     `calc((100vw - 60rem) / 2)` tracks that, always landing 12-20px short of
+     the article's own box:
 
-     `padding` is not on the motion ladder and is not animated: the column
-     arrives in its new place immediately. A reading column sliding sideways
-     under the reader is worse than one that has simply moved. */
-  @media (min-width: 78rem) {
-    :root[data-js] body[data-toc-open] {
-      padding-inline-start: var(--toc-w);
+       1280 → 176px rail, article box at 191   1536 → 288 / 308
+       1366 → 203 / 229                        1680 → 360 / 380
+       1440 → 240 / 261                        1920 → 304 (capped) / 500
+
+     Below 80rem the margin is not wide enough to hold a list at all — at
+     1152 there are 135px — so the panel goes back to being a drawer over the
+     page, modal, closing when a section is picked. Which is what MDN,
+     react.dev and docs.astro.build all do at those widths, for this reason.
+
+     No scrim and no shadow up here: nothing is covered, so there is nothing to
+     dim and nothing to lift off. */
+  @media (min-width: 80rem) {
+    :root[data-js] .toc__panel {
+      width: clamp(11rem, calc((100vw - 60rem) / 2), 19rem);
+      /* Every pixel of a rail this narrow is a character on the line. */
+      padding-inline: 0.9rem;
+    }
+    :root[data-js] .toc__head {
+      margin-inline: -0.9rem;
+      padding-inline: 0.9rem;
+    }
+
+    /* One step down the scale, and the sub-entries lose most of their indent.
+       A drawer is 304px wide and can carry reading-sized type; a rail at 233px
+       cannot, and at the drawer's sizes "1.10 How the decoder works: masked
+       self-attention + cross-attention" took five lines. Two things follow
+       from that: the list stops being scannable, and thirty-six entries at
+       four lines each is a lot of scrolling for a map. --text-sm and --text-xs
+       bring the longest entry to three lines. The register is right too — a
+       navigation rail is interface, not prose, and it should not be set at the
+       same size as the article beside it. */
+    :root[data-js] .toc__link {
+      padding-block: 0.34rem;
+      font-size: var(--text-sm);
+    }
+    :root[data-js] .toc__item--h3 .toc__link {
+      padding-left: 1.15rem;
+      font-size: var(--text-xs);
     }
     :root[data-js] body[data-toc-open] .toc__scrim {
       display: none;
     }
-    /* Nothing is covered, so nothing needs lifting off the page. */
     :root[data-js] body[data-toc-open] .toc__panel {
       box-shadow: none;
     }
@@ -461,9 +510,10 @@ const enough = entries.length >= 4;
        and it stays put when a section is picked, because the reader can see
        both. Narrower and it covers the article, so it is modal and it closes
        on the way to the section — leaving it up would mean tapping a heading
-       and watching nothing happen. The number matches the media query in the
-       stylesheet; both come from --toc-w. */
-    const beside = window.matchMedia('(min-width: 78rem)');
+       and watching nothing happen. Keep this in step with the 80rem media
+       query above, which is where the left margin stops being wide enough to
+       hold the panel. */
+    const beside = window.matchMedia('(min-width: 80rem)');
 
     const open = () => {
       document.body.setAttribute('data-toc-open', '');

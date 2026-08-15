@@ -126,13 +126,14 @@
      the thing it is offsetting cannot drift. */
   --post-bar-h:  3.5rem;
 
-  /* The contents panel. One number, three users: the panel's own width, the
-     padding the page takes on when the panel is pinned open beside it, and the
-     breakpoint arithmetic in PostToc that decides where "pinned" stops being
-     possible. 19rem rather than something roomier because it is a list of
-     headings, not a column of prose — MDN's runs about 250px and react.dev's
-     about 200px. `84vw` is the phone cap: a drawer that reaches the far edge
-     gives no sense of the page still being there behind it. */
+  /* The contents drawer, on screens too narrow to give it a margin to live in.
+     Above 80rem PostToc overrides this with a width derived from the space
+     actually left beside the reading column — see the note there.
+
+     19rem rather than something roomier because it is a list of headings, not
+     a column of prose: MDN's runs about 250px, react.dev's about 200px. `84vw`
+     is the phone cap — a drawer that reaches the far edge leaves no sign of
+     the page still being there behind it. */
   --toc-w:       min(19rem, 84vw);
 
   /* Motion.

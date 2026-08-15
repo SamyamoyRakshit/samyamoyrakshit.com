@@ -211,6 +211,26 @@
   --text-4xl:      clamp(2.2500rem, 1.7083rem + 2.4074vw, 3.8750rem);
   --text-5xl:      clamp(2.7500rem, 1.9167rem + 3.7037vw, 5.2500rem);
 
+  /* Reading type — long-form body copy, and nothing else.
+     Not a rung on the ladder above: those size an interface, and this sizes a
+     page somebody spends forty minutes inside. It is its own token because the
+     two jobs pull in opposite directions on a phone, and .prose used to borrow
+     --text-lg and get the interface answer.
+
+     17px → 21px rather than 18px → 21px. The desktop end is unchanged; only
+     the phone end moves, and it moves because the column there cannot. At
+     390px the text has ~358px to live in no matter what, so size is the only
+     lever on line length: 18px gave 39 characters a line, and 17px gives 43.
+     Measured at 390px against the blogs this site's readers already read —
+     Comeau 42, distill 44, Jalammar 46, Overreacted 47, Weng 50, Karpathy 51 —
+     39 was the second-narrowest of the eleven and 43 lands inside the range.
+
+     17px is also the floor worth defending: Substack sets 17, and nothing in
+     the sample goes below 16. Inter is a wide face (~0.495em average advance
+     against Helvetica's ~0.45), which is why this needs a smaller size than
+     the peers to reach the same line, not a larger one. */
+  --text-read:     clamp(1.0625rem, 0.9792rem + 0.3704vw, 1.3125rem);
+
   --spacing-gutter:  var(--gutter);
   --spacing-section: var(--section-gap);
   --spacing-rail:    var(--rail);
@@ -742,11 +762,22 @@
 @layer components {
   /* Full ink, not muted. Long technical reading is tiring enough without the
      text being greyed down for looks — softened body copy reads as elegant for
-     one screen and as hard work for ten. */
+     one screen and as hard work for ten.
+
+     Leading was 1.72 and is 1.65. Measured across eleven technical blogs at
+     both 390px and 1440px, 1.72 was the loosest setting in the sample bar one
+     (Overreacted, 1.75); the median is ~1.55 and nobody else clears 1.6 on a
+     phone. Leading and measure move together — space between lines is what
+     stops the eye losing the next line on the way back, so a long line needs
+     more of it and a short line needs less. This site had the relationship
+     backwards on a phone: the narrowest column in the sample carried the
+     loosest leading, which is what made a paragraph read as a stack of
+     fragments rather than as prose. 1.65 is still generous at the 79-character
+     desktop line and no longer airy at the 43-character phone one. */
   .prose {
     max-width: var(--measure);
-    font-size: var(--text-lg);
-    line-height: 1.72;
+    font-size: var(--text-read);
+    line-height: 1.65;
     color: var(--ink);
   }
   .prose > * + * { margin-top: 1.4em; }
@@ -758,6 +789,16 @@
     border-top: 1px solid var(--rule);
   }
   .prose h3 { font-size: var(--text-xl); margin-top: 1.9em; }
+
+  /* An h2 draws its own rule, so a Markdown `---` immediately before one gave
+     the page two hairlines with a 100px void between them — which reads as a
+     section that failed to load rather than as a divider. The heading keeps
+     the space; the <hr> keeps the line. */
+  .prose hr + h2 {
+    border-top: 0;
+    margin-top: 0;
+    padding-top: 0;
+  }
   .prose strong { color: var(--ink); font-weight: 600; }
   .prose a {
     color: var(--ink);
@@ -828,13 +869,20 @@
     color: var(--ink-faint);
     font-size: 0.85em;
   }
+  /* A pull-quote: larger than the body and italic, so it is worth stopping on.
+     Sized in `em` off the reading type rather than from --text-xl, which is a
+     rung on the interface ladder and climbs faster than the prose does. At
+     390px --text-xl resolved to 21px against 17px body — a quarter larger,
+     italic, inside an indent, on a column already down to ~40 characters, so
+     the one thing set apart for emphasis was the hardest thing on the page to
+     read. 1.12em holds the same proportion to the body at every width. */
   .prose blockquote {
     border-left: 1px solid var(--rule-strong);
     padding-left: 1.4em;
     font-family: var(--font-body);
-    font-size: var(--text-xl);
+    font-size: 1.12em;
     font-style: italic;
-    line-height: 1.4;
+    line-height: 1.45;
     color: var(--ink);
   }
   /* A short status line at the head of a post — "this is the short version,
@@ -868,11 +916,60 @@
     font-size: var(--text-sm);
     line-height: 1.6;
   }
+
+  /* On a phone, code gets the whole screen.
+     Everything else on the page reflows to fit the column; a code block is the
+     one thing that cannot, because its line breaks carry meaning. So it stops
+     being an object inset in the prose and becomes a band running edge to edge
+     — which is why the radius and the side borders come off here rather than
+     being kept for looks. A band with rounded corners is a card, and a card
+     that touches both screen edges reads as a mistake.
+
+     The 358px column is 40% of the desktop one, so this is worth ~4 extra
+     characters before the first horizontal scroll, and more importantly it
+     removes the two hairlines that were cutting into a shape — a directory
+     tree, an arrow diagram — that the reader is trying to see whole.
+
+     -1 * --gutter is exactly .shell's own padding, so the block lands flush
+     with the viewport. .post narrows --gutter on phones and this follows it
+     automatically. body carries overflow-x: clip, so nothing leaks sideways. */
+  @media (max-width: 40rem) {
+    .prose pre {
+      margin-inline: calc(-1 * var(--gutter));
+      border-inline: 0;
+      border-radius: 0;
+      padding-inline: var(--gutter);
+    }
+  }
+
+  /* Inline code sits inside a sentence, so it is measured against the words on
+     either side of it rather than against a code block.
+
+     Three things were wrong and all three showed up mid-paragraph as a hard
+     rectangle interrupting the line. It was set at 0.9em in a mono face whose
+     advance is ~0.6em against Inter's ~0.495 — so `nn.ModuleList` was set
+     *wider* than the same characters in body text, not narrower. It carried a
+     full 1px border with square corners, which is a box, not an annotation;
+     five of the seven peers measured draw no border at all and let the ground
+     do the work. And it could not break, so one long identifier
+     (`torch.nn.TransformerEncoderLayer` — 32 characters, 313px of a 349px
+     phone column) took a line to itself and shoved the sentence around it.
+
+     0.85em on a tinted ground with no border, and it breaks when it has to.
+     --paper-sunken rather than the block's --code-bg: --code-bg is deliberately
+     *lighter* than --paper so an external syntax theme's comment colour clears
+     AA on it, and a patch lighter than the page is close to invisible at four
+     words long. Inline code carries no syntax colour at all — it is one flat
+     --ink — so it wants the recessed ground instead, which is what
+     --paper-sunken is for. `ink on paper-sunken` is already an audited pair in
+     check-contrast.mjs, so this adds nothing new to hold at AA. */
   .prose :not(pre) > code {
-    background: var(--code-bg);
-    border: 1px solid var(--rule);
-    padding: 0.12em 0.38em;
+    background: var(--paper-sunken);
+    border-radius: 3px;
+    padding: 0.1em 0.32em;
+    font-size: 0.85em;
     color: var(--ink);
+    overflow-wrap: break-word;
   }
   .prose img { border: 1px solid var(--rule); }
   .prose figcaption {
@@ -899,8 +996,35 @@
      no vertical lines and no zebra striping. GFM emits inline
      `style="text-align: …"` for alignment, so that works unaided.
      A real table rather than a block box, so it fills the measure and the
-     header rule spans the full width. Cells wrap instead of scrolling, which
-     holds down to 360px — verified, no horizontal overflow. */
+     header rule spans the full width, and so it keeps its table semantics.
+
+     Cells wrap, and where wrapping is not enough the wrapper scrolls. Most
+     tables here fit the column and the wrapper does nothing; a four-column
+     comparison with a sentence in the last cell does not fit a 358px phone at
+     any padding, and used to be clipped away silently. See rehypeTableScroll
+     in astro.config.mjs for why the container is a real element rather than
+     `display: block` on the table itself. */
+  .prose .table-scroll {
+    overflow-x: auto;
+    /* Only the horizontal axis scrolls; `auto` on both would give a table with
+       a tall row a pointless vertical scrollbar of its own. */
+    overflow-y: hidden;
+  }
+  /* The wrapper is focusable, so it has to show focus. The global
+     :focus-visible rule handles the ring; this stops it being drawn tight
+     against the header rule. */
+  .prose .table-scroll:focus-visible {
+    outline-offset: 5px;
+  }
+
+  /* Same bargain as a code block: on a phone, a thing that cannot reflow gets
+     the whole screen rather than a polite inset. */
+  @media (max-width: 40rem) {
+    .prose .table-scroll {
+      margin-inline: calc(-1 * var(--gutter));
+      padding-inline: var(--gutter);
+    }
+  }
   .prose table {
     width: 100%;
     max-width: 100%;
@@ -931,6 +1055,31 @@
   .prose td:last-child { padding-right: 0; }
   /* Long identifiers break rather than force the table wider than the page */
   .prose td code { overflow-wrap: anywhere; }
+
+  /* Phone. Declared after the rules above so it wins on equal specificity.
+
+     The column gutter and nothing else. 1.5rem is right at the desktop
+     measure, where it separates columns that have room to spare; on a phone a
+     four-column table spends 72px of its 425px on whitespace, and that 72px is
+     the difference between the explanation column setting three characters to
+     a line and setting fourteen. Measured across the nine tables in the
+     Transformer post, this is what decides whether a table fits at all: with
+     1.5rem, two of the nine overflowed; with 0.9rem, one does.
+
+     There is deliberately no `min-width` here, though two versions of one were
+     tried. A flat `min-width: 34rem` widens the eight tables that already fit
+     and makes them all scroll — the fix becoming the bug, eight times over.
+     `min(34rem, max-content)` is what that wants to be and is not valid CSS:
+     math functions take lengths, and `max-content` is not one, so the whole
+     declaration is dropped and the layout silently falls back. CSS cannot
+     currently say "if you overflow, overflow by at least this much", so the
+     one table that does overflow overflows by its own 67px and is scrolled. */
+  @media (max-width: 40rem) {
+    .prose thead th { padding-right: 0.9rem; }
+    .prose tbody td { padding-right: 0.9rem; }
+    .prose th:last-child,
+    .prose td:last-child { padding-right: 0; }
+  }
 
   /* --- Task lists ------------------------------------------------------
      These carry their own marker — the checkbox — so the disc is suppressed

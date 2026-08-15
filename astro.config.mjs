@@ -15,6 +15,67 @@ import rehypeKatex from 'rehype-katex';
  */
 const SITE_URL = process.env.SITE_URL ?? 'https://samyamoyrakshit.com';
 
+/**
+ * Puts every Markdown table inside a scroll container.
+ *
+ * Tables used to be left bare on the grounds that cells wrap and it holds down
+ * to 360px. That stopped being true. The specs comparison in the Transformer
+ * post — Knob / Paper / This Build / Why — has a min-content width of 454px
+ * against the 358px a 390px phone leaves, and a table cannot be compressed
+ * below min-content. So the table overflowed `.prose`, and because `body`
+ * carries `overflow-x: clip` the overflow was painted nowhere and could not be
+ * scrolled to: the "Why" column, which is the entire reason that table exists,
+ * was invisible on a phone with no indication anything was missing. Silently
+ * dropping data is worse than either wrapping or scrolling.
+ *
+ * Wrapping harder was not an option. Even at min-content the fourth column
+ * lands around 40px — one short word a line — so the honest fix is to let a
+ * wide table scroll and keep its rows intact.
+ *
+ * The wrapper is the standard "under-engineered responsive table" pattern, and
+ * crucially the <table> itself is untouched, so it keeps its table semantics —
+ * which is what `display: block; overflow: auto` on the table would have thrown
+ * away, and thrown away specifically on phones, where screen-reader use is
+ * highest.
+ *
+ * What this emits is only the box. `tabindex` and `role="region"` are added in
+ * the browser, by the script in src/pages/blog/[...id].astro, and only to the
+ * wrappers that are actually scrolling at the current width. Baking them in
+ * here was the first attempt and it is wrong: whether a table overflows is a
+ * function of the viewport, so on this one post it declared nine landmarks
+ * named "Table, scrollable" of which two scroll on a phone and none scroll on
+ * a desktop. Seven bogus landmarks and seven dead tab stops on every page load
+ * is a worse deal for the people the markup is for than the narrow case it
+ * covers (keyboard-only, JavaScript off, table wide enough to scroll).
+ *
+ * Written out longhand rather than pulling in unist-util-visit: it is a dozen
+ * lines and `scripts/` has no dependencies for the same reason.
+ */
+function rehypeTableScroll() {
+  /** @param {import('hast').Root} tree */
+  return (tree) => {
+    /** @param {import('hast').Root | import('hast').Element} node */
+    const walk = (node) => {
+      if (!Array.isArray(node.children)) return;
+      for (const child of node.children) {
+        if (child.type === 'element') walk(child);
+      }
+      node.children.forEach((child, i) => {
+        if (child.type !== 'element' || child.tagName !== 'table') return;
+        /** @type {import('hast').Element} */
+        const wrapper = {
+          type: 'element',
+          tagName: 'div',
+          properties: { className: ['table-scroll'] },
+          children: [child],
+        };
+        node.children[i] = wrapper;
+      });
+    };
+    walk(tree);
+  };
+}
+
 export default defineConfig({
   site: SITE_URL,
 
@@ -160,6 +221,8 @@ export default defineConfig({
           throwOnError: false,
         },
       ],
+      // After KaTeX, so it only ever sees real content tables.
+      rehypeTableScroll,
     ],
 
     shikiConfig: {
@@ -170,7 +233,30 @@ export default defineConfig({
        * which audits every token colour in both themes.
        */
       themes: { light: 'github-light-high-contrast', dark: 'github-dark-dimmed' },
-      wrap: true,
+      /**
+       * Scroll, do not wrap.
+       *
+       * `wrap: true` emits `white-space: pre-wrap`, and on a phone that folded
+       * every long line back to column 0. Python is indentation-significant,
+       * so a wrapped body line lands at the same indent as the `def` above it
+       * and the block structure — the thing the reader is here to follow —
+       * stops being readable. Directory trees and the `x -> y -> z` shape
+       * diagrams in these posts came apart the same way.
+       *
+       * Checked against the blogs this post's readers already read, at 390px:
+       * Karpathy, Lilian Weng, Chip Huyen, Josh Comeau, Overreacted and the
+       * Astro docs all set `white-space: pre` and scroll. The one that wraps
+       * is a link blog whose snippets are two lines long.
+       *
+       * The cost of scrolling is that a wide block is cut off at the right
+       * edge, which is why `.prose pre` in global.css bleeds to the full
+       * viewport width below 40rem — code gets the whole screen, since it is
+       * the one thing on the page that cannot reflow.
+       *
+       * NOTE: this lives in `markdown`, so `.astro/` must be deleted before a
+       * rebuild or the cached HTML keeps the old wrapping.
+       */
+      wrap: false,
       /**
        * Emit CSS custom properties only — no inline `color` or
        * `background-color` on the <pre>.

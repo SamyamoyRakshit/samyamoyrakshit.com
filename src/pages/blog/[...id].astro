@@ -145,13 +145,49 @@ const parts = series ? await getSeries(series.name) : [];
 </Base>
 
 <style>
-  /* .shell is 78rem, but every block inside a post is capped at the reading
-     measure, so the article sat against the left edge with a third of the
-     page empty beside it. Narrowing the shell to the measure centres the
-     column — `.shell` already carries margin-inline: auto. */
+  /* The reading column.
+     .shell is 78rem, but every block inside a post is capped at the measure,
+     so the article sat against the left edge with a third of the page empty
+     beside it. Narrowing .post to the measure centres it — `.shell` already
+     carries margin-inline: auto.
+
+     Two numbers, both set from measurement rather than taste. Ten
+     well-regarded technical blogs, measured at a 1898px viewport:
+
+       Karpathy 800px/113cpl · Chip Huyen 785/105 · Eugene Yan 720/96 ·
+       Lilian Weng 720/101 · Ciechanowski 704/81 · Comeau 686/81 ·
+       Anthropic 640/78 · Overreacted 632/84 · Simon Willison 560/78
+
+     None of them runs the text full-width, so this does not either. But the
+     body face here is 21px — larger than any of them — so the old 68ch gave
+     66 characters a line against their ~82 median, and the page read as a
+     ribbon on a wide screen. 72ch lands the column at ~817px and ~79cpl:
+     inside the peer range on both axes, and inside Butterick's 45–90.
+
+     The `+ 2 * --gutter` is the fix for the third of it: --gutter is .shell's
+     padding-inline, and with a plain `max-width: var(--measure)` it was being
+     subtracted from the measure rather than sitting outside it, so the column
+     was 88px narrower than the number said. Page chrome, not measure. */
   .post {
-    max-width: var(--measure);
+    --measure: 72ch;
+    max-width: calc(var(--measure) + 2 * var(--gutter));
     padding-block: clamp(2rem, 1.2rem + 3vw, 4rem);
+  }
+
+  /* On a phone the column is whatever the screen leaves after the gutter, so
+     the gutter is the measure. --gutter is 20px there, which is set for cards
+     that need to look inset from the edge; a page of running text does not,
+     and 40px of the 390px available was going to margin. 16px is the median of
+     the blogs measured at that width (Comeau 16, Substack 16, Willison 15,
+     Weng 14, Karpathy 12) and buys four more characters a line.
+
+     Declared on .post rather than :root so it moves the reading column and
+     nothing else — the cards on /blog/ and the homepage keep their inset. It
+     inherits, so `.prose pre`'s full-bleed rule follows it automatically. */
+  @media (max-width: 30rem) {
+    .post {
+      --gutter: 1rem;
+    }
   }
 
   .post__back {
@@ -174,8 +210,20 @@ const parts = series ? await getSeries(series.name) : [];
     max-width: var(--measure);
   }
 
+  /* Its own curve, not --text-4xl.
+     The ladder's top rungs climb steeply so a name can fill a screen, and a
+     post title is not a name — it is a sentence, and these run long
+     ("Rebuilding \"Attention Is All You Need\" From Scratch on a Mac M1 with
+     16GB of RAM"). At 390px --text-4xl resolved to 36px and took that title to
+     six lines, so the first screen of a 55-minute post was the title and
+     nothing else.
+
+     The desktop end is deliberately unchanged — 61px against the old 62px, a
+     difference nobody can see — so this only lifts the floor: 31px at 390px,
+     which brings the same title down to four lines and puts the opening
+     paragraph on the first screen. Fluid, so nothing steps at a breakpoint. */
   .post__title {
-    font-size: var(--text-4xl);
+    font-size: clamp(1.9375rem, 1.3125rem + 2.7778vw, 3.875rem);
     max-width: 20ch;
   }
 
@@ -358,6 +406,50 @@ const parts = series ? await getSeries(series.name) : [];
     }
   }
 
+  /**
+   * Makes a table that is actually overflowing reachable from the keyboard.
+   *
+   * rehypeTableScroll (astro.config.mjs) wraps every Markdown table in a
+   * `.table-scroll` box, but most tables fit their column and that box does
+   * nothing. A scroll container that can only be scrolled by dragging is a
+   * dead end for anyone not using a pointer (WCAG 2.1.1), so the ones that
+   * genuinely scroll become focusable regions — and the ones that do not stay
+   * plain, because a landmark announcing "Table, scrollable" over a table that
+   * fits is worse than no landmark at all.
+   *
+   * Whether a table overflows depends on the width, so this re-runs on resize.
+   * A ResizeObserver on each box rather than a window listener: it fires when
+   * the box itself changes, which also covers a font finishing loading.
+   */
+  function syncScrollableTables() {
+    const boxes = document.querySelectorAll<HTMLElement>('.prose .table-scroll');
+
+    const sync = (box: HTMLElement) => {
+      // 1px of slack: sub-pixel column widths round up and would otherwise
+      // report every table as overflowing by a fraction.
+      if (box.scrollWidth > box.clientWidth + 1) {
+        box.setAttribute('tabindex', '0');
+        box.setAttribute('role', 'region');
+        box.setAttribute('aria-label', 'Table, scrollable');
+      } else {
+        box.removeAttribute('tabindex');
+        box.removeAttribute('role');
+        box.removeAttribute('aria-label');
+      }
+    };
+
+    for (const box of boxes) {
+      sync(box);
+      if (box.dataset.watched) continue;
+      box.dataset.watched = '';
+      new ResizeObserver(() => sync(box)).observe(box);
+    }
+  }
+
   addHeadingAnchors();
-  document.addEventListener('astro:after-swap', addHeadingAnchors);
+  syncScrollableTables();
+  document.addEventListener('astro:after-swap', () => {
+    addHeadingAnchors();
+    syncScrollableTables();
+  });
 </script>

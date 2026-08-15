@@ -19,6 +19,25 @@ import { getWork, getBlogPosts } from '../lib/content';
  * but beside a name already spelled out it states the same thing twice, and it
  * would be the only boxed element in a bar built from one hairline. Where the
  * full name will not fit, the first name stands in.
+ *
+ * On a phone the bar is TWO rows and the links stay visible — there is no
+ * hamburger, deliberately. Measured at 360px, the widest phone case: the three
+ * labels plus the toggle come to 279px and the wordmark to 72px, against 320px
+ * of content width. They cannot share a line, and the ways of making them fit
+ * (dropping the tracking, setting the links in Inter, shrinking the name to
+ * initials) all land within a few pixels of the limit and break again on a
+ * 320px screen. So the bar wraps — but it wraps on purpose: the wordmark and
+ * the toggle take the two ends of the first row, the links hold the second.
+ *
+ * A disclosure button was the obvious alternative and is the wrong one here.
+ * Three destinations is under every threshold at which hiding navigation pays
+ * for itself, hidden navigation measurably reduces the chance a reader visits
+ * any of it, and it would need a script, a focus trap, an Escape handler and a
+ * scroll lock to do properly. It also contradicts the one rule this site is
+ * built on — nothing worth reading sits behind a click — and a slide-out panel
+ * is the single most transplantable component on the web, which is the failure
+ * the brief names outright. The bar costs ~92px of a phone screen. Three links
+ * a reader can see and hit is worth 92px.
  */
 
 const [work, posts] = await Promise.all([getWork(), getBlogPosts()]);
@@ -57,7 +76,7 @@ const isCurrent = (href: string) =>
       <span class="wordmark__short" aria-hidden="true">{identity.shortName}</span>
     </a>
 
-    <nav aria-label="Primary">
+    <nav aria-label="Primary" class="masthead-bar__nav">
       <ul class="nav">
         {
           links.map((item) => (
@@ -72,15 +91,22 @@ const isCurrent = (href: string) =>
             </li>
           ))
         }
-        {
-          features.themeToggle && (
-            <li class="nav__toggle">
-              <ThemeToggle />
-            </li>
-          )
-        }
       </ul>
     </nav>
+
+    {
+      /* Outside the list on purpose. Changing the theme is not a destination,
+        so it does not belong among the links a screen reader is offered when
+        it enumerates the primary navigation — and keeping it a sibling is what
+        lets it move to the end of the first row when the bar wraps. */
+    }
+    {
+      features.themeToggle && (
+        <div class="masthead-bar__toggle">
+          <ThemeToggle />
+        </div>
+      )
+    }
   </div>
 </header>
 
@@ -95,15 +121,29 @@ const isCurrent = (href: string) =>
     border-bottom: 1px solid var(--rule);
   }
 
+  /* Three siblings — wordmark, nav, toggle. The wordmark holds the left and
+     `margin-left: auto` on the nav pushes the other two to the right end, so
+     the row survives the wrap below without either of them needing a wrapper
+     to group them. */
   .masthead-bar__inner {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem 2rem;
+    gap: 0.5rem clamp(1rem, 0.4rem + 2vw, 2.25rem);
     padding-block: 0.35rem;
-    /* Kept in step with --header-h, which scroll-padding-top is derived from. */
+    /* Kept in step with --header-h, which scroll-padding-top is derived from.
+       --header-h grows at the same breakpoint the bar wraps at — see the
+       media query in global.css — so a deep link never parks its heading
+       underneath a bar that turned out to be taller than the offset. */
     min-height: var(--header-h);
+  }
+
+  .masthead-bar__nav {
+    margin-left: auto;
+  }
+
+  .masthead-bar__toggle {
+    display: flex;
   }
 
   /* A hairline is enough separation while the page is at rest, and at the top
@@ -210,17 +250,44 @@ const isCurrent = (href: string) =>
     background: var(--ink);
   }
 
-  .nav__toggle {
-    display: flex;
-  }
+  /* Two breakpoints, not one, because the bar has three states and the widths
+     they change at are 2rem apart.
 
-  /* Narrow enough that the full name and the navigation cannot share a line. */
-  @media (max-width: 30rem) {
+     Measured in JetBrains Mono at the `.label` size, which has a fixed 0.6em
+     advance, so these are arithmetic rather than guesses. The full name plus
+     the links plus the toggle come to 442px and need a 512px viewport once the
+     gutter is taken off; the first name plus the same needs 412px, which is a
+     width real phones actually are. So the first name takes over at 32rem —
+     where the full one stops fitting — and the wrap happens at 30rem, far
+     enough below 412px that no phone lands within a few pixels of the edge. */
+  @media (max-width: 32rem) {
     .wordmark__full {
       display: none;
     }
     .wordmark__short {
       display: inline;
+    }
+  }
+
+  @media (max-width: 30rem) {
+    /* Two rows, composed rather than wrapped. `flex-basis: 100%` on the nav
+       forces the break at a predictable place instead of leaving it to
+       whichever label happens to overflow first, and the toggle takes the
+       right end of the first row so both rows run edge to edge. Reordering is
+       safe for the keyboard: source order is still wordmark → links → toggle,
+       which is also the order they read left-to-right, top-to-bottom. */
+    .masthead-bar__inner {
+      padding-block: 0;
+      row-gap: 0;
+    }
+    .masthead-bar__toggle {
+      order: 2;
+      margin-left: auto;
+    }
+    .masthead-bar__nav {
+      order: 3;
+      flex-basis: 100%;
+      margin-left: 0;
     }
   }
 </style>

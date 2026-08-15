@@ -138,6 +138,18 @@
 :root[data-theme="light"] { color-scheme: light; }
 :root[data-theme="dark"]  { color-scheme: dark; }
 
+/* Below 30rem the masthead wraps to two rows — the wordmark and the theme
+   toggle on the first, the links on the second — because the three labels and
+   the name cannot share a line on a phone. See Header.astro for the
+   measurements. The bar is then ~92px rather than 56px, and this token has to
+   follow it: `scroll-padding-top` is derived from it, so leaving it at 3.5rem
+   would park every deep-linked heading (`/experience/#<roleId>`,
+   `/projects/#<id>`) underneath the bar on exactly the devices where a reader
+   has the least screen to spare. */
+@media (max-width: 30rem) {
+  :root { --header-h: 5.75rem; }
+}
+
 /* ---------------------------------------------------------------------------
    2 - TAILWIND THEME
    `@theme inline` emits `var(--token)` into utilities instead of baking the

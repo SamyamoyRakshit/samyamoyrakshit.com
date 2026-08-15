@@ -289,5 +289,13 @@ const isCurrent = (href: string) =>
       flex-basis: 100%;
       margin-left: 0;
     }
+
+    /* Spread across the full width. Left-aligned, the row stopped two-thirds
+       of the way over and left a hole at the right margin, which read as an
+       overflow rather than a decision — the row above it already runs edge to
+       edge, and this one has to answer it. */
+    .nav {
+      justify-content: space-between;
+    }
   }
 </style>

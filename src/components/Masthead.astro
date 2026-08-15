@@ -45,6 +45,25 @@ const ICON: Record<string, string> = {
 
 <div class="hero">
   <div class="shell hero__inner">
+    {
+      /* Before the words in the source, which is what lets it float on a
+        narrow screen — a float only pushes content that comes after it. The
+        wide layout puts it back in the second column by grid placement. */
+    }
+    <div class="hero__figure">
+      <div class="portrait">
+        <Image
+          class="portrait__img"
+          src={portrait}
+          alt={filled(identity.portraitAlt) ?? `${identity.name}`}
+          widths={[240, 320, 480, 640]}
+          sizes="(min-width: 60rem) 22rem, (min-width: 30rem) 13rem, 7rem"
+          loading="eager"
+          fetchpriority="high"
+        />
+      </div>
+    </div>
+
     <div class="hero__words">
       <h1 class="masthead hero__name">{identity.name}</h1>
 
@@ -91,20 +110,6 @@ const ICON: Record<string, string> = {
           </div>
         )
       }
-    </div>
-
-    <div class="hero__figure">
-      <div class="portrait">
-        <Image
-          class="portrait__img"
-          src={portrait}
-          alt={filled(identity.portraitAlt) ?? `${identity.name}`}
-          widths={[240, 320, 480, 640]}
-          sizes="(min-width: 60rem) 22rem, (min-width: 48rem) 60vw, 8.5rem"
-          loading="eager"
-          fetchpriority="high"
-        />
-      </div>
     </div>
   </div>
 
@@ -188,16 +193,30 @@ const ICON: Record<string, string> = {
     mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
   }
 
+  /* Two layouts, not one stacked version of the other.
+     Wide: two columns, the photograph in the second.
+     Narrow: the photograph sits in the text and the words wrap round it, the
+     way a portrait sits in a printed column. Stacking it instead put a square
+     the full width of the screen between the reader and the page. */
   .hero__inner {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: clamp(2.25rem, 1.5rem + 3vw, 4rem);
-    align-items: center;
+    display: flow-root; /* contains the float below */
   }
 
   @media (min-width: 60rem) {
     .hero__inner {
+      display: grid;
       grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      gap: clamp(2.25rem, 1.5rem + 3vw, 4rem);
+      align-items: center;
+    }
+    /* Source order is figure → words, so both need placing. */
+    .hero__words {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    .hero__figure {
+      grid-column: 2;
+      grid-row: 1;
     }
   }
 
@@ -281,7 +300,12 @@ const ICON: Record<string, string> = {
   .hero__figure {
     margin: 0;
     justify-self: center;
-    width: 100%;
+  }
+
+  @media (min-width: 60rem) {
+    .hero__figure {
+      width: 100%;
+    }
   }
 
   /* The photograph.
@@ -311,30 +335,18 @@ const ICON: Record<string, string> = {
     box-shadow: var(--shadow-lift);
   }
 
-  /* On a phone the photograph leads, and it is small.
-     Below the two-column breakpoint the grid stacks, which put a 22rem square
-     — the full width of the screen — after the statement, the buttons and the
-     social row. That is most of a second screen spent on a headshot, and it
-     arrives after the point most readers stop scrolling, so the one thing a
-     face is good at (settling instantly that a real person is behind the page)
-     happened too late to do it. Moved above the name it does that job in the
-     first 100px, and at ~105px it costs a tenth of the height it did.
-
-     `order` is safe here: the photograph carries no information the words do
-     not, so a screen reader still meets the name first, in source order. */
-  @media (max-width: 47.9375rem) {
-    .hero__inner {
-      gap: clamp(1.25rem, 1rem + 1vw, 1.75rem);
-    }
+  /* The name sets beside the photograph and the statement runs on under it.
+     Sized so the name breaks over two lines next to it rather than colliding
+     with it: ~104px against 320px of text at 360px, leaving ~195px, and
+     "Samyamoy" is ~158px. Stacking it instead put a square the full width of
+     the screen between the reader and the first sentence. */
+  @media (max-width: 59.9375rem) {
     .hero__figure {
-      order: -1;
-      justify-self: start;
-      width: auto;
+      float: right;
+      margin: 0.25rem 0 1rem clamp(1rem, 0.5rem + 2vw, 2rem);
     }
-    /* Left edge flush with the name below it, not centred — everything else
-       in the hero is set from the same left margin. */
     .portrait {
-      width: clamp(6.5rem, 5rem + 7vw, 8.5rem);
+      width: clamp(6.5rem, 4rem + 11vw, 13rem);
       margin-inline: 0;
     }
   }

@@ -629,17 +629,29 @@ const enough = entries.length >= 4;
     toggle.addEventListener('click', () => (isOpen() ? close() : open()));
     closeButton?.addEventListener('click', () => {
       close();
-      toggle.focus();
+      // `preventScroll` because from 80rem the toggle is fixed to the
+      // viewport and always onscreen — a plain `.focus()` still asks the
+      // browser to scroll it into view regardless, which is what was
+      // dragging the reader back to the top of the page on close.
+      toggle.focus({ preventScroll: true });
     });
     scrim.addEventListener('click', () => {
       close();
-      toggle.focus();
+      // `preventScroll` because from 80rem the toggle is fixed to the
+      // viewport and always onscreen — a plain `.focus()` still asks the
+      // browser to scroll it into view regardless, which is what was
+      // dragging the reader back to the top of the page on close.
+      toggle.focus({ preventScroll: true });
     });
 
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && isOpen()) {
         close();
-        toggle.focus();
+        // `preventScroll` because from 80rem the toggle is fixed to the
+        // viewport and always onscreen — a plain `.focus()` still asks the
+        // browser to scroll it into view regardless, which is what was
+        // dragging the reader back to the top of the page on close.
+        toggle.focus({ preventScroll: true });
       }
     });
 

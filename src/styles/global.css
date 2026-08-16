@@ -1053,6 +1053,15 @@
     color: var(--ink-faint);
     margin-top: 0.7em;
   }
+  /* A short credit line under a photo reads the way Medium sets one — centred
+     under the image it belongs to, not pinned to the left margin like a
+     paragraph. The TensorBoard figures nearby use the same `.fig` figure for
+     a caption that is actually a paragraph of analysis, and centring several
+     lines of running prose makes it ragged and harder to read — so this is
+     opt-in via `.fig--credit` rather than applied to every caption. */
+  .prose .fig--credit figcaption {
+    text-align: center;
+  }
   .prose hr { margin-block: 2.5em; }
 
   .prose h5 { font-size: var(--text-lg); margin-top: 1.7em; }
@@ -1068,8 +1077,10 @@
 
   /* --- Tables ---------------------------------------------------------
      Set like a spec sheet: a ruled header, hairlines between rows,
-     no vertical lines and no zebra striping. GFM emits inline
-     `style="text-align: …"` for alignment, so that works unaided.
+     no vertical lines and no zebra striping. GFM marks an aligned column
+     with an `align` attribute on every cell in it, headers included — not
+     inline `style`, whatever an earlier version of this comment claimed —
+     so a right- or centre-aligned column needs nothing further here.
      A real table rather than a block box, so it fills the measure and the
      header rule spans the full width, and so it keeps its table semantics.
 
@@ -1116,9 +1127,17 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--ink-faint);
-    text-align: left;
     border-bottom: 1px solid var(--rule-strong);
     padding: 0 1.5rem 0.65rem 0;
+  }
+  /* Left by default — a browser centres <th> text on its own, which would
+     read as a different alignment than the data underneath on every table
+     that does not specify one explicitly (most of them). `:not([align])` so
+     this only fills in the default: a column that GFM DID mark right or
+     centre keeps that alignment instead of being forced left along with
+     everything else, which is what a plain `text-align: left` here did. */
+  .prose thead th:not([align]) {
+    text-align: left;
   }
   .prose tbody td {
     border-bottom: 1px solid var(--rule);

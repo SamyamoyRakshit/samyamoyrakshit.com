@@ -261,7 +261,7 @@ uv run python -m transformer.scripts.app   # serves http://127.0.0.1:7860 (gradi
 
 The checkpoint path is set at the top of [`scripts/app.py`](https://github.com/SamyamoyRakshit/papers-from-scratch/blob/main/transformer/scripts/app.py); the sliders default to `beam=4, α=1.0` (the best-BLEU setting from Part 6).
 
-<figure class="fig">
+<figure class="fig fig--credit">
 
 ![Gradio demo — English → Bengali translation UI](images/gradio_demo.png)
 
@@ -810,7 +810,7 @@ lr = d_model**(-0.5) * min(step**(-0.5), step * warmup_steps**(-1.5))
 
 Real optimizer experiments from this project — a too-aggressive LR sends the loss diverging, versus a warmed-up schedule converging smoothly:
 
-<figure class="fig">
+<figure class="fig fig--credit">
 
 ![Overshooting LR — loss diverges](images/lr_overshoot.png)
 
@@ -822,7 +822,7 @@ Overshooting LR — loss diverges.
 
 </figure>
 
-<figure class="fig">
+<figure class="fig fig--credit">
 
 ![Smooth convergence with warmup](images/lr_smooth.png)
 

@@ -132,6 +132,45 @@ export default defineConfig({
       fallbacks: ['system-ui', 'Segoe UI', 'Helvetica Neue', 'Arial', 'sans-serif'],
     },
     /**
+     * Lora — the reading column of a blog post, and nothing else.
+     *
+     * The "no serif anywhere" rule this replaces for `.prose` came out of a
+     * survey of ~145 personal-site repos and 1,917 portfolios. That evidence
+     * is about PORTFOLIO pages, and it still holds for every one of them here.
+     * A 53-minute article is the other job, and reading the shipped CSS of the
+     * sites that do that job well gives a different answer:
+     *
+     *   Chip Huyen   font: 400 16px/1.5 "Lora", serif   — body AND headings
+     *   Medium       Charter for body, Söhne/Inter for UI only
+     *   Overreacted  Merriweather body, Montserrat headings
+     *   distill.pub  Georgia, serif
+     *
+     * versus the sans camp — Karpathy, Vicki Boykis (Verdana), Eugene Yan
+     * (Raleway), Stripe (Söhne) — which is where the short index pages sit.
+     * The split is not random: it is long-form reading against everything else.
+     * Applying the portfolio finding to the article was the same scope error
+     * the Tiro Bangla note further down describes.
+     *
+     * Lora rather than a "nicer" serif, on precedent: it is what Chip Huyen
+     * sets, and hers is the closest peer this site has — an ML engineer's
+     * technical long-form writing. It is drawn for screens, its x-height is
+     * large enough to hold up at a body size, and its moderate stroke contrast
+     * survives a dark theme, which a high-contrast display serif does not.
+     *
+     * Body text only. Headings stay Inter, which is what Medium and
+     * Overreacted both do, and which leaves the heading scale — 600 weight at
+     * -0.02em to -0.03em, tuned against Inter's metrics — untouched.
+     */
+    {
+      name: 'Lora',
+      cssVariable: '--f-serif',
+      provider: fontProviders.google(),
+      weights: [400, 500, 600, 700],
+      styles: ['normal', 'italic'],
+      subsets: ['latin'],
+      fallbacks: ['Charter', 'Georgia', 'Cambria', 'serif'],
+    },
+    /**
      * JetBrains Mono — figures, metadata, code, the specs strips.
      *
      * A face made to be compiled against rather than to decorate a label,

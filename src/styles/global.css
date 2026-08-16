@@ -43,9 +43,14 @@
      whole page is the generic look. Keep the distinction.
 
      Do not drift this hue back towards 240–260. */
-  --paper:        light-dark(oklch(0.9400 0.0026 95),  oklch(0.1750 0.0075 255));
-  --paper-raised: light-dark(oklch(0.9975 0.0008 95),  oklch(0.2200 0.0090 255));
-  --paper-sunken: light-dark(oklch(0.9020 0.0034 95),  oklch(0.1450 0.0065 255));
+  /* The dark grounds are deliberately NOT near-black, and the dark ink is
+     deliberately NOT near-white. See the note on --ink below: the pair used to
+     be #e6eaee on #0e1114, which measures 15.66:1 — more than double the AAA
+     threshold — and that is where dark-mode eye strain comes from, not from
+     too little contrast. Lifting the ground is half the fix. */
+  --paper:        light-dark(oklch(0.9400 0.0026 95),  oklch(0.2020 0.0080 255));
+  --paper-raised: light-dark(oklch(0.9975 0.0008 95),  oklch(0.2460 0.0095 255));
+  --paper-sunken: light-dark(oklch(0.9020 0.0034 95),  oklch(0.1720 0.0070 255));
 
   /* Code surface. Deliberately lighter than --paper-sunken in the light
      theme: syntax highlighting uses an external theme's colours, and its
@@ -53,7 +58,7 @@
      light. The block is still legible as a block because a hairline defines
      it — which is how every other container here works anyway.
      `npm run check:contrast` audits the real token colours against this. */
-  --code-bg:      light-dark(oklch(0.9700 0.0022 95), oklch(0.1550 0.0070 255));
+  --code-bg:      light-dark(oklch(0.9700 0.0022 95), oklch(0.1800 0.0075 255));
 
   /* Rules - the hairlines that carry the whole layout.
      `--rule` is decorative separation (exempt from WCAG 1.4.11).
@@ -64,10 +69,22 @@
 
   /* Ink - text, in three levels of insistence. Graphite rather than black:
      a blue-black holds its colour against a cool ground where true black
-     goes flat. */
-  --ink:          light-dark(oklch(0.2300 0.0230 258), oklch(0.9350 0.0070 250));
-  --ink-muted:    light-dark(oklch(0.4200 0.0210 258), oklch(0.7700 0.0090 250));
-  --ink-faint:    light-dark(oklch(0.4900 0.0190 258), oklch(0.6700 0.0100 250));
+     goes flat.
+
+     THE DARK INK IS NOT WHITE, ON PURPOSE. It was oklch(0.935) — #e6eaee — on
+     a #0e1114 ground, which measures 15.66:1. Every contrast rule this project
+     has is a floor (AA 4.5:1, AAA 7:1) and it is easy to read them as "more is
+     better". For dark text on a dark ground it is not: near-white on near-black
+     is what makes glyphs bloom and smear, badly enough to hurt to read for a
+     long stretch, and worse for the roughly one reader in three with an
+     astigmatism. The measured pair now lands near 12:1 — still comfortably
+     past AAA, out of the range that glows. Do not push either end back.
+
+     The light theme is untouched. Dark-on-light does not halate, so the
+     problem this solves does not exist there. */
+  --ink:          light-dark(oklch(0.2300 0.0230 258), oklch(0.8820 0.0075 250));
+  --ink-muted:    light-dark(oklch(0.4200 0.0210 258), oklch(0.7800 0.0090 250));
+  --ink-faint:    light-dark(oklch(0.4900 0.0190 258), oklch(0.7000 0.0100 250));
 
   /* Accent - ultramarine, the blue of drafting ink. Flat, never a gradient,
      and never decorative: it appears on hover, on focus, and on the current
@@ -180,12 +197,16 @@
   --color-on-accent:    var(--on-accent);
 
   /* Astro's Fonts API defines the raw stacks as `--f-*` (see astro.config.mjs).
-     One superfamily, two cuts: Plex Sans is read, Plex Mono is counted. The
+     Inter is read, JetBrains Mono is counted, Lora is read at length. The
      `--font-display` alias is kept so components do not all need editing when
      the heading face changes — today it is the same sans, set heavier. */
   --font-display: var(--f-sans);
   --font-body:    var(--f-sans);
   --font-mono:    var(--f-mono);
+
+  /* The reading column of a blog post only — see the note in astro.config.mjs.
+     Everything that is not running prose in an article stays on --font-body. */
+  --font-serif:   var(--f-serif);
 
   /* Bengali script — Tiro Bangla. Used by the epigraph and by nothing else.
      Inter has no Bengali glyphs, so any Bengali set in --font-body silently
@@ -784,13 +805,27 @@
      loosest leading, which is what made a paragraph read as a stack of
      fragments rather than as prose. 1.65 is still generous at the 79-character
      desktop line and no longer airy at the 43-character phone one. */
+  /* Running prose in an article is set in a book serif — the one place on the
+     site that is not Inter, and the reasoning is in astro.config.mjs. This is
+     the reading column and nothing else: not the index cards, not the summary,
+     not the metadata, and not the headings below. */
   .prose {
     max-width: var(--measure);
+    font-family: var(--font-serif);
     font-size: var(--text-read);
     line-height: 1.65;
     color: var(--ink);
   }
   .prose > * + * { margin-top: 1.4em; }
+  /* Headings stay on the sans, which is what Medium and Overreacted both do.
+     The heading scale is tuned against Inter's metrics — 600 at -0.02em to
+     -0.03em — and a serif at those settings is a different design. Keeping the
+     sans here is also what makes the serif read as "this is the part you
+     read", rather than as a wholesale change of face. */
+  .prose h1, .prose h2, .prose h3,
+  .prose h4, .prose h5, .prose h6 {
+    font-family: var(--font-display);
+  }
   .prose h2, .prose h3, .prose h4 { color: var(--ink); }
   .prose h2 {
     font-size: var(--text-2xl);

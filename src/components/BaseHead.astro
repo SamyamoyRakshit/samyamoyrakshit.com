@@ -107,7 +107,7 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
 
 <!-- The browser chrome matches the paper, in both themes -->
 <meta name="theme-color" content="#ecebe9" media="(prefers-color-scheme: light)" />
-<meta name="theme-color" content="#0e1114" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#14171a" media="(prefers-color-scheme: dark)" />
 
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -156,6 +156,16 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
 <Font cssVariable="--f-sans" preload />
 
 <Font cssVariable="--f-mono" />
+
+<!--
+  The reading serif. Declared everywhere and preloaded nowhere: it is used by
+  `.prose` alone, so only a blog post ever paints a glyph in it, and a preload
+  on the other five routes would be a download nothing on the page can use.
+  On a post it is the body text, so it is the one face where a swap is visible
+  — but preloading it here would mean preloading it site-wide, and the fix for
+  that belongs with `preloadBengali` above if it ever proves worth it.
+-->
+<Font cssVariable="--f-serif" />
 
 <!--
   Bengali. Declared on every page, downloaded on almost none: the @font-face

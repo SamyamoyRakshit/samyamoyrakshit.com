@@ -2,6 +2,7 @@
 import { render } from 'astro:content';
 import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
+import PostToc from '../../components/PostToc.astro';
 import {
   getBlogPosts,
   getSeries,
@@ -29,7 +30,7 @@ export async function getStaticPaths() {
 const { entry, next, prev } = Astro.props;
 const { title, description, pubDate, updatedDate, tags, cover, coverAlt, series } =
   entry.data;
-const { Content } = await render(entry);
+const { Content, headings } = await render(entry);
 
 const parts = series ? await getSeries(series.name) : [];
 ---
@@ -43,11 +44,21 @@ const parts = series ? await getSeries(series.name) : [];
   modifiedTime={updatedDate}
 >
   <article class="shell post">
-    <a href="/blog/" class="label post__back">
-      <span aria-hidden="true">&#8592;</span> Blog
-    </a>
+    <div class="post__bar">
+      <a href="/blog/" class="label post__back">
+        <span aria-hidden="true">&#8592;</span> Blog
+      </a>
+    </div>
 
+    {
+      /* The Contents control lives inside the header, not above it, so it
+         sits beside the title rather than in a row of its own. On a screen
+         with margin to spare it moves into that margin — see .toc__toggle
+         below — and on one without it, it just sits in normal flow, a line
+         above the title. */
+    }
     <header class="post__header">
+      <PostToc headings={headings} part="control" />
       <h1 class="post__title">{title}</h1>
 
       <div class="post__meta">
@@ -84,9 +95,25 @@ const parts = series ? await getSeries(series.name) : [];
             loading="eager"
             fetchpriority="high"
           />
+          {
+            /* The same text as the alt, made visible — the way Medium credits
+               a hero image instead of leaving the description for a screen
+               reader only. Both read from `coverAlt` rather than a second
+               field, since it is already written as a real caption
+               ("Figure 1 from Vaswani et al. (2017): …"), not just alt text. */
+            coverAlt && <figcaption>{coverAlt}</figcaption>
+          }
         </figure>
       )
     }
+
+    {
+      /* Under the title and the cover, which is where a contents list belongs
+         and where the hand-written one used to be. With JavaScript this is
+         lifted straight out to <body> and becomes the panel; this position is
+         what a reader without it gets. */
+    }
+    <PostToc headings={headings} part="panel" />
 
     <div class="prose post__body">
       <Content />
@@ -145,8 +172,54 @@ const parts = series ? await getSeries(series.name) : [];
 </Base>
 
 <style>
+  /* The reading column.
+     .shell is 78rem, but every block inside a post is capped at the measure,
+     so the article sat against the left edge with a third of the page empty
+     beside it. Narrowing .post to the measure centres it — `.shell` already
+     carries margin-inline: auto.
+
+     Two numbers, both set from measurement rather than taste. Ten
+     well-regarded technical blogs, measured at a 1898px viewport:
+
+       Karpathy 800px/113cpl · Chip Huyen 785/105 · Eugene Yan 720/96 ·
+       Lilian Weng 720/101 · Ciechanowski 704/81 · Comeau 686/81 ·
+       Anthropic 640/78 · Overreacted 632/84 · Simon Willison 560/78
+
+     None of them runs the text full-width, so this does not either. But the
+     body face here is 21px — larger than any of them — so the old 68ch gave
+     66 characters a line against their ~82 median, and the page read as a
+     ribbon on a wide screen. 72ch lands the column at ~817px and ~79cpl:
+     inside the peer range on both axes, and inside Butterick's 45–90.
+
+     The `+ 2 * --gutter` is the fix for the third of it: --gutter is .shell's
+     padding-inline, and with a plain `max-width: var(--measure)` it was being
+     subtracted from the measure rather than sitting outside it, so the column
+     was 88px narrower than the number said. Page chrome, not measure. */
   .post {
+    --measure: 72ch;
+    max-width: calc(var(--measure) + 2 * var(--gutter));
     padding-block: clamp(2rem, 1.2rem + 3vw, 4rem);
+  }
+
+  /* On a phone the column is whatever the screen leaves after the gutter, so
+     the gutter is the measure. --gutter is 20px there, which is set for cards
+     that need to look inset from the edge; a page of running text does not,
+     and 40px of the 390px available was going to margin. 16px is the median of
+     the blogs measured at that width (Comeau 16, Substack 16, Willison 15,
+     Weng 14, Karpathy 12) and buys four more characters a line.
+
+     Declared on .post rather than :root so it moves the reading column and
+     nothing else — the cards on /blog/ and the homepage keep their inset. It
+     inherits, so `.prose pre`'s full-bleed rule follows it automatically. */
+  @media (max-width: 30rem) {
+    .post {
+      --gutter: 1rem;
+    }
+  }
+
+  .post__bar {
+    display: flex;
+    align-items: center;
   }
 
   .post__back {
@@ -169,8 +242,81 @@ const parts = series ? await getSeries(series.name) : [];
     max-width: var(--measure);
   }
 
+  /* Below 80rem there is no margin to put it in — from 64rem the panel can
+     sit beside the article, but only by shifting the article over once it is
+     already open, and the toggle has to be reachable *before* that happens.
+
+     So it floats over the article instead, bottom-right, which is the one
+     place on a phone that is reliably empty: text starts at the left edge, and
+     the bottom corner is where a thumb already rests. It has to be pinned
+     rather than left in flow above the title — this post is a 53-minute read,
+     the moment a contents list is wanted is somewhere in the middle of it, and
+     in flow the control is thousands of pixels off-screen by then. That was
+     the whole point of pinning it on the desktop rail too.
+
+     `--paper-raised` and a card shadow rather than the bare bordered button it
+     is at the top of the page: it now sits ON the article rather than in a row
+     of its own, and a transparent control with body text sliding underneath it
+     is unreadable. */
+  @media (max-width: 79.99rem) {
+    :root[data-js] .post__header :global(.toc__toggle) {
+      position: fixed;
+      right: var(--gutter);
+      /* Clear of the iOS home indicator and Android gesture bar. */
+      bottom: calc(var(--gutter) + env(safe-area-inset-bottom, 0px));
+      /* Under the scrim (50) and the panel (60), so opening the contents
+         covers it rather than leaving it floating over the top. */
+      z-index: 40;
+      margin-bottom: 0;
+      background: var(--paper-raised);
+      box-shadow: var(--shadow-card);
+      white-space: nowrap;
+    }
+  }
+
+  /* From 80rem the margin beside the reading column is real before anything
+     is clicked — PostToc's rail lives in it unconditionally — so this is
+     where the toggle belongs too, in the same margin the rail itself opens
+     into. `position: fixed` rather than absolute to the header: the reader
+     is 40 minutes into a 55-minute post as often as they are at the top, and
+     a control anchored to the header scrolls away with it the moment they
+     move past the first screen. Fixed to the viewport, it stays reachable
+     for the whole read — the same guarantee the open panel already gets from
+     its own `position: fixed`. `0.9rem` from the edge matches the panel's own
+     inset at this width, so the two states — open and closed — line up. */
+  @media (min-width: 80rem) {
+    :root[data-js] .post__header :global(.toc__toggle) {
+      position: fixed;
+      top: calc(var(--header-h) + 1.5rem);
+      left: 0.9rem;
+      margin-bottom: 0;
+      white-space: nowrap;
+    }
+
+    /* The open panel physically covers this spot — its own background paints
+       over the toggle, so nothing looks wrong — but without this the button
+       stays in the tab order underneath it: focusable, invisible, reachable
+       only by chance. It is only for reopening the panel after the reader
+       closes it, so it has nothing to do while the panel is already open. */
+    :root[data-js] body[data-toc-open] .post__header :global(.toc__toggle) {
+      visibility: hidden;
+    }
+  }
+
+  /* Its own curve, not --text-4xl.
+     The ladder's top rungs climb steeply so a name can fill a screen, and a
+     post title is not a name — it is a sentence, and these run long
+     ("Rebuilding \"Attention Is All You Need\" From Scratch on a Mac M1 with
+     16GB of RAM"). At 390px --text-4xl resolved to 36px and took that title to
+     six lines, so the first screen of a 55-minute post was the title and
+     nothing else.
+
+     The desktop end is deliberately unchanged — 61px against the old 62px, a
+     difference nobody can see — so this only lifts the floor: 31px at 390px,
+     which brings the same title down to four lines and puts the opening
+     paragraph on the first screen. Fluid, so nothing steps at a breakpoint. */
   .post__title {
-    font-size: var(--text-4xl);
+    font-size: clamp(1.9375rem, 1.3125rem + 2.7778vw, 3.875rem);
     max-width: 20ch;
   }
 
@@ -194,10 +340,34 @@ const parts = series ? await getSeries(series.name) : [];
     margin-top: 2.5rem;
     max-width: var(--measure);
   }
+  /* Same reason as the thumbnail in PostRow: a portrait figure stretched to
+     the full measure is ~750px tall, so the reader gets a screenful of
+     picture before the first sentence. Cap the height and let the width
+     follow — width:auto plus the intrinsic width/height attributes is enough
+     for the browser to keep the proportions.
+
+     In px for the same reason the thumbnail's caps are, and it was the same
+     bug: in rem this read 30rem, so a reader with Android's text scaling at
+     150% got a 720px cover — half again as tall as intended, on the screen
+     with the least height. See the note in PostRow.astro. */
   .post__cover :global(img) {
+    display: block;
     border: 1px solid var(--rule);
     border-radius: var(--radius);
-    width: 100%;
+    width: auto;
+    max-width: 100%;
+    max-height: 480px;
+    margin-inline: auto;
+  }
+
+  /* Same treatment as `.fig--credit` in the article body — a short credit
+     line, centred under the picture rather than left against the margin. */
+  .post__cover figcaption {
+    margin-top: 0.7em;
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    color: var(--ink-faint);
+    text-align: center;
   }
 
   .post__body {
@@ -344,6 +514,113 @@ const parts = series ? await getSeries(series.name) : [];
     }
   }
 
+  /**
+   * Makes a table that is actually overflowing reachable from the keyboard.
+   *
+   * rehypeTableScroll (astro.config.mjs) wraps every Markdown table in a
+   * `.table-scroll` box, but most tables fit their column and that box does
+   * nothing. A scroll container that can only be scrolled by dragging is a
+   * dead end for anyone not using a pointer (WCAG 2.1.1), so the ones that
+   * genuinely scroll become focusable regions — and the ones that do not stay
+   * plain, because a landmark announcing "Table, scrollable" over a table that
+   * fits is worse than no landmark at all.
+   *
+   * Whether a table overflows depends on the width, so this re-runs on resize.
+   * A ResizeObserver on each box rather than a window listener: it fires when
+   * the box itself changes, which also covers a font finishing loading.
+   */
+  function syncScrollableTables() {
+    const boxes = document.querySelectorAll<HTMLElement>('.prose .table-scroll');
+
+    const sync = (box: HTMLElement) => {
+      // 1px of slack: sub-pixel column widths round up and would otherwise
+      // report every table as overflowing by a fraction.
+      if (box.scrollWidth > box.clientWidth + 1) {
+        box.setAttribute('tabindex', '0');
+        box.setAttribute('role', 'region');
+        box.setAttribute('aria-label', 'Table, scrollable');
+      } else {
+        box.removeAttribute('tabindex');
+        box.removeAttribute('role');
+        box.removeAttribute('aria-label');
+      }
+    };
+
+    for (const box of boxes) {
+      sync(box);
+      if (box.dataset.watched) continue;
+      box.dataset.watched = '';
+      new ResizeObserver(() => sync(box)).observe(box);
+    }
+  }
+
+  /**
+   * A copy button on every code block.
+   *
+   * The site's rule is that a copy button is for a string a person cannot
+   * reasonably select by hand — a token, a hash, a clone URL, a code block —
+   * and not for something short and selectable like an email address, where it
+   * only duplicates what the browser already does. These qualify twice over:
+   * they are long, they are multi-line, and since they now scroll rather than
+   * wrap, part of what you are trying to select is off the right-hand edge
+   * while you drag.
+   *
+   * Built here rather than in the Markdown pipeline because the button is
+   * useless without JavaScript, so there is nothing for the HTML to carry.
+   * The wrapper is added here for the same reason: `pre` is the scroll
+   * container, so a button positioned inside it would slide away with the code.
+   */
+  function addCopyButtons() {
+    const COPY =
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5.5A1.5 1.5 0 0 1 6.5 4H15"/></svg>';
+    const DONE =
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg>';
+
+    for (const pre of document.querySelectorAll<HTMLElement>('.prose pre')) {
+      if (pre.parentElement?.classList.contains('code-block')) continue;
+
+      const wrap = document.createElement('div');
+      wrap.className = 'code-block';
+      pre.replaceWith(wrap);
+      wrap.append(pre);
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'code-copy';
+      // The label carries the state, so the icon never has to be the only
+      // thing saying whether it worked.
+      button.innerHTML = `${COPY}<span class="sr-only">Copy code</span>`;
+
+      let revert: ReturnType<typeof setTimeout>;
+
+      button.addEventListener('click', async () => {
+        const code = pre.textContent ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+          button.innerHTML = `${DONE}<span class="sr-only">Copied</span>`;
+          button.dataset.copied = '';
+        } catch {
+          // Denied permission, or an insecure context. Say so rather than
+          // showing a tick for something that did not happen.
+          button.innerHTML = `${COPY}<span class="sr-only">Copying failed — select the code and copy it</span>`;
+        }
+        clearTimeout(revert);
+        revert = setTimeout(() => {
+          button.innerHTML = `${COPY}<span class="sr-only">Copy code</span>`;
+          delete button.dataset.copied;
+        }, 2200);
+      });
+
+      wrap.append(button);
+    }
+  }
+
   addHeadingAnchors();
-  document.addEventListener('astro:after-swap', addHeadingAnchors);
+  syncScrollableTables();
+  addCopyButtons();
+  document.addEventListener('astro:after-swap', () => {
+    addHeadingAnchors();
+    syncScrollableTables();
+    addCopyButtons();
+  });
 </script>

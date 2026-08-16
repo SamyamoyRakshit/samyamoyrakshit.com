@@ -1,0 +1,761 @@
+---
+import type { MarkdownHeading } from 'astro';
+
+/**
+ * A post's table of contents, as a panel that slides in from the right.
+ *
+ * WHY A PANEL AND NOT A LIST IN THE ARTICLE
+ *
+ * The Transformer post has 37 headings. Written out inline — which is how it
+ * started, hand-maintained in the Markdown — that is two full phone screens of
+ * links sitting between the opening paragraph and the first section, and it is
+ * only usable from the top of the page. On a 55-minute read the moment you
+ * want the contents is at minute 30, which is exactly when they have scrolled
+ * out of reach.
+ *
+ * WHY NOT A PERMANENT SIDE RAIL, WHICH IS THE OTHER OBVIOUS ANSWER
+ *
+ * Measured across the sites this post's readers use. Documentation — MDN,
+ * react.dev, docs.astro.build, tailwindcss.com — universally pins the contents
+ * to a rail and highlights the current section. Blogs mostly carry no contents
+ * at all: Stripe, Vercel, Google Research, OpenAI, Ciechanowski, distill.pub,
+ * Anthropic engineering and Jay Alammar all have none. The ones that do are
+ * the ones with posts this long — Chip Huyen (fixed, with scroll tracking),
+ * Lilian Weng (collapsible), Josh Comeau (sticky), transformer-circuits.
+ *
+ * A rail needs its own column, and this post's reading column is centred on
+ * purpose. Putting a rail beside it either shoves the text off-centre or waits
+ * for a 1400px viewport before it appears at all. The panel works at every
+ * width, which is what makes it the right shape here rather than a compromise.
+ *
+ * WHAT IT TAKES FROM THE RAIL PATTERN
+ *
+ * The part of the documentation rail that actually earns its place is not the
+ * rail — it is that the current section is marked. Without that a contents
+ * list answers "what is in this?"; with it, it also answers "where am I?",
+ * which on a piece this long is the more valuable question. So the panel
+ * tracks the scroll position and marks the section being read.
+ *
+ * WITHOUT JAVASCRIPT this renders as a plain list at the top of the post — the
+ * finished thing, not a dead end. Everything below keys off `:root[data-js]`,
+ * which BaseHead sets before paint, the same way the phone menu in Header does.
+ */
+interface Props {
+  headings: MarkdownHeading[];
+  /**
+   * Which half to render. The two are written in different places on purpose.
+   *
+   * With JavaScript the script moves the panel to <body> and none of this
+   * matters — but without it, the panel is a real block in the article and
+   * where it sits is the whole question. Rendering both halves together in the
+   * sticky row put a 2,000px-tall list inside a centred flex row, which threw
+   * "← Blog" down to the vertical middle of it and off the first screen; and
+   * moving the row below the title to compensate would put the contents above
+   * the heading they belong to. So the control goes in the row and the panel
+   * goes where a contents list belongs, under the title and the cover.
+   *
+   * Astro emits one copy of the styles and one copy of the script however many
+   * times a component is used, so the split costs nothing.
+   */
+  part: 'control' | 'panel';
+}
+
+const { headings, part } = Astro.props;
+
+/**
+ * h2 and h3 only. h4 and below are used inside sections for worked examples,
+ * and a contents list that descends to them stops being a map and becomes a
+ * second copy of the article.
+ */
+const entries = headings.filter((h) => h.depth === 2 || h.depth === 3);
+
+/**
+ * Under four entries there is nothing to navigate — the reader can see the
+ * whole shape of the piece by scrolling — and a control promising a contents
+ * list that turns out to hold three links is worse than no control. Empty
+ * states vanish here rather than render as a stub.
+ */
+const enough = entries.length >= 4;
+---
+
+{
+  enough && part === 'control' && (
+    <>
+      {/* The icon is a list, not a hamburger, and this is deliberate. The
+          masthead already carries three bare lines for the phone menu, and two
+          identical glyphs on one screen opening two different things is the
+          kind of detail that makes an interface feel unconsidered. Lines with
+          leading dots read as "contents" at 18px. The word is written out
+          beside it for the same reason Header's own note gives: a labelled
+          control measures better than a bare glyph, and here there is nothing
+          adjacent forcing icon-only consistency. */}
+      <button
+        type="button"
+        class="toc__toggle"
+        id="toc-toggle"
+        aria-expanded="false"
+        aria-controls="post-toc"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M4 6.5h.01M4 12h.01M4 17.5h.01" />
+          <path d="M9 6.5h11M9 12h11M9 17.5h7" />
+        </svg>
+        <span class="toc__toggle-text">Contents</span>
+      </button>
+    </>
+  )
+}
+
+{
+  enough && part === 'panel' && (
+    <>
+      {/* Rendered alongside the panel rather than in the control's half so the
+          two always move to <body> together — the script appends both, and a
+          scrim left behind in the article would dim nothing and cover
+          everything. */}
+      <div class="toc__scrim" data-toc-scrim />
+
+      <nav id="post-toc" class="toc__panel" aria-labelledby="toc-title">
+        <div class="toc__head">
+          <p class="label" id="toc-title">
+            Contents
+          </p>
+          <button
+            type="button"
+            class="toc__close"
+            data-toc-close
+            aria-label="Close contents"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M5.5 5.5l13 13M18.5 5.5l-13 13" />
+            </svg>
+          </button>
+        </div>
+
+        <ol class="toc__list">
+          {entries.map((h) => (
+            <li class:list={['toc__item', `toc__item--h${h.depth}`]}>
+              <a href={`#${h.slug}`} class="toc__link">
+                {h.text}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    </>
+  )
+}
+
+<style>
+  /* --- The control ---------------------------------------------------- */
+
+  /* Nothing without JavaScript: the list below is already on the page and
+     already readable, so a button that toggles nothing would be a lie. */
+  .toc__toggle {
+    display: none;
+    align-items: center;
+    gap: 0.5em;
+    min-height: 44px;
+    padding: 0 0.75rem 0 0.65rem;
+    background: none;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-sm);
+    color: var(--ink-muted);
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+      color var(--dur-hover) var(--ease),
+      border-color var(--dur-hover) var(--ease);
+  }
+  :root[data-js] .toc__toggle {
+    display: inline-flex;
+  }
+  .toc__toggle:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  /* --- The panel ------------------------------------------------------- */
+
+  /* The no-JavaScript shape: an ordinary block at the top of the post, which
+     is where the hand-written list used to sit. Everything that turns it into
+     a panel is scoped to [data-js] below. */
+  .toc__panel {
+    margin-top: 1.5rem;
+    padding: 1.1rem 1.25rem 1.25rem;
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+  }
+
+  .toc__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  #toc-title {
+    color: var(--ink-faint);
+  }
+
+  /* There is nothing to close when the panel is just a block on the page. */
+  .toc__close {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    margin-right: -0.6rem;
+    padding: 0;
+    background: none;
+    border: 0;
+    color: var(--ink-faint);
+    cursor: pointer;
+    transition: color var(--dur-hover) var(--ease);
+  }
+  .toc__close:hover {
+    color: var(--accent);
+  }
+
+  .toc__scrim {
+    display: none;
+  }
+
+  /* --- The list -------------------------------------------------------- */
+
+  .toc__list {
+    list-style: none;
+    margin: 0.9rem 0 0;
+    padding: 0;
+  }
+
+  .toc__item {
+    /* The rule that marks the current section. Painted transparent rather than
+       added on demand, so nothing shifts sideways when it appears. */
+    border-left: 2px solid transparent;
+  }
+
+  .toc__item--h3 .toc__link {
+    padding-left: 1.6rem;
+    color: var(--accent);
+    font-size: var(--text-sm);
+  }
+
+  /* Blue, which is a departure from `.prose a` (ink, with an accent underline)
+     and is right here for a reason the prose rule does not have to deal with:
+     every single item in this panel is a link. In running text the question a
+     reader has is "which of these words can I click", and colouring the answer
+     is what the underline does more quietly. In a contents list there is no
+     such question, so the colour is not identifying anything — it is doing the
+     job it does on `.nav__link:hover`, which is telling you the whole surface
+     is navigation. `accent on paper-raised` is an already-audited pair in
+     check-contrast.mjs, so this holds at AA without adding anything new. */
+  .toc__link {
+    display: block;
+    padding: 0.42rem 0.55rem 0.42rem 0.75rem;
+    border-radius: var(--radius-sm);
+    color: var(--accent);
+    font-size: var(--text-base);
+    line-height: 1.4;
+    text-decoration: none;
+    transition:
+      background-color var(--dur-hover) var(--ease),
+      color var(--dur-hover) var(--ease);
+  }
+  .toc__link:hover {
+    background: var(--accent-soft);
+  }
+
+  /* Where you are. This is the one thing worth taking from the documentation
+     rails — a contents list that only says what is in the piece answers half
+     the question on something this long. */
+  .toc__item[data-current] {
+    border-left-color: var(--accent);
+  }
+  .toc__item[data-current] > .toc__link {
+    background: var(--accent-soft);
+    font-weight: 600;
+  }
+
+  /* --- With JavaScript: the panel ------------------------------------- */
+
+  /* On the left, and it enters from the left.
+     It was on the right first, which is where a drawer usually goes because a
+     drawer is usually a menu you are dismissing. This is not that — it is the
+     structure of the document, and in a left-to-right language the structure
+     of a document is read down its left edge. Every documentation site
+     measured for this puts navigation there for the same reason. Coming in
+     from the right also meant it arrived travelling against the reading
+     direction, which is the wrong way for something you are about to read. */
+  :root[data-js] .toc__panel {
+    position: fixed;
+    /* Below the masthead, not behind it. Full-height would put the panel over
+       the wordmark, which sits inside a shell that starts well left of the
+       reading column on a wide screen. */
+    top: var(--header-h);
+    bottom: 0;
+    left: 0;
+    z-index: 60;
+    width: var(--toc-w);
+    margin: 0;
+    padding: 0 1.15rem 2rem;
+    border: 0;
+    border-right: 1px solid var(--rule);
+    border-radius: 0;
+    box-shadow: var(--shadow-lift);
+    overflow-y: auto;
+    /* A flick that reaches the end of this list must not carry on and scroll
+       the article underneath it. */
+    overscroll-behavior: contain;
+    /* Out of sight and out of the tab order until it is opened. The script
+       also sets `inert`, which is what actually takes it out; this is the
+       visual half. */
+    transform: translateX(-100%);
+    visibility: hidden;
+  }
+
+  /* The panel's own header stays while the sections move under it.
+     Thirty-six entries is four panel-heights of scrolling, and the way out —
+     the close button — was at the top of all of it. A list you have to scroll
+     back up to escape from is a small trap. It bleeds to the panel's edges so
+     the hairline under it runs the full width, and it carries the panel's own
+     ground so entries disappear behind it rather than showing through. */
+  :root[data-js] .toc__head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    margin-inline: -1.15rem;
+    padding: 0.95rem 1.15rem 0.8rem;
+    background: var(--paper-raised);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  :root[data-js] .toc__close {
+    display: inline-flex;
+  }
+
+  :root[data-js] .toc__scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    /* Derived from a token rather than a raw colour, so it follows the theme:
+       a dark wash in the light theme and a heavier one in the dark, because a
+       45% ink over a near-black page is barely a scrim at all. */
+    background: color-mix(in oklch, var(--ink) 45%, transparent);
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  :root[data-js] body[data-toc-open] .toc__panel {
+    transform: none;
+    visibility: visible;
+  }
+  :root[data-js] body[data-toc-open] .toc__scrim {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* Only transform and opacity, from the duration ladder, and the exit runs
+     faster than the entrance because nobody wants to wait to leave. The
+     un-animated state is the finished one: without this block the panel simply
+     appears and disappears, which is correct, just abrupt. */
+  @media (prefers-reduced-motion: no-preference) {
+    :root[data-js] .toc__panel {
+      transition:
+        transform var(--dur-exit) var(--ease-inout),
+        visibility 0s linear var(--dur-exit);
+    }
+    :root[data-js] .toc__scrim {
+      transition:
+        opacity var(--dur-exit) var(--ease),
+        visibility 0s linear var(--dur-exit);
+    }
+    :root[data-js] body[data-toc-open] .toc__panel {
+      transition:
+        transform var(--dur-page) var(--ease-inout),
+        visibility 0s;
+    }
+    :root[data-js] body[data-toc-open] .toc__scrim {
+      transition:
+        opacity var(--dur-page) var(--ease),
+        visibility 0s;
+    }
+  }
+
+  /* --- Wide: the panel moves into the margin that is already there ----- */
+
+  /* Above 80rem the panel stops being a drawer and becomes a column, and it
+     takes the empty space to the left of the reading column rather than
+     pushing the page over to make new space. The article does not move at all
+     — it is centred, and it stays exactly where it was.
+
+     That empty space is real and it is measured. `.post` is centred and its
+     width stops growing once --text-base caps, so the margin either side grows
+     with the viewport: 191px of it at 1280, 261px at 1440, 500px at 1920.
+     `calc((100vw - 60rem) / 2)` tracks that, always landing 12-20px short of
+     the article's own box:
+
+       1280 → 176px rail, article box at 191   1536 → 288 / 308
+       1366 → 203 / 229                        1680 → 360 / 380
+       1440 → 240 / 261                        1920 → 304 (capped) / 500
+
+     Below 80rem the margin is not wide enough to hold a list at all — at
+     1152 there are 135px — so the panel goes back to being a drawer over the
+     page, modal, closing when a section is picked. Which is what MDN,
+     react.dev and docs.astro.build all do at those widths, for this reason.
+
+     No scrim and no shadow up here: nothing is covered, so there is nothing to
+     dim and nothing to lift off. */
+  @media (min-width: 80rem) {
+    :root[data-js] .toc__panel {
+      width: clamp(11rem, calc((100vw - 60rem) / 2), 19rem);
+      /* Every pixel of a rail this narrow is a character on the line. */
+      padding-inline: 0.9rem;
+    }
+    :root[data-js] .toc__head {
+      margin-inline: -0.9rem;
+      padding-inline: 0.9rem;
+    }
+
+    /* One step down the scale, and the sub-entries lose most of their indent.
+       A drawer is 304px wide and can carry reading-sized type; a rail at 233px
+       cannot, and at the drawer's sizes "1.10 How the decoder works: masked
+       self-attention + cross-attention" took five lines. Two things follow
+       from that: the list stops being scannable, and thirty-six entries at
+       four lines each is a lot of scrolling for a map. --text-sm and --text-xs
+       bring the longest entry to three lines. The register is right too — a
+       navigation rail is interface, not prose, and it should not be set at the
+       same size as the article beside it. */
+    :root[data-js] .toc__link {
+      padding-block: 0.34rem;
+      font-size: var(--text-sm);
+    }
+    :root[data-js] .toc__item--h3 .toc__link {
+      padding-left: 1.15rem;
+      font-size: var(--text-xs);
+    }
+
+    /* Open on arrival, because up here it costs the article nothing.
+       The margin is empty either way, so leaving the map folded up inside it
+       and making every reader find a button first is asking for work in
+       exchange for nothing. No documentation site with room for a rail starts
+       with it collapsed.
+
+       Done in CSS rather than by the script setting the attribute, so the
+       panel is in place at first paint instead of arriving a moment after it.
+       `[data-toc-ready]` is the handover: the script sets it in the same
+       synchronous block as `data-toc-open`, and from then on that one
+       attribute is in charge — otherwise this rule would keep the panel
+       visible after the reader closed it. */
+    :root[data-js]:not([data-toc-ready]) .toc__panel {
+      transform: none;
+      visibility: visible;
+      box-shadow: none;
+    }
+
+    /* Once the script takes over it opens the panel the same way a drawer
+       opens — by setting `data-toc-open` on the body — and that general rule
+       also lights up the scrim and the lift shadow, both meant for a panel
+       covering the page. Up here nothing is covered, so both are switched
+       back off for the open state too, not just the pre-ready one above. */
+    :root[data-js] body[data-toc-open] .toc__scrim {
+      display: none;
+    }
+    :root[data-js] body[data-toc-open] .toc__panel {
+      box-shadow: none;
+    }
+  }
+
+  /* --- Between: beside the article, by making room for it -------------- */
+
+  /* 64rem to 80rem is the band where the contents can sit beside the article
+     but the margin cannot hold them — 135px of margin at 1152. The choice is
+     to give up and cover the page, or to move the article over. Moving it is
+     better: the reader asked for the contents, and a column narrowed by 240px
+     is still a column, while a panel over the top of it is not readable at
+     all.
+
+     So here it behaves the same way as the rail — not modal, stays put when a
+     section is picked — but it is not open on arrival, because unlike the rail
+     it costs the article width, and that is not a decision to make for someone
+     who has not asked. 15rem rather than the drawer's 19rem for the same
+     reason: this is width taken from the reading column. */
+  @media (min-width: 64rem) and (max-width: 79.99rem) {
+    :root[data-js] body[data-toc-open] {
+      padding-inline-start: 15rem;
+    }
+    :root[data-js] body[data-toc-open] .toc__panel {
+      width: 15rem;
+      box-shadow: none;
+    }
+    :root[data-js] body[data-toc-open] .toc__scrim {
+      display: none;
+    }
+    :root[data-js] .toc__link {
+      padding-block: 0.34rem;
+      font-size: var(--text-sm);
+    }
+    :root[data-js] .toc__item--h3 .toc__link {
+      padding-left: 1.15rem;
+      font-size: var(--text-xs);
+    }
+  }
+
+  /* The list is the whole content of the panel, so it can afford to be a
+     little larger than it is as a block on the page. */
+  :root[data-js] .toc__list {
+    margin-top: 1.1rem;
+  }
+</style>
+
+<script>
+  /**
+   * The contents panel.
+   *
+   * Two jobs: open and close it as a modal, and keep the entry for the section
+   * being read marked.
+   *
+   * The panel is moved to <body> on init. It is authored inside the article so
+   * that a reader without JavaScript gets it in a sensible place, but a modal
+   * has to be able to make the rest of the page `inert`, and it cannot do that
+   * from inside the thing it is inerting. Moving it is the whole reason `inert`
+   * can be used here instead of a hand-written focus trap — which is the usual
+   * source of keyboard bugs in a drawer like this.
+   */
+  function initToc() {
+    const toggle = document.getElementById('toc-toggle');
+    const panel = document.getElementById('post-toc');
+    const scrim = document.querySelector<HTMLElement>('[data-toc-scrim]');
+    if (!toggle || !panel || !scrim) return;
+    if (panel.dataset.ready !== undefined) return;
+    panel.dataset.ready = '';
+
+    // Out of the article, so the article can be inerted without it.
+    document.body.append(scrim, panel);
+
+    const closeButton = panel.querySelector<HTMLElement>('[data-toc-close]');
+    // Everything the panel has to switch off while it is open. Captured now
+    // rather than at open time so the panel and scrim are never in the list.
+    const rest = [...document.body.children].filter((el) => el !== panel && el !== scrim);
+
+    const isOpen = () => document.body.hasAttribute('data-toc-open');
+
+    /* The two questions the layout answers, and the only two the script asks.
+
+       `beside`: is the panel sitting next to the article rather than on top of
+       it? If it is, it is not modal, nothing is inerted, and it stays put when
+       a section is picked, because the reader can see both. If it is not, it
+       is a drawer: modal, and it closes on the way to the section, since
+       leaving it up would mean tapping a heading and watching nothing happen.
+
+       `inMargin`: is there enough empty margin to hold it without moving the
+       article? Only then is it open on arrival — it is free there. Both
+       numbers match media queries in the stylesheet above. */
+    const beside = window.matchMedia('(min-width: 64rem)');
+    const inMargin = window.matchMedia('(min-width: 80rem)');
+
+    const open = () => {
+      document.body.setAttribute('data-toc-open', '');
+      toggle.setAttribute('aria-expanded', 'true');
+      panel.removeAttribute('inert');
+
+      if (!beside.matches) {
+        for (const el of rest) el.setAttribute('inert', '');
+        // Focus is pulled in only when the panel is a modal. Pinned open it is
+        // one more region of an ordinary page, and stealing focus from
+        // whatever the reader was doing would be wrong.
+        closeButton?.focus();
+      }
+
+      /* Open where the reader is, not at the top.
+         Thirty-six entries is four panel-heights. Someone who opens this at
+         minute forty is asking "what is near me" at least as often as "what is
+         in this", and a list that always starts at "Introduction" answers only
+         the second. `center` rather than `start` so the sections either side
+         are visible too — the ones they are most likely to want. */
+      const here = panel.querySelector<HTMLElement>('[data-current]');
+      here?.scrollIntoView({ block: 'center', behavior: 'instant' });
+    };
+
+    const close = () => {
+      document.body.removeAttribute('data-toc-open');
+      toggle.setAttribute('aria-expanded', 'false');
+      for (const el of rest) el.removeAttribute('inert');
+      panel.setAttribute('inert', '');
+    };
+
+    /* Crossing the breakpoint with the panel open changes what it is. Going
+       narrow, an un-inerted page behind a covering panel is a keyboard trap;
+       going wide, a page left inert is unusable. Re-applying the open state is
+       the whole fix. */
+    beside.addEventListener('change', () => {
+      if (isOpen()) open();
+    });
+
+    /* Hand over from the CSS default.
+       At rail widths the stylesheet has already painted the panel open, so
+       this adopts that state rather than starting from closed and flashing it
+       shut. `data-toc-ready` is what switches the stylesheet's default rule
+       off, and it is set immediately after, in the same block, so there is no
+       frame in between where the two disagree. */
+    if (inMargin.matches) open();
+    else panel.setAttribute('inert', '');
+    document.documentElement.setAttribute('data-toc-ready', '');
+
+    toggle.addEventListener('click', () => (isOpen() ? close() : open()));
+    closeButton?.addEventListener('click', () => {
+      close();
+      // `preventScroll` because from 80rem the toggle is fixed to the
+      // viewport and always onscreen — a plain `.focus()` still asks the
+      // browser to scroll it into view regardless, which is what was
+      // dragging the reader back to the top of the page on close.
+      toggle.focus({ preventScroll: true });
+    });
+    scrim.addEventListener('click', () => {
+      close();
+      // `preventScroll` because from 80rem the toggle is fixed to the
+      // viewport and always onscreen — a plain `.focus()` still asks the
+      // browser to scroll it into view regardless, which is what was
+      // dragging the reader back to the top of the page on close.
+      toggle.focus({ preventScroll: true });
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && isOpen()) {
+        close();
+        // `preventScroll` because from 80rem the toggle is fixed to the
+        // viewport and always onscreen — a plain `.focus()` still asks the
+        // browser to scroll it into view regardless, which is what was
+        // dragging the reader back to the top of the page on close.
+        toggle.focus({ preventScroll: true });
+      }
+    });
+
+    /* Picking a section closes the panel only when the panel is covering the
+       article. Pinned open beside it, it stays — reading with the contents up
+       is the reader's call to make, and the only way to unmake it is the
+       control they used to open it.
+
+       Focus is not pulled back to the button either way: the browser is moving
+       it to the heading, which is where they asked to go. */
+    for (const link of panel.querySelectorAll('.toc__link')) {
+      link.addEventListener('click', () => {
+        if (!beside.matches) close();
+      });
+    }
+
+    /* --- Where am I ---------------------------------------------------
+       The current entry is the last heading whose top has passed under the
+       masthead. Read from a cached list of offsets and recomputed on resize,
+       rather than measured per scroll event: 37 headings is 37 layout reads a
+       frame otherwise, and layout reads during a scroll are what makes a page
+       feel heavy.
+
+       A plain scroll listener rather than an IntersectionObserver. The
+       observer version is cheaper but answers "which headings are on screen",
+       and between two headings the honest answer is none of them — which
+       leaves the mark either stuck on the last one to leave or blank. This
+       asks the question the reader is actually asking. */
+    const items = [...panel.querySelectorAll<HTMLElement>('.toc__item')];
+    const targets = items.map((item) => {
+      const href = item.querySelector('a')?.getAttribute('href') ?? '';
+      return document.getElementById(decodeURIComponent(href.slice(1)));
+    });
+
+    let offsets: number[] = [];
+    let current = -1;
+    let queued = false;
+
+    const measure = () => {
+      const scrolled = window.scrollY;
+      offsets = targets.map((el) =>
+        el ? el.getBoundingClientRect().top + scrolled : Infinity
+      );
+    };
+
+    const mark = () => {
+      queued = false;
+      // The line the masthead sits on, plus a little, is what counts as "read".
+      const line =
+        window.scrollY +
+        parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop || '0') +
+        8;
+
+      let next = -1;
+      for (let i = 0; i < offsets.length; i += 1) {
+        if (offsets[i] <= line) next = i;
+        else break;
+      }
+
+      // At the very foot of the page the last section may be too short to ever
+      // cross the line, so nothing would mark it.
+      if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 4) {
+        next = offsets.length - 1;
+      }
+
+      if (next === current) return;
+
+      if (current >= 0) {
+        items[current].removeAttribute('data-current');
+        items[current].querySelector('a')?.removeAttribute('aria-current');
+      }
+      if (next >= 0) {
+        items[next].setAttribute('data-current', '');
+        // "location", not "true": this is where the reader is inside the
+        // document, which is exactly what that value is for.
+        items[next].querySelector('a')?.setAttribute('aria-current', 'location');
+      }
+      current = next;
+    };
+
+    const schedule = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(mark);
+    };
+
+    measure();
+    mark();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener(
+      'resize',
+      () => {
+        measure();
+        schedule();
+      },
+      { passive: true }
+    );
+    // Images and fonts landing after first paint move every heading below them.
+    window.addEventListener('load', () => {
+      measure();
+      schedule();
+    });
+  }
+
+  initToc();
+  document.addEventListener('astro:after-swap', initToc);
+</script>

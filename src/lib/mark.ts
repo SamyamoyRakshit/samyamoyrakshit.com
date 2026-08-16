@@ -138,7 +138,7 @@ export interface IconColours {
  */
 export const ICON_THEME: Record<'light' | 'dark', IconColours> = {
   light: { paper: '#ecebe9', ink: '#161d28', accent: '#324ebb' },
-  dark: { paper: '#0e1114', ink: '#e6eaee', accent: '#8bb2f3' },
+  dark: { paper: '#14171a', ink: '#d4d9dd', accent: '#8bb2f3' },
 };
 
 /**

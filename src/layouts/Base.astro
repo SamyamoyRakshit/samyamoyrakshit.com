@@ -118,4 +118,41 @@ const props = Astro.props;
 
   markExternalLinks();
   document.addEventListener('astro:after-swap', markExternalLinks);
+
+  /**
+   * Skip the page fade inside Facebook's and Instagram's in-app browsers.
+   *
+   * The cross-document view transition in global.css stalls there. Both halves
+   * of it use `both` fill, so a stalled hand-off leaves the old page already
+   * faded to nothing and the new one not yet faded in — both invisible. The
+   * reader gets a frozen empty frame and has to background the app and come
+   * back before the page they asked for appears. It loaded the whole time; it
+   * was never painted.
+   *
+   * Confirmed as ours rather than theirs by elimination: other sites navigate
+   * smoothly in the same browser, and the scroll-driven reveal — the site's
+   * other animation, and the one that puts six whole homepage sections at
+   * `opacity: 0` until it resolves — works there, since the homepage renders.
+   * The page fade is the only thing this site does on navigation, and almost
+   * nothing else on the web does it at all.
+   *
+   * `skipTransition()` is the browser's own opt-out, so no snapshot is taken
+   * and the page paints the ordinary way. The fade is untouched everywhere it
+   * works, which is everywhere else.
+   *
+   * Sniffing the user agent, which is the wrong tool for almost everything —
+   * but what is being detected IS one browser's bug, and a bug has no feature
+   * to test for. FBAN/FBAV/FB_IAB cover Facebook on both platforms; Instagram
+   * sets its own token. If this ever stops being needed, delete the whole
+   * block: the fade returns by itself.
+   */
+  if (/FBAN|FBAV|FB_IAB|Instagram/i.test(navigator.userAgent)) {
+    const skip = (event: Event) => {
+      (
+        event as Event & { viewTransition?: { skipTransition(): void } }
+      ).viewTransition?.skipTransition();
+    };
+    window.addEventListener('pageswap', skip);
+    window.addEventListener('pagereveal', skip);
+  }
 </script>

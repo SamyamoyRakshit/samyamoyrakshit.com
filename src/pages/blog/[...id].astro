@@ -44,22 +44,21 @@ const parts = series ? await getSeries(series.name) : [];
   modifiedTime={updatedDate}
 >
   <article class="shell post">
-    {
-      /* The article's own bar: where you came from on the left, where you can
-         go inside the piece on the right. It sticks under the masthead once
-         there is a contents panel to open, because a control for jumping
-         around a 55-minute read is worth nothing if it only exists at the top
-         of it. On a post short enough not to have contents it is a plain row
-         and does not stick — one line of "← Blog" is not worth pinning. */
-    }
     <div class="post__bar">
       <a href="/blog/" class="label post__back">
         <span aria-hidden="true">&#8592;</span> Blog
       </a>
-      <PostToc headings={headings} part="control" />
     </div>
 
+    {
+      /* The Contents control lives inside the header, not above it, so it
+         sits beside the title rather than in a row of its own. On a screen
+         with margin to spare it moves into that margin — see .toc__toggle
+         below — and on one without it, it just sits in normal flow, a line
+         above the title. */
+    }
     <header class="post__header">
+      <PostToc headings={headings} part="control" />
       <h1 class="post__title">{title}</h1>
 
       <div class="post__meta">
@@ -210,44 +209,9 @@ const parts = series ? await getSeries(series.name) : [];
     }
   }
 
-  /* Sticky only when it carries the contents control, and only with the script
-     that makes that control do anything. `:has()` is the test, so the rule and
-     the reason cannot drift apart: no panel, no reason to pin the row.
-
-     It bleeds to the edges of .post and paints --paper, because a sticky row
-     over transparent ground has article text sliding through it. Below the
-     masthead in the stack (20) and well below the panel itself (60). */
-  /* Both controls sit at the left end, and the right end is left empty.
-
-     The Contents button was at the far right while the panel it opens comes in
-     from the far left, so the thing you pressed and the thing that happened
-     were at opposite ends of the screen. A control belongs on the side of the
-     effect it causes — pinned open on a wide screen it is a sidebar toggle,
-     and a sidebar toggle sits against its sidebar.
-
-     "← Blog" keeps the first position rather than being swapped to the right
-     to rebalance the row. It is the back link, top-left is where a back link
-     is looked for, and a bar that is honestly empty on one side is better than
-     one balanced by putting a familiar control somewhere unfamiliar. */
   .post__bar {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
-    /* Enough that a bordered button does not look stuck to the words beside
-       it — the back link has no box of its own, so the two would otherwise
-       read as one control at 390px. */
-    gap: clamp(1rem, 0.6rem + 1.4vw, 1.5rem);
-  }
-
-  :root[data-js] .post__bar:has(.toc__toggle) {
-    position: sticky;
-    top: var(--header-h);
-    z-index: 10;
-    min-height: var(--post-bar-h);
-    margin-inline: calc(-1 * var(--gutter));
-    padding-inline: var(--gutter);
-    background: var(--paper);
-    border-bottom: 1px solid var(--rule);
   }
 
   .post__back {
@@ -264,10 +228,47 @@ const parts = series ? await getSeries(series.name) : [];
   }
 
   .post__header {
+    position: relative;
     margin-top: 1.5rem;
     padding-bottom: 1.75rem;
     border-bottom: 1px solid var(--rule);
     max-width: var(--measure);
+  }
+
+  /* Below 80rem, in flow — a line above the title. There is nowhere else for
+     it: from 64rem the panel itself can already sit beside the article, but
+     only by shifting the article over once it opens (see PostToc's own
+     "beside, by making room" block), and the toggle has to be reachable
+     *before* that happens. Placing it in a margin that only exists after the
+     reader has already clicked it is a control they can never find. */
+  :root[data-js] .post__header :global(.toc__toggle) {
+    margin-bottom: 1rem;
+  }
+
+  /* From 80rem the margin beside the reading column is real before anything
+     is clicked — PostToc's rail lives in it unconditionally — so this is
+     where the toggle belongs too: next to the thing it is a contents list
+     *for*, not in a row above it. `right: 100%` finds the header's own left
+     edge regardless of how wide "Contents" renders, so nothing here has to
+     duplicate the width math the rail already does. */
+  @media (min-width: 80rem) {
+    :root[data-js] .post__header :global(.toc__toggle) {
+      position: absolute;
+      top: 0;
+      right: 100%;
+      margin-right: 1rem;
+      margin-bottom: 0;
+      white-space: nowrap;
+    }
+
+    /* The open panel physically covers this spot — its own background paints
+       over the toggle, so nothing looks wrong — but without this the button
+       stays in the tab order underneath it: focusable, invisible, reachable
+       only by chance. It is only for reopening the panel after the reader
+       closes it, so it has nothing to do while the panel is already open. */
+    :root[data-js] body[data-toc-open] .post__header :global(.toc__toggle) {
+      visibility: hidden;
+    }
   }
 
   /* Its own curve, not --text-4xl.

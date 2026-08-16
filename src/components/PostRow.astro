@@ -44,51 +44,85 @@ const Heading = level;
           read. An unlabelled wall of text is the thing people bounce off. */
       }
       <span class="label post-row__time">{readingTime(entry.body)}</span>
-      {
-        tags.length > 0 && (
-          <ul class="post-row__tags">
-            {/* Each tag goes to its own page. Safe inside a card whose whole
-              surface is already a link: global.css gives `.row a:not(.row-link)`
-              a z-index above the .row-link overlay, so these stay clickable and
-              the rest of the card still opens the post. */}
-            {tags.map((tag) => (
-              <li>
-                <a href={`/blog/tags/${tagSlug(tag)}/`} class="tag tag-link">
-                  {tag}
-                </a>
-              </li>
-            ))}
-          </ul>
-        )
-      }
     </div>
-  </div>
 
-  {
-    cover && (
-      <a href={href} class="post-row__thumb" tabindex="-1" aria-hidden="true">
-        <Image src={cover} alt={coverAlt ?? ''} width={280} densities={[1, 2]} />
-      </a>
-    )
-  }
+    {
+      tags.length > 0 && (
+        <ul class="post-row__tags">
+          {/* Each tag goes to its own page. Safe inside a card whose whole
+            surface is already a link: global.css gives `.row a:not(.row-link)`
+            a z-index above the .row-link overlay, so these stay clickable and
+            the rest of the card still opens the post. */}
+          {tags.map((tag) => (
+            <li>
+              <a href={`/blog/tags/${tagSlug(tag)}/`} class="tag tag-link">
+                {tag}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    {
+      cover && (
+        <a href={href} class="post-row__thumb" tabindex="-1" aria-hidden="true">
+          <Image src={cover} alt={coverAlt ?? ''} width={280} densities={[1, 2]} />
+        </a>
+      )
+    }
+  </div>
 </article>
 
 <style>
-  .post-row {
+  /* The card is just chrome now — .post-row__main does the layout, because
+     the thumbnail moved inside it (see below). One child, so no grid columns
+     needed here. */
+
+  /* A grid, not the flex row this used to be, so the thumbnail can be placed
+     by name instead of by source order. Mobile-first: title, description,
+     meta and tags each get their own row in a single column. When a cover
+     exists, `:has()` reassigns the layout — see the two variants below. */
+  .post-row__main {
+    display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 0.6rem 1.25rem;
+    grid-template-areas: 'title' 'desc' 'meta' 'tags';
+    align-items: start;
   }
 
-  /* `auto`, not a fixed column: the frame is only as wide as the picture
-     needs, so a portrait figure gives its unused width back to the text
-     instead of sitting in the middle of an empty 12rem lane. */
+  /* Medium's mobile list puts a small, uncropped thumbnail beside the byline
+     rather than giving it a full-width row of its own — the version this
+     replaced put a 200×120 picture below the tags, which is a whole extra
+     screenful of scroll for a card that is otherwise four lines of text. The
+     thumbnail rides next to the date/read-time line instead; tags stay
+     full-width below both, since a wrapped tag list next to a shrinking
+     picture would fight it for room. */
+  .post-row__main:has(.post-row__thumb) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'title title' 'desc desc' 'meta thumb' 'tags tags';
+    column-gap: 0.75rem;
+  }
+
+  .row-title {
+    grid-area: title;
+  }
+
+  /* `auto`, not a fixed column, on the desktop variant below: the frame is
+     only as wide as the picture needs, so a portrait figure gives its unused
+     width back to the text instead of sitting in the middle of an empty
+     12rem lane. From 60rem the thumbnail goes back to spanning the whole
+     card at the right, the way it always has — there is a whole empty
+     column to fill there, so the small byline-height version would just
+     leave it half empty. */
   @media (min-width: 60rem) {
-    .post-row:has(.post-row__thumb) {
-      grid-template-columns: minmax(0, 1fr) auto;
+    .post-row__main:has(.post-row__thumb) {
+      grid-template-areas: 'title thumb' 'desc thumb' 'meta thumb' 'tags thumb';
+      column-gap: 1.25rem;
     }
   }
 
   .post-row__desc {
+    grid-area: desc;
     margin-top: 0.5rem;
     color: var(--ink-muted);
     max-width: 56ch;
@@ -98,6 +132,7 @@ const Heading = level;
   /* Date, cost, subject — the three things somebody uses to decide, on one
      line rather than scattered around the row. */
   .post-row__meta {
+    grid-area: meta;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -111,11 +146,12 @@ const Heading = level;
   }
 
   .post-row__tags {
+    grid-area: tags;
     display: flex;
     flex-wrap: wrap;
     gap: 0.4rem;
     list-style: none;
-    margin: 0;
+    margin: 0.6rem 0 0;
     padding: 0;
   }
 
@@ -145,25 +181,25 @@ const Heading = level;
      picture's visual weight, so both sides of it belong in the same units the
      image's own intrinsic size is in.
 
-     Below 60rem it is capped *shorter* than on the desktop, which looks
-     backwards and is not. Here the frame sits under the text in one column, so
-     its height is pure added scroll on the screen with the least of it; on the
-     desktop it sits beside the text in a column that is otherwise empty. The
-     phone cap used to be the larger of the two — 18rem/12rem against
-     12rem/10rem — which is the same mistake in slower motion. */
+     Below 60rem it now rides beside the meta line instead of taking a row of
+     its own — see `.post-row__main:has(.post-row__thumb)` above — so it is
+     capped much smaller there, closer to an avatar than a figure. It grows
+     back to the desktop size once it has the whole right-hand column to
+     itself. */
   .post-row__thumb {
+    grid-area: thumb;
     display: block;
     width: fit-content;
+    align-self: center;
     border: 1px solid var(--rule);
     border-radius: var(--radius-sm);
     overflow: hidden;
-    margin-top: 1rem;
   }
   .post-row__thumb img {
     display: block;
     width: auto;
-    max-width: 200px;
-    max-height: 120px;
+    max-width: 64px;
+    max-height: 64px;
     transition: transform var(--dur-reveal) var(--ease);
   }
   .row:hover .post-row__thumb img {

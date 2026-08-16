@@ -7,13 +7,37 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
   X-Frame-Options: DENY
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://*.facebook.com https://*.facebook.net https://*.fbcdn.net https://*.instagram.com https://*.cdninstagram.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://*.facebook.com https://*.facebook.net https://*.fbcdn.net https://*.instagram.com https://*.cdninstagram.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
 
 # Note on 'unsafe-inline' in script-src: the theme is applied by a small inline
 # script that must run before first paint, and a static site has no server to
 # mint a per-request nonce. The policy still blocks every external script
 # origin, which is the attack this site is realistically exposed to. If that
 # ever stops being good enough, move to hash-based CSP.
+
+# Note on the Meta domains in script-src and connect-src: Facebook and
+# Instagram do not hand a link to the phone's browser. They open it in their
+# own, and inject their own JavaScript into whatever page it loads — code that
+# wraps every link so a tap can be recorded before the page changes. With this
+# policy at 'self' the recording half was refused, the wrapper stopped, and the
+# navigation it was meant to trigger never ran: inside those two apps every
+# link on the site was dead, while the same links worked in Chrome, in X and in
+# LinkedIn, which open a real browser instead. Typing a URL by hand worked
+# there too, which is what narrowed it to the tap rather than the page.
+#
+# This allowance is unused everywhere else. The site loads no third-party
+# script, font or image, and its own JavaScript makes no cross-origin request
+# at all, so no browser but Meta's will ever ask for one of these hosts. It
+# also grants Meta nothing new: a browser injecting a script into a page it is
+# rendering is outside what a page's own policy can refuse, so their code runs
+# with or without this line — the line only lets it finish. What it costs is a
+# slice of the safety net, since a script injected into this site by an
+# attacker could now reach those hosts. Every other origin is still refused.
+#
+# Both directives are listed because it was never established which of the two
+# was the fatal one, and one deploy to test beat three. Do not narrow or remove
+# this without tapping a link inside the Instagram app afterwards — nothing in
+# `npm run verify`, and no desktop browser, can see this break.
 
 # Fonts and images are content-hashed by the build, so they can be cached hard.
 /_astro/*

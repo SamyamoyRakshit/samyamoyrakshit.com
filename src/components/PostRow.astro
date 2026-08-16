@@ -131,7 +131,26 @@ const Heading = level;
      The frame is `fit-content`, so it hugs whatever shape comes out of that.
      A fixed box was tried and is wrong in both directions: `contain` leaves
      bars down the sides of a portrait figure, and `cover` crops a diagram,
-     which throws away the half that carried the point. */
+     which throws away the half that carried the point.
+
+     **The caps are in px, and that is deliberate — they were in rem and it was
+     a bug.** Chrome on Android has an accessibility text-scaling slider that
+     raises the default font size, which is what `1rem` resolves to, so every
+     rem length on the page grew with it. Measured at 390px with the slider at
+     150%: the thumbnail went 173×192 → 260×288 inside a card that had itself
+     shrunk to 330px, because the bigger type pushed the padding out. The
+     picture ate the card, and it only ever happened on a phone, which is why
+     it took a screenshot to find. A reader asking for larger *text* has not
+     asked for a larger *picture*, and the cap is a statement about the
+     picture's visual weight, so both sides of it belong in the same units the
+     image's own intrinsic size is in.
+
+     Below 60rem it is capped *shorter* than on the desktop, which looks
+     backwards and is not. Here the frame sits under the text in one column, so
+     its height is pure added scroll on the screen with the least of it; on the
+     desktop it sits beside the text in a column that is otherwise empty. The
+     phone cap used to be the larger of the two — 18rem/12rem against
+     12rem/10rem — which is the same mistake in slower motion. */
   .post-row__thumb {
     display: block;
     width: fit-content;
@@ -143,8 +162,8 @@ const Heading = level;
   .post-row__thumb img {
     display: block;
     width: auto;
-    max-width: 18rem;
-    max-height: 12rem;
+    max-width: 200px;
+    max-height: 120px;
     transition: transform var(--dur-reveal) var(--ease);
   }
   .row:hover .post-row__thumb img {
@@ -162,8 +181,8 @@ const Heading = level;
       margin-top: 0.35rem;
     }
     .post-row__thumb img {
-      max-width: 12rem;
-      max-height: 10rem;
+      max-width: 192px;
+      max-height: 160px;
     }
   }
 

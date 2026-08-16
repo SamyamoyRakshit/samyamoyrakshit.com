@@ -344,14 +344,19 @@ const parts = series ? await getSeries(series.name) : [];
      the full measure is ~750px tall, so the reader gets a screenful of
      picture before the first sentence. Cap the height and let the width
      follow — width:auto plus the intrinsic width/height attributes is enough
-     for the browser to keep the proportions. */
+     for the browser to keep the proportions.
+
+     In px for the same reason the thumbnail's caps are, and it was the same
+     bug: in rem this read 30rem, so a reader with Android's text scaling at
+     150% got a 720px cover — half again as tall as intended, on the screen
+     with the least height. See the note in PostRow.astro. */
   .post__cover :global(img) {
     display: block;
     border: 1px solid var(--rule);
     border-radius: var(--radius);
     width: auto;
     max-width: 100%;
-    max-height: 30rem;
+    max-height: 480px;
     margin-inline: auto;
   }
 

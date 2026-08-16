@@ -918,6 +918,9 @@
   .prose .note strong { color: var(--ink); }
 
   .prose pre {
+    /* The ground the scroll-shadow covers are painted in — see the note by
+       `.table-scroll` further down, which sets up both boxes. */
+    --scroll-ground: var(--code-bg);
     background: var(--code-bg);
     border: 1px solid var(--rule);
     border-radius: var(--radius);
@@ -1090,7 +1093,52 @@
      any padding, and used to be clipped away silently. See rehypeTableScroll
      in astro.config.mjs for why the container is a real element rather than
      `display: block` on the table itself. */
+  /* --- Telling the reader a box scrolls -------------------------------
+     A phone hides scrollbars until you are already scrolling, so a table or a
+     code block that runs past the right edge just looks like text cut off
+     mid-word — broken rather than continued. This paints a soft shadow on
+     whichever edge has more content behind it.
+
+     It is four background layers and no JavaScript, which is what makes it
+     self-maintaining: the two `local` layers scroll with the content and are
+     painted in the box's own ground, so each one slides over and hides the
+     shadow beneath it exactly when that end is reached. The two `scroll`
+     layers are the shadows themselves, fixed to the box. Nothing has to
+     measure anything or listen for a scroll event, and a box that does not
+     overflow shows neither shadow because both covers sit over both.
+
+     `--scroll-ground` is the box's own background, set per box below — the
+     covers have to match it or the trick shows its working. */
+  .prose .table-scroll,
+  .prose pre {
+    background-image:
+      linear-gradient(to right, var(--scroll-ground) 60%, transparent),
+      linear-gradient(to left, var(--scroll-ground) 60%, transparent),
+      linear-gradient(
+        to right,
+        color-mix(in oklch, var(--ink) 16%, transparent),
+        transparent
+      ),
+      linear-gradient(
+        to left,
+        color-mix(in oklch, var(--ink) 16%, transparent),
+        transparent
+      );
+    background-position:
+      0 0,
+      100% 0,
+      0 0,
+      100% 0;
+    background-repeat: no-repeat;
+    background-size:
+      36px 100%,
+      36px 100%,
+      14px 100%,
+      14px 100%;
+    background-attachment: local, local, scroll, scroll;
+  }
   .prose .table-scroll {
+    --scroll-ground: var(--paper);
     overflow-x: auto;
     /* Only the horizontal axis scrolls; `auto` on both would give a table with
        a tall row a pointless vertical scrollbar of its own. */

@@ -58,6 +58,32 @@ The Transformer is a sequence-to-sequence model with two stacks:
   .dgm{background:var(--code-bg, oklch(0.97 0.0022 95));border:1px solid var(--rule, oklch(0.868 0.0038 95));border-radius:14px;padding:20px 14px;overflow-x:auto;margin:1.6rem 0}
   .dgm svg{display:block;width:100%;height:auto;margin:0 auto}
   .dgm text{font-family:var(--f-mono, ui-monospace,SFMono-Regular,Menlo,monospace)}
+  /* On a phone, scroll the diagram rather than shrink it.
+     These viewBoxes are 520-700 wide and their labels are set at 10.5-14px.
+     Scaled to fit a 358px column that is a factor of about 0.47, which renders
+     the labels at 5-9px — measured, not guessed — and a flow chart whose labels
+     cannot be read is decoration. The container already scrolls; this just
+     stops the SVG shrinking past the point where its text still works, so the
+     diagram keeps roughly the size it has on a laptop and the reader swipes it
+     instead. */
+  @media (max-width: 40rem){
+    .dgm svg{min-width:620px}
+    /* And say so. Same four-layer scroll shadow the tables and code blocks
+       use — see the note in global.css: two covers in the box's own ground
+       that scroll with the content, two shadows fixed to the box, so each
+       edge shows a shadow only while there is more diagram past it. */
+    .dgm{
+      background-image:
+        linear-gradient(to right, var(--code-bg, oklch(0.97 0.0022 95)) 60%, transparent),
+        linear-gradient(to left, var(--code-bg, oklch(0.97 0.0022 95)) 60%, transparent),
+        linear-gradient(to right, color-mix(in oklch, var(--ink, oklch(0.23 0.023 258)) 16%, transparent), transparent),
+        linear-gradient(to left, color-mix(in oklch, var(--ink, oklch(0.23 0.023 258)) 16%, transparent), transparent);
+      background-position:0 0,100% 0,0 0,100% 0;
+      background-repeat:no-repeat;
+      background-size:36px 100%,36px 100%,14px 100%,14px 100%;
+      background-attachment:local,local,scroll,scroll;
+    }
+  }
   .dg-bn{font-family:var(--f-bengali, "Nirmala UI","Shonar Bangla","Bangla MN",serif)}
   .dg-lbl{font-size:14px;font-weight:600}
   .dg-sub{font-size:11px}

@@ -242,14 +242,36 @@ const parts = series ? await getSeries(series.name) : [];
     max-width: var(--measure);
   }
 
-  /* Below 80rem, in flow — a line above the title. There is nowhere else for
-     it: from 64rem the panel itself can already sit beside the article, but
-     only by shifting the article over once it opens (see PostToc's own
-     "beside, by making room" block), and the toggle has to be reachable
-     *before* that happens. Placing it in a margin that only exists after the
-     reader has already clicked it is a control they can never find. */
-  :root[data-js] .post__header :global(.toc__toggle) {
-    margin-bottom: 1rem;
+  /* Below 80rem there is no margin to put it in — from 64rem the panel can
+     sit beside the article, but only by shifting the article over once it is
+     already open, and the toggle has to be reachable *before* that happens.
+
+     So it floats over the article instead, bottom-right, which is the one
+     place on a phone that is reliably empty: text starts at the left edge, and
+     the bottom corner is where a thumb already rests. It has to be pinned
+     rather than left in flow above the title — this post is a 53-minute read,
+     the moment a contents list is wanted is somewhere in the middle of it, and
+     in flow the control is thousands of pixels off-screen by then. That was
+     the whole point of pinning it on the desktop rail too.
+
+     `--paper-raised` and a card shadow rather than the bare bordered button it
+     is at the top of the page: it now sits ON the article rather than in a row
+     of its own, and a transparent control with body text sliding underneath it
+     is unreadable. */
+  @media (max-width: 79.99rem) {
+    :root[data-js] .post__header :global(.toc__toggle) {
+      position: fixed;
+      right: var(--gutter);
+      /* Clear of the iOS home indicator and Android gesture bar. */
+      bottom: calc(var(--gutter) + env(safe-area-inset-bottom, 0px));
+      /* Under the scrim (50) and the panel (60), so opening the contents
+         covers it rather than leaving it floating over the top. */
+      z-index: 40;
+      margin-bottom: 0;
+      background: var(--paper-raised);
+      box-shadow: var(--shadow-card);
+      white-space: nowrap;
+    }
   }
 
   /* From 80rem the margin beside the reading column is real before anything

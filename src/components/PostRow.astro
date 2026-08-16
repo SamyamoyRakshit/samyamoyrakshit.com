@@ -90,16 +90,20 @@ const Heading = level;
     align-items: start;
   }
 
-  /* Medium's mobile list puts a small, uncropped thumbnail beside the byline
-     rather than giving it a full-width row of its own — the version this
-     replaced put a 200×120 picture below the tags, which is a whole extra
-     screenful of scroll for a card that is otherwise four lines of text. The
-     thumbnail rides next to the date/read-time line instead; tags stay
-     full-width below both, since a wrapped tag list next to a shrinking
-     picture would fight it for room. */
+  /* Medium's mobile list puts a small, uncropped thumbnail beside the
+     headline alone — the description runs full-width underneath both,
+     not beside the picture too — rather than giving the picture a
+     full-width row of its own. The version this replaced put a 200×120
+     picture below the tags, a whole extra screenful of scroll for a card
+     that is otherwise four lines of text; a first attempt at fixing that
+     put it next to the date line instead, which was closer but not what
+     Medium actually does. Meta and tags run full-width below, same as the
+     description — a title is usually shorter than the description, so
+     pairing the picture with the description too left a gap under it on
+     any post with a long standfirst. */
   .post-row__main:has(.post-row__thumb) {
     grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas: 'title title' 'desc desc' 'meta thumb' 'tags tags';
+    grid-template-areas: 'title thumb' 'desc desc' 'meta meta' 'tags tags';
     column-gap: 0.75rem;
   }
 
@@ -181,16 +185,16 @@ const Heading = level;
      picture's visual weight, so both sides of it belong in the same units the
      image's own intrinsic size is in.
 
-     Below 60rem it now rides beside the meta line instead of taking a row of
+     Below 60rem it now rides beside the headline instead of taking a row of
      its own — see `.post-row__main:has(.post-row__thumb)` above — so it is
-     capped much smaller there, closer to an avatar than a figure. It grows
-     back to the desktop size once it has the whole right-hand column to
-     itself. */
+     capped smaller there than on the desktop, closer to a Medium thumbnail
+     than a figure. It grows back to the desktop size once it has the whole
+     right-hand column to itself. */
   .post-row__thumb {
     grid-area: thumb;
     display: block;
     width: fit-content;
-    align-self: center;
+    align-self: start;
     border: 1px solid var(--rule);
     border-radius: var(--radius-sm);
     overflow: hidden;
@@ -198,8 +202,8 @@ const Heading = level;
   .post-row__thumb img {
     display: block;
     width: auto;
-    max-width: 64px;
-    max-height: 64px;
+    max-width: 100px;
+    max-height: 100px;
     transition: transform var(--dur-reveal) var(--ease);
   }
   .row:hover .post-row__thumb img {

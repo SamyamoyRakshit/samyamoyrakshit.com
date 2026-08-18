@@ -99,15 +99,33 @@ The Transformer is a sequence-to-sequence model with two stacks:
   .dg-mintbox{fill:var(--tint-mint-bg, oklch(0.933 0.035 165));stroke:var(--tint-mint-fg, oklch(0.42 0.081 168));stroke-width:1.4} .dg-xmint{fill:var(--tint-mint-fg, oklch(0.42 0.081 168))}
   .dg-node{fill:var(--paper-sunken, oklch(0.902 0.0034 95));stroke:var(--rule, oklch(0.868 0.0038 95));stroke-width:1.3} .dg-xnode{fill:var(--ink-muted, oklch(0.42 0.021 258))}
   .dg-group{fill:none;stroke:var(--rule-strong, oklch(0.615 0.006 95));stroke-width:1.3;stroke-dasharray:5 4}
-  .dg-flow{fill:none;stroke:var(--ink-muted, oklch(0.42 0.021 258));stroke-width:1.8;stroke-linecap:round}
-  .dg-res{fill:none;stroke:var(--tint-mint-fg, oklch(0.42 0.081 168));stroke-width:1.8;stroke-linecap:round} .dg-rest{fill:var(--tint-mint-fg, oklch(0.42 0.081 168))}
-  .dg-mem{fill:none;stroke:var(--accent, oklch(0.47 0.175 268));stroke-width:2.4;stroke-linecap:round} .dg-memt{fill:var(--accent, oklch(0.47 0.175 268))}
+  /* Each line's arrowhead fill sits on the same row as its stroke. They are a
+     pair — see the note on the markers below for why the arrowhead cannot read
+     the line's own colour. Recolour a line and recolour its head. */
+  .dg-flow{fill:none;stroke:var(--ink-muted, oklch(0.42 0.021 258));stroke-width:1.8;stroke-linecap:round} .dg-ahflow{fill:var(--ink-muted, oklch(0.42 0.021 258))}
+  .dg-res{fill:none;stroke:var(--tint-mint-fg, oklch(0.42 0.081 168));stroke-width:1.8;stroke-linecap:round} .dg-rest,.dg-ahres{fill:var(--tint-mint-fg, oklch(0.42 0.081 168))}
+  .dg-mem{fill:none;stroke:var(--accent, oklch(0.47 0.175 268));stroke-width:2.4;stroke-linecap:round} .dg-memt,.dg-ahmem{fill:var(--accent, oklch(0.47 0.175 268))}
   .dg-leafok{fill:var(--tint-mint-bg, oklch(0.933 0.035 165));stroke:var(--tint-mint-fg, oklch(0.42 0.081 168));stroke-width:1.4}
   .dg-leafno{fill:var(--paper-sunken, oklch(0.902 0.0034 95));stroke:var(--rule, oklch(0.868 0.0038 95));stroke-width:1.4;stroke-dasharray:4 4}
-  .dg-pruned{fill:none;stroke:var(--rule-strong, oklch(0.615 0.006 95));stroke-width:1.5;stroke-dasharray:4 4}
+  .dg-pruned{fill:none;stroke:var(--rule-strong, oklch(0.615 0.006 95));stroke-width:1.5;stroke-dasharray:4 4} .dg-ahpruned{fill:var(--rule-strong, oklch(0.615 0.006 95))}
 </style>
+<!-- One arrowhead per line colour, which is four copies of the same triangle.
+
+     It was one marker filled with `context-stroke` — a keyword that paints the
+     head in the stroke of whichever path referenced it, so a single definition
+     served every colour. Safari does not implement it, and an unrecognised
+     paint value falls back to black: every residual and every memory arrow
+     ended in a black head on a green or ultramarine line, in both themes,
+     while Chrome and Firefox drew it correctly.
+
+     There is no one-marker fix. A marker's contents inherit from where the
+     marker is DEFINED, not from the path that uses it, so `currentColor` reads
+     this hidden svg rather than the line and lands on the same problem. -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-  <marker id="dgah" viewBox="0 0 9 9" refX="7.5" refY="4.5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L9,4.5 L0,9 z" fill="context-stroke"/></marker>
+  <marker id="dgah" viewBox="0 0 9 9" refX="7.5" refY="4.5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="dg-ahflow" d="M0,0 L9,4.5 L0,9 z"/></marker>
+  <marker id="dgah-res" viewBox="0 0 9 9" refX="7.5" refY="4.5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="dg-ahres" d="M0,0 L9,4.5 L0,9 z"/></marker>
+  <marker id="dgah-mem" viewBox="0 0 9 9" refX="7.5" refY="4.5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="dg-ahmem" d="M0,0 L9,4.5 L0,9 z"/></marker>
+  <marker id="dgah-pruned" viewBox="0 0 9 9" refX="7.5" refY="4.5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="dg-ahpruned" d="M0,0 L9,4.5 L0,9 z"/></marker>
 </defs></svg>
 
 <figure class="dgm">
@@ -118,7 +136,7 @@ The Transformer is a sequence-to-sequence model with two stacks:
     <rect class="dg-node" x="194" y="54" width="138" height="72" rx="12"/>
     <text class="dg-hd dg-ink dg-c" x="263" y="86">ENCODER</text>
     <text class="dg-sub dg-mut dg-c" x="263" y="106">self-attn + FFN · ×N</text>
-    <path class="dg-mem" d="M332,90 H404" marker-end="url(#dgah)"/>
+    <path class="dg-mem" d="M332,90 H404" marker-end="url(#dgah-mem)"/>
     <text class="dg-tag dg-memt dg-c" x="369" y="80">memory · K,V</text>
     <rect class="dg-node" x="412" y="54" width="150" height="72" rx="12"/>
     <text class="dg-hd dg-ink dg-c" x="487" y="84">DECODER</text>
@@ -591,8 +609,8 @@ One **EncoderLayer** is two sub-layers, each wrapped in the **post-LayerNorm res
     <path class="dg-flow" d="M175,350 V384" marker-end="url(#dgah)"/>
     <text class="dg-lbl dg-ink dg-c" x="175" y="404">src'</text>
     <text class="dg-sub dg-mut dg-c" x="175" y="420">(batch, seq, 256)</text>
-    <path class="dg-res" d="M175,86 C335,86 340,203 264,203" marker-end="url(#dgah)"/>
-    <path class="dg-res" d="M175,230 C335,230 340,321 264,321" marker-end="url(#dgah)"/>
+    <path class="dg-res" d="M175,86 C335,86 340,203 264,203" marker-end="url(#dgah-res)"/>
+    <path class="dg-res" d="M175,230 C335,230 340,321 264,321" marker-end="url(#dgah-res)"/>
     <text class="dg-tag dg-rest" x="352" y="140">residual</text>
     <text class="dg-tag dg-rest" x="352" y="156" opacity=".82">skips the</text>
     <text class="dg-tag dg-rest" x="352" y="172" opacity=".82">sub-layer</text>
@@ -647,13 +665,13 @@ The **DecoderLayer** has *three* sub-layers (the encoder had two): ([`models/dec
     <path class="dg-flow" d="M210,434 V470" marker-end="url(#dgah)"/>
     <text class="dg-lbl dg-ink dg-c" x="210" y="490">tgt'</text>
     <text class="dg-sub dg-mut dg-c" x="210" y="506">(batch, seq, 256)</text>
-    <path class="dg-res" d="M210,96 C380,96 386,202 299,202" marker-end="url(#dgah)"/>
-    <path class="dg-res" d="M210,228 C380,228 386,312 299,312" marker-end="url(#dgah)"/>
-    <path class="dg-res" d="M210,338 C380,338 386,422 299,422" marker-end="url(#dgah)"/>
+    <path class="dg-res" d="M210,96 C380,96 386,202 299,202" marker-end="url(#dgah-res)"/>
+    <path class="dg-res" d="M210,228 C380,228 386,312 299,312" marker-end="url(#dgah-res)"/>
+    <path class="dg-res" d="M210,338 C380,338 386,422 299,422" marker-end="url(#dgah-res)"/>
     <text class="dg-tag dg-rest" x="392" y="150">residual</text>
     <text class="dg-tag dg-rest" x="392" y="266">residual</text>
     <text class="dg-tag dg-rest" x="392" y="380">residual</text>
-    <path class="dg-mem" d="M22,267 H123" marker-end="url(#dgah)"/>
+    <path class="dg-mem" d="M22,267 H123" marker-end="url(#dgah-mem)"/>
     <text class="dg-tag dg-memt" x="22" y="255">memory · K, V</text>
     <text class="dg-tag dg-memt" x="22" y="283" opacity=".8">from encoder</text>
   </svg>
@@ -745,7 +763,7 @@ The same five lines as a picture — the paper's Figure 1 (the cover image up to
     <path class="dg-flow" d="M506,506 V494" marker-end="url(#dgah)"/>
     <text class="dg-lbl dg-ink dg-bn dg-c" x="506" y="516">&lt;sos&gt; "আমরা বন্ধু"</text>
     <text class="dg-tag dg-mut dg-c" x="506" y="536">BENGALI (shifted right) · DECODER</text>
-    <path class="dg-mem" d="M200,258 C312,262 330,318 428,318" marker-end="url(#dgah)"/>
+    <path class="dg-mem" d="M200,258 C312,262 330,318 428,318" marker-end="url(#dgah-mem)"/>
     <text class="dg-tag dg-memt dg-c" x="300" y="288">memory</text>
     <text class="dg-tag dg-memt dg-c" x="300" y="303">K, V</text>
   </svg>
@@ -982,10 +1000,10 @@ A trained model gives a probability distribution over the next token. Turning th
     <path class="dg-flow" d="M104,170 C150,170 156,270 200,270" marker-end="url(#dgah)"/>
     <path class="dg-flow" d="M286,100 C326,100 332,64 372,64" marker-end="url(#dgah)"/>
     <path class="dg-flow" d="M286,116 C326,116 332,156 372,156" marker-end="url(#dgah)"/>
-    <path class="dg-pruned" d="M286,270 C330,270 336,270 372,270" marker-end="url(#dgah)"/>
-    <path class="dg-res" d="M456,64 H500" marker-end="url(#dgah)"/>
-    <path class="dg-res" d="M456,156 H500" marker-end="url(#dgah)"/>
-    <path class="dg-pruned" d="M456,270 H500" marker-end="url(#dgah)"/>
+    <path class="dg-pruned" d="M286,270 C330,270 336,270 372,270" marker-end="url(#dgah-pruned)"/>
+    <path class="dg-res" d="M456,64 H500" marker-end="url(#dgah-res)"/>
+    <path class="dg-res" d="M456,156 H500" marker-end="url(#dgah-res)"/>
+    <path class="dg-pruned" d="M456,270 H500" marker-end="url(#dgah-pruned)"/>
     <rect class="dg-node" x="28" y="154" width="76" height="32" rx="9"/>
     <text class="dg-lbl dg-xnode dg-c" x="66" y="174">&lt;sos&gt;</text>
     <rect class="dg-node" x="200" y="84" width="86" height="32" rx="9"/>

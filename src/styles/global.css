@@ -358,7 +358,18 @@
 
   img, svg, video { display: block; max-width: 100%; height: auto; }
 
-  code, kbd, samp, pre { font-family: var(--font-mono); font-size: 0.9em; }
+  /* Ligatures off, and not as a matter of taste. JetBrains Mono ships
+     programming ligatures on by default, so it draws two characters as one
+     glyph: `<pad>=0` came out as `<pad>≥0`, because the `>` and the `=` next
+     to each other are the sequence the face replaces with `≥`. That is not a
+     styling of the text, it is a different character on a site whose subject
+     is getting the details right, and it silently changes what a reader
+     copies out of a code block. `->` and `=>` go with it, which is the price. */
+  code, kbd, samp, pre {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    font-variant-ligatures: none;
+  }
 
   /* Reduced motion is a design state, not a kill switch: everything holds its
      finished position, transitions collapse to near-instant, nothing is left

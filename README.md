@@ -16,8 +16,8 @@ banner, no third-party requests at all. Built with [Astro](https://astro.build).
 
 ## The site
 
-Four pages in the navigation — **/** · **/experience/** · **/projects/** ·
-**/blog/** — plus `/blog/<post>/` and `/blog/tags/<tag>/`.
+Five pages in the navigation — **/** · **/experience/** · **/projects/** ·
+**/blog/** · **/bn/** — plus `/blog/<post>/` and `/blog/tags/<tag>/`.
 
 Content is shown in full on the page it belongs to: every role and its work is
 on `/experience/`, and each project's results, stack and links are on
@@ -97,7 +97,7 @@ long index scannable. The page ground is a _neutral_ grey rather than the
 blue-white most templates ship, and the ultramarine accent is reserved strictly
 for things that can be interacted with, so colour always means "you can act
 here". Three typefaces, one job each: **Inter** is read, **JetBrains Mono**
-counts, and **Tiro Bangla** sets the Bengali couplet on `/blog/`. Motion runs
+counts, and **Tiro Bangla** sets the Bengali on `/bn/`. Motion runs
 on one duration ladder and only ever animates `transform` and `opacity`;
 scroll-driven reveals sit behind both `@supports` and `prefers-reduced-motion`,
 so a browser without scroll timelines gets the finished page rather than a

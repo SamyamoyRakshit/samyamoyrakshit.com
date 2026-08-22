@@ -37,6 +37,12 @@ import { getWork, getBlogPosts } from '../lib/content';
  *
  * If the bar ever loses the theme toggle, re-measure: the links alone fit on
  * one line at 360px and the button stops being necessary.
+ *
+ * Re-measure when a link is ADDED, too, which is the direction this actually
+ * went. Every figure above is for three links; the bar now carries five, and
+ * one row does not fit until 615px. It wraps to two tidy rows in between,
+ * which is fine — but --header-h has to follow it, and the media query in
+ * global.css that does so carries the current numbers.
  */
 
 const [work, posts] = await Promise.all([getWork(), getBlogPosts()]);
@@ -45,6 +51,10 @@ const available = new Set<string>();
 available.add('/experience/');
 if (features.work && work.length > 0) available.add('/projects/');
 if (features.blog && posts.length > 0) available.add('/blog/');
+/* Unconditional, like /experience/. The rule above is that a route hides while
+   it has no entries to list — /bn/ has no collection behind it to be empty of,
+   and the couplet it carries is content in its own right. */
+available.add('/bn/');
 
 /**
  * The résumé sits in the navigation rather than buried in the footer, because

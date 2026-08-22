@@ -186,7 +186,7 @@ export default defineConfig({
       fallbacks: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
     },
     /**
-     * Tiro Bangla — the epigraph on /blog/, and nothing else.
+     * Tiro Bangla — the Bengali section at /bn/, and nothing else.
      *
      * Inter has no Bengali coverage, so without this the couplet falls through
      * to whatever the reader's OS happens to ship: Nirmala UI on Windows,
@@ -208,7 +208,7 @@ export default defineConfig({
      *
      * The `unicode-range` on the emitted @font-face is what keeps this cheap:
      * a browser only fetches a file when a codepoint inside that range is
-     * actually painted, so every page but /blog/ pays a few hundred bytes of
+     * actually painted, so every page but /bn/ pays a few hundred bytes of
      * CSS and no font bytes at all.
      *
      * `latin` is in the subset list because the verse contains word spaces and

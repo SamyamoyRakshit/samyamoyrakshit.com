@@ -176,6 +176,30 @@
   :root[data-js]   { --header-h: 3.5rem;  }  /* one row, links behind Menu */
 }
 
+/* And a second band above it, which is not about phones at all.
+   `flex-wrap` sends the links to their own row whenever they stop fitting
+   beside the name, and that happens well above 30rem now — the arithmetic in
+   Header.astro was done when the bar held three links, and it has since gained
+   Résumé and BN. Re-measured by the same method (JetBrains Mono's fixed 0.6em
+   advance, plus tracking, plus the gaps and the gutter), one row needs:
+
+     3 links  fits everywhere above 480px   ← what the note describes
+     4 links  wraps 513-570px
+     5 links  wraps 481-614px               ← today
+
+   The wrapped bar is fine to look at: it is the same two-row layout a reader
+   without JavaScript already gets, name on top and links below. What is not
+   fine is leaving --header-h at one row's worth while the bar is two, because
+   `scroll-padding-top` is derived from it and every deep-linked heading —
+   /experience/#<roleId>, /projects/#<id> — then parks underneath the bar.
+   There is no Menu button in this range, so scripted and unscripted get the
+   same two rows and the value is unconditional. 39rem rather than 38.5rem is
+   deliberate slack: too much offset leaves an anchor sitting low, too little
+   hides it. Add a sixth link and re-measure. */
+@media (min-width: 30.0625rem) and (max-width: 39rem) {
+  :root { --header-h: 5.75rem; }
+}
+
 /* ---------------------------------------------------------------------------
    2 - TAILWIND THEME
    `@theme inline` emits `var(--token)` into utilities instead of baking the
@@ -208,7 +232,7 @@
      Everything that is not running prose in an article stays on --font-body. */
   --font-serif:   var(--f-serif);
 
-  /* Bengali script — Tiro Bangla. Used by the epigraph and by nothing else.
+  /* Bengali script — Tiro Bangla. Used by /bn/ and by nothing else.
      Inter has no Bengali glyphs, so any Bengali set in --font-body silently
      falls through to whatever the operating system supplies. Two rules: never
      letter-space text set in this (the matra is a continuous headstroke across

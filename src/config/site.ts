@@ -431,6 +431,11 @@ export const nav = [
   { label: 'Experience', href: '/experience/' },
   { label: 'Projects', href: '/projects/' },
   { label: 'Blog', href: '/blog/' },
+  /* The Bengali section. Labelled in Latin — `bn` is the language's own ISO
+     639-1 code — because every nav link is `.label`, which letter-spaces its
+     text 0.18em, and Bengali must never be letter-spaced. See the note at the
+     top of src/pages/bn/index.astro. */
+  { label: 'BN', href: '/bn/' },
 ] as const;
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -493,7 +498,7 @@ export const features = {
 
 /* ─────────────────────────────────────────────────────────────────────────
    10 · EPIGRAPH
-   The strapline under the masthead on /blog/. A line you stand behind, set
+   The strapline under the masthead on /bn/. A line you stand behind, set
    in your own script — which is the one thing on this site that could not
    have been generated for somebody else.
 

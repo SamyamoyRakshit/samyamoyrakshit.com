@@ -1,0 +1,118 @@
+---
+import Base from '../../layouts/Base.astro';
+import Epigraph from '../../components/Epigraph.astro';
+import { identity } from '../../config/site';
+
+/**
+ * The Bengali section. Empty of posts today; the couplet is its content.
+ *
+ * The band under the masthead used to sit on /blog/, where it was a line the
+ * site stands behind attached to a page of English essays. It belongs here:
+ * "বিশ্বমানব হবি যদি / শাশ্বত বাঙ্গালী হ’॥" is the argument for the section
+ * existing, so the section is where it goes. /blog/ no longer renders it, and
+ * it is still rendered on exactly one page — see Epigraph.astro.
+ *
+ * Named in its own script. The heading is বাংলা, not "Bangla": romanising it
+ * is the same move as the romanised "GURUSADAY DUTT" that was built under the
+ * couplet and removed, which explained the line to a reader who cannot read it
+ * and turned something the site means into an exhibit with a caption.
+ *
+ * The tab, though, is the Latin "BN", and that is not a compromise. Every
+ * navigation link is `.label` — mono, uppercase, letter-spaced 0.18em — and
+ * Bengali must never be letter-spaced, because the matra is one continuous
+ * headstroke across a word and tracking cuts it into pieces. A Bengali nav
+ * label would need the one class in the bar to opt out of the bar's own
+ * treatment. `bn` is also the language's ISO 639-1 code, which is what the
+ * `lang` attribute on the verse already says.
+ *
+ * WHAT THIS PAGE SAYS, and why it is not "Coming soon":
+ *
+ *   1. A page that only announces itself is a dead end. The empty-state
+ *      guidance is unanimous on this — say what the space is for and leave a
+ *      way onward — so the page states the purpose in one sentence and ends
+ *      with the route to the writing that does exist.
+ *   2. NN/g's homepage guidelines say not to post "under construction" for
+ *      parts of a site yet to come. What makes this page not that is the
+ *      couplet: there is something here to read, and it is the one thing on
+ *      the site that could not have been written for anybody else.
+ *   3. No date and no countdown. A promise with a month on it is a promise
+ *      that goes stale by itself.
+ *   4. No "notify me" field. It needs a third-party endpoint, which this site
+ *      does not have and does not want — same reason there is no contact form.
+ *      The blog's RSS already exists for anyone who wants to be told.
+ *   5. **No `noindex`.** A placeholder is only thin content when it is a bare
+ *      announcement; this one has real text, a real description and a real
+ *      link, so it is indexable like every other page. The standard failure
+ *      here is adding `noindex` "just for now" and forgetting it at launch,
+ *      which is a section nobody can find on the day it fills up.
+ *
+ * Built like 404.astro rather than with <Section>: this is one short block,
+ * not a list with a heading rail, and `.section__title` carries a positive
+ * letter-spacing that must not touch Bengali.
+ */
+---
+
+<Base
+  title="বাংলা"
+  description={`Writing in Bengali by ${identity.name}. Nothing is published here yet — the rest of the site's writing is in English.`}
+  preloadBengali
+>
+  {
+    /* Outside the block below on purpose: the band runs the full width of the
+      viewport and belongs to the masthead above it. See Epigraph.astro. */
+  }
+  <Epigraph />
+
+  <div class="shell bn">
+    <h1 class="bn__title" lang="bn">বাংলা</h1>
+
+    <p class="bn__body">
+      Writing in Bengali will be published here. Everything on the site so far is in
+      English.
+    </p>
+
+    <div class="bn__actions">
+      <a href="/blog/" class="btn">The English writing</a>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .bn {
+    padding-block: clamp(4rem, 2rem + 10vw, 10rem);
+    max-width: 44rem;
+  }
+
+  /* Three inherited properties have to be taken back off this heading, and all
+     three are wrong for Bengali rather than merely different:
+
+       letter-spacing — `h1` is tracked to -0.031em, tuned to Inter. Negative
+       tracking on Bengali crowds the matra into the glyphs hanging under it,
+       and the headstroke stops reading as one stroke.
+       font-weight    — Tiro Bangla loads at 400 only. `font-synthesis-weight:
+                        none` is global, so the inherited 600 silently returns
+                        the regular anyway; asking for what exists is honest.
+       line-height    — 1.15 is a Latin cap-height measure. Bengali stacks reph
+                        and matra above the line and jophola below it. */
+  .bn__title {
+    font-family: var(--font-bengali);
+    font-weight: 400;
+    font-size: var(--text-4xl);
+    line-height: 1.3;
+    letter-spacing: normal;
+  }
+
+  .bn__body {
+    margin-top: 1.5rem;
+    color: var(--ink-muted);
+    font-size: var(--text-lg);
+    max-width: 48ch;
+  }
+
+  .bn__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2.5rem;
+  }
+</style>

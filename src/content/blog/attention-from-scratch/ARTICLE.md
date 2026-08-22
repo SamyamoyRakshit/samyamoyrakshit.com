@@ -104,7 +104,8 @@ The Transformer is a sequence-to-sequence model with two stacks:
      the line's own colour. Recolour a line and recolour its head. */
   .dg-flow{fill:none;stroke:var(--ink-muted, oklch(0.42 0.021 258));stroke-width:1.8;stroke-linecap:round} .dg-ahflow{fill:var(--ink-muted, oklch(0.42 0.021 258))}
   .dg-res{fill:none;stroke:var(--tint-mint-fg, oklch(0.42 0.081 168));stroke-width:1.8;stroke-linecap:round} .dg-rest,.dg-ahres{fill:var(--tint-mint-fg, oklch(0.42 0.081 168))}
-  .dg-mem{fill:none;stroke:var(--accent, oklch(0.47 0.175 268));stroke-width:2.4;stroke-linecap:round} .dg-memt,.dg-ahmem{fill:var(--accent, oklch(0.47 0.175 268))}
+
+.dg-mem{fill:none;stroke:var(--accent, oklch(0.47 0.175 268));stroke-width:2.4;stroke-linecap:round} .dg-memt,.dg-ahmem{fill:var(--accent, oklch(0.47 0.175 268))}
   .dg-leafok{fill:var(--tint-mint-bg, oklch(0.933 0.035 165));stroke:var(--tint-mint-fg, oklch(0.42 0.081 168));stroke-width:1.4}
   .dg-leafno{fill:var(--paper-sunken, oklch(0.902 0.0034 95));stroke:var(--rule, oklch(0.868 0.0038 95));stroke-width:1.4;stroke-dasharray:4 4}
   .dg-pruned{fill:none;stroke:var(--rule-strong, oklch(0.615 0.006 95));stroke-width:1.5;stroke-dasharray:4 4} .dg-ahpruned{fill:var(--rule-strong, oklch(0.615 0.006 95))}

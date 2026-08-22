@@ -23,8 +23,8 @@ interface Props {
   noindex?: boolean;
   /**
    * Preload the Bengali face. Set only by pages that actually paint Bengali
-   * above the fold — today that is /blog/ and its epigraph. See the note by
-   * the <Font> tags below.
+   * above the fold — today that is /bn/, its epigraph and its heading. See the
+   * note by the <Font> tags below.
    */
   preloadBengali?: boolean;
 }
@@ -170,8 +170,8 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
 <!--
   Bengali. Declared on every page, downloaded on almost none: the @font-face
   carries a Bengali `unicode-range`, so the browser fetches the file only where
-  a Bengali character is actually painted — today that is /blog/ alone, and
-  every other page pays a few hundred bytes of CSS and nothing else.
+  a Bengali character is actually painted — today that is /bn/ alone, and every
+  other page pays a few hundred bytes of CSS and nothing else.
 
   Preloaded only where a page says it needs it. Astro sets `font-display: swap`
   on every face, so without a preload the epigraph paints first in whatever

@@ -1,0 +1,136 @@
+---
+import Base from '../../layouts/Base.astro';
+import Epigraph from '../../components/Epigraph.astro';
+import { identity } from '../../config/site';
+
+/**
+ * The Bengali section. The couplet and two words, and that is the whole page.
+ *
+ * This is NOT a Bengali edition of /blog/. Nothing here will be a rebuild
+ * write-up in translation; the writing will be in Bengali and what it is about
+ * is not decided yet. Anything on this page implying a parallel to the blog is
+ * wrong — an earlier draft said "everything on the site so far is in English"
+ * and linked across to it, and both were removed for saying exactly that.
+ *
+ * The band under the masthead used to sit on /blog/, over a list of English
+ * essays. It belongs here: "বিশ্বমানব হবি যদি / শাশ্বত বাঙ্গালী হ’॥" is the
+ * argument for the section existing, so it heads the section.
+ *
+ * WHAT IS NOT ON THIS PAGE, all of it built and then cut:
+ *
+ *   A heading. It read বাংলা, and the couplet above it is already two lines of
+ *   Bengali — a page that opens in the script does not then need to be
+ *   labelled with the name of the script. Romanising it to "Bangla" would have
+ *   been worse, and for the same reason the romanised "GURUSADAY DUTT" was cut
+ *   from under the verse.
+ *
+ *   A sentence saying the writing will be in Bengali. The couplet says it, and
+ *   saying it again in English says it to the wrong reader.
+ *
+ *   A link out. The usual empty-state advice is never to leave a dead end, and
+ *   that advice is written for an app screen with no navigation on it. This
+ *   page has the site's own bar across the top, which is the way onward; a
+ *   second copy of it in the body would be furniture.
+ *
+ * THE NOTICE IS SADHU BHASHA — শীঘ্রই আসিতেছে, not the everyday শীঘ্রই আসছে.
+ * That is the register the couplet is already in: Gurusaday Dutt's verse is
+ * 1930s, keeps his own older orthography in বাঙ্গালী, and closes on the sadhu
+ * imperative হ’. A modern চলিত line under it would be two periods of the
+ * language stacked in one column, which is the same mismatch the Bengali face
+ * exists to prevent — the site sets Tiro Bangla precisely so the verse is not
+ * left to whatever the reader's OS supplies. Chosen by the site's owner, who
+ * is the native speaker; do not "modernise" it.
+ *
+ * No date, no countdown, no notify-me field — that would want a third-party
+ * endpoint, which is the same reason the site has no contact form. Anyone who
+ * wants telling has the blog's RSS.
+ *
+ * The <h1> is the page's label rather than its content, so it is `.sr-only`.
+ * A screen reader gets "বাংলা", matching the <title> and the tab that led
+ * here; the eye gets the couplet and the notice. `check:build` requires
+ * exactly one <h1> per page, and a heading printed over a two-word page would
+ * be louder than the page. It is `position: absolute`, so it is out of the
+ * grid flow below and does not pull the notice off centre.
+ *
+ * **No `noindex`.** A placeholder is thin content when it is a bare
+ * announcement; this one has the couplet, a real title and a real description.
+ * The standard way this goes wrong is adding `noindex` "just for now" and
+ * leaving it in on the day the section fills up.
+ *
+ * The description is in English on purpose. It is never painted on the page —
+ * it is what a search result and a shared link show, and those are read by
+ * people who have not arrived yet.
+ */
+---
+
+<Base
+  title="বাংলা"
+  description={`The Bengali section of ${identity.name}'s site. Nothing published here yet.`}
+  preloadBengali
+>
+  {
+    /* Outside the block below on purpose: the band runs the full width of the
+      viewport and belongs to the masthead above it. See Epigraph.astro. */
+  }
+  <Epigraph />
+
+  <div class="shell bn">
+    <h1 class="sr-only" lang="bn">বাংলা</h1>
+    <p class="bn__soon" lang="bn">শীঘ্রই আসিতেছে</p>
+  </div>
+</Base>
+
+<style>
+  /* The air is the composition, and the notice sits in the middle of it. Two
+     words tucked under the band read as a page that failed to load the rest of
+     itself; the same two words held in the centre of a field this size read as
+     a page waiting on purpose.
+
+     `svh` rather than `vh`: on a phone `vh` is the viewport with the browser
+     chrome retracted, so a block sized in it is taller than what you can
+     actually see until you scroll, and a vertically centred thing inside it
+     sits below the middle on arrival. `svh` is the smallest state, which is
+     what the reader gets first. The `vh` line above it is the old-engine
+     fallback — off by the height of a URL bar, which is the right way to be
+     wrong. Expect it to be absent from the built CSS: the minifier drops a
+     fallback once every browser in the target list supports the newer unit,
+     and puts it back by itself if that list ever widens. */
+  .bn {
+    display: grid;
+    place-items: center;
+    min-height: 58vh;
+    min-height: 58svh;
+    padding-block: clamp(3rem, 1.5rem + 6vw, 6rem);
+    max-width: 44rem;
+  }
+
+  /* Bigger than the couplet above it, which is the right way round rather than
+     an inversion: an epigraph is set small and the thing it heads is set
+     large, the way a book does it. --text-4xl is the size 404.astro gives its
+     one line, and that page is the same shape as this one — a short statement
+     alone in a lot of air.
+
+     Three Bengali rules, all of which the defaults get wrong:
+
+       letter-spacing — must stay `normal`. The matra is one continuous
+                        headstroke across the word and tracking cuts it into
+                        pieces. Nothing here sets it, but nothing here may.
+       font-weight    — Tiro Bangla loads at 400 only, and
+                        `font-synthesis-weight: none` is global, so asking for
+                        anything else silently returns the regular anyway.
+       line-height    — 1.3, not a Latin display setting. Bengali stacks reph
+                        and matra above the line and jophola below it.
+
+     Centred by the grid above rather than by `text-align`, so that if the line
+     ever wraps on a narrow phone the box centres and the lines inside it stay
+     flush left. Centring each line individually is a greeting-card habit — the
+     same rule the couplet in the band is set by. */
+  .bn__soon {
+    font-family: var(--font-bengali);
+    font-weight: 400;
+    font-size: var(--text-4xl);
+    line-height: 1.3;
+    letter-spacing: normal;
+    color: var(--ink);
+  }
+</style>

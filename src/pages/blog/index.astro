@@ -2,25 +2,20 @@
 import Base from '../../layouts/Base.astro';
 import Section from '../../components/Section.astro';
 import PostRow from '../../components/PostRow.astro';
-import Epigraph from '../../components/Epigraph.astro';
 import { getBlogPosts } from '../../lib/content';
 import { identity } from '../../config/site';
+
+/**
+ * The Bengali couplet used to run as a band under the masthead here, and it
+ * has moved to /bn/. It is the argument for that section existing, so it sits
+ * at the head of it rather than over a list of English essays. This page no
+ * longer paints a Bengali glyph, which is why `preloadBengali` went with it.
+ */
 
 const posts = await getBlogPosts();
 ---
 
-<Base
-  title="Writing"
-  description={`Notes and essays by ${identity.name}.`}
-  preloadBengali
->
-  {
-    /* Outside <Section> on purpose: the band runs the full width of the
-      viewport and belongs to the masthead above it, not to the list of posts
-      below. See the note in Epigraph.astro. */
-  }
-  <Epigraph />
-
+<Base title="Writing" description={`Notes and essays by ${identity.name}.`}>
   <Section title="Writing" level="h1">
     {
       posts.length > 0 ? (

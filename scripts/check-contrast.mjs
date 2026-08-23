@@ -122,6 +122,9 @@ const PAIRINGS = [
   ['tint-mint-fg', 'tint-mint-bg', 4.5, 'chip · mint'],
   ['tint-amber-fg', 'tint-amber-bg', 4.5, 'chip · amber'],
   ['tint-violet-fg', 'tint-violet-bg', 4.5, 'chip · violet'],
+  /* No chip wears rose — it is the BERT post's discarded pre-training heads.
+     Audited here anyway: the pair is what makes a tint usable at all. */
+  ['tint-rose-fg', 'tint-rose-bg', 4.5, 'chip · rose'],
   ['ink-muted', 'paper-raised', 4.5, 'tag text on a card'],
   ['ink-muted', 'paper-sunken', 4.5, 'prose text on code/quote blocks'],
   /* The sunken ground carries small text in three places — the FULL TIME chip

@@ -110,7 +110,7 @@
   --hero-wash:    light-dark(oklch(0.9100 0.0420 268), oklch(0.2900 0.0620 265));
 
   /* Chip hues.
-     Four, no more, and each is a background/foreground pair rather than a
+     Five, no more, and each is a background/foreground pair rather than a
      free-floating colour — so the only way to use one is a combination that
      has been contrast-checked. The accent stays the site's single interactive
      colour; these are labels, and they never appear on anything clickable. */
@@ -122,6 +122,24 @@
   --tint-amber-fg:   light-dark(oklch(0.4450 0.0900 65),  oklch(0.8450 0.0900 80));
   --tint-violet-bg:  light-dark(oklch(0.9330 0.0310 300), oklch(0.2700 0.0530 300));
   --tint-violet-fg:  light-dark(oklch(0.4400 0.1450 300), oklch(0.8300 0.0780 300));
+
+  /* Rose, the fifth, and the only one with no chip class — no skill is a rose.
+     It exists because the BERT post's architecture diagram spends all four of
+     the above and still has one more thing to say (the two pre-training heads
+     the transplant throws away), and reusing a hue there would have claimed
+     they are the same kind of part as whatever already wore it.
+
+     The hue is measured, not picked. Laid out on the circle the four sit at
+     85 · 165 · 245 · 300, and the accent takes 268, so the widest empty arc is
+     300 → 85 going through zero; its midpoint is ~12°, and 20° is where the
+     minimum oklab distance to all five is largest (~0.041). Chroma is 0.0330
+     rather than the 0.0360 that would match amber's weight: above that, L 0.93
+     at this hue clips the red channel and the pair leaves sRGB.
+
+     Measured 6.74:1 light and 8.75:1 dark, and audited in check-contrast.mjs
+     with the other four. */
+  --tint-rose-bg:    light-dark(oklch(0.9330 0.0330 20),  oklch(0.2720 0.0520 15));
+  --tint-rose-fg:    light-dark(oklch(0.4400 0.1300 25),  oklch(0.8300 0.0850 18));
 
   /* Fluid measurements */
   --gutter:      clamp(1.25rem, 0.75rem + 2.2222vw, 2.75rem);

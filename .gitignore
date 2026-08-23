@@ -56,6 +56,15 @@ RESUME.md
 RUN.md
 WEBSITE-CONTEXT.md
 
+# Screenshots taken for a post but not referenced by it. Listed one by one, not
+# by pattern, so a real figure added later is never silently swallowed.
+src/content/blog/bert-from-scratch/images/TensorBoard/loss_step.png
+src/content/blog/bert-from-scratch/images/Tensorboard_FineTune/train_acc_epoch.png
+src/content/blog/bert-from-scratch/images/Tensorboard_FineTune/train_loss_epoch.png
+src/content/blog/bert-from-scratch/images/Tensorboard_FineTune/train_loss_step.png
+src/content/blog/bert-from-scratch/images/Tensorboard_FineTune/train_lr.png
+src/content/blog/bert-from-scratch/images/Tensorboard_FineTune/val_loss_epoch.png
+
 # OS / editor cruft
 .DS_Store
 Thumbs.db

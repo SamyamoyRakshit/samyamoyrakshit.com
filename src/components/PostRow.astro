@@ -220,8 +220,27 @@ const Heading = level;
       justify-self: end;
       margin-top: 0.35rem;
     }
+    /* 280 rather than 192, and only here — the phone cap above is untouched.
+       192 was set when both covers on the site were portrait figures, where
+       the HEIGHT cap binds and the width one never comes up. A landscape cover
+       is the opposite case: BERT's title card is 2400×1200, so it hit 192 wide
+       and stopped at 192×96 — using 96 of the 160px of height it was allowed,
+       in a column that spans the whole card on this breakpoint. Over half the
+       frame was empty and the picture was too small to read.
+
+       280 is not a taste call, it is the widest size that costs nothing:
+       <Image width={280} densities={[1, 2]} /> above already emits a 280w and
+       a 560w asset, so 280 CSS px is exactly 1:1 at 1x and 2x. Anything wider
+       upscales on a retina screen.
+
+       The height cap does not move, and that is what keeps this narrow. A 2:1
+       cover now lands at 280×140, still under 160, so the picture still never
+       sets the card's height. A portrait figure is unaffected in both
+       directions: the Transformer's 1142×1266 is height-bound at 160 and
+       resolves to 144 wide, under the old cap and under this one. Only a
+       landscape cover moves at all. */
     .post-row__thumb img {
-      max-width: 192px;
+      max-width: 280px;
       max-height: 160px;
     }
   }

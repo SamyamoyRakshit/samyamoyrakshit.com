@@ -43,16 +43,16 @@
     "verify": "npm run format:check && npm run check:contrast && npm run check && npm run build && npm run check:build && npm run check:content"
   },
   "dependencies": {
-    "@astrojs/mdx": "^7.0.5",
+    "@astrojs/mdx": "^7.0.8",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
     "@resvg/resvg-js": "^2.6.2",
     "@tailwindcss/vite": "^4.3.3",
-    "astro": "^7.2.0",
-    "katex": "^0.18.1",
+    "astro": "^7.2.9",
+    "katex": "^0.18.4",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
-    "satori": "^0.29.0",
+    "satori": "^0.33.4",
     "sharp": "^0.35.3",
     "tailwindcss": "^4.3.3"
   },
@@ -61,6 +61,6 @@
     "prettier": "^3.9.6",
     "prettier-plugin-astro": "^0.14.1",
     "typescript": "^5.9.3",
-    "wrangler": "^4.120.1"
+    "wrangler": "^4.127.1"
   }
 }

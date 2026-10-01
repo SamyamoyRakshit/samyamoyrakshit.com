@@ -45,22 +45,22 @@
   "dependencies": {
     "@astrojs/mdx": "^7.0.5",
     "@astrojs/rss": "^4.0.19",
-    "@astrojs/sitemap": "^3.7.3",
+    "@astrojs/sitemap": "^3.7.4",
     "@resvg/resvg-js": "^2.6.2",
     "@tailwindcss/vite": "^4.3.3",
-    "astro": "^7.2.0",
-    "katex": "^0.18.1",
+    "astro": "^7.3.5",
+    "katex": "^0.18.9",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
-    "satori": "^0.29.0",
+    "satori": "^0.33.5",
     "sharp": "^0.35.3",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.5",
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.9",
     "prettier-plugin-astro": "^0.14.1",
     "typescript": "^5.9.3",
-    "wrangler": "^4.120.1"
+    "wrangler": "^4.142.0"
   }
 }

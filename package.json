@@ -27,7 +27,7 @@
     "url": "https://github.com/SamyamoyRakshit/samyamoyrakshit.com/issues"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=22.22.0"
   },
   "scripts": {
     "dev": "astro dev",

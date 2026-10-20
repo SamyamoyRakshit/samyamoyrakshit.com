@@ -12,10 +12,12 @@ name: Verify
 
 on:
   pull_request:
-  # Also on main, so the branch itself carries a status rather than only the
-  # pull requests that built it.
+  # test is the UAT branch and nothing reaches main that has not passed there,
+  # so every push to it is checked on its own rather than only once a pull
+  # request happens to exist. main is here too, so the branch itself carries a
+  # status rather than only the pull requests that built it.
   push:
-    branches: [main]
+    branches: [main, test]
 
 # The job reads the repository and needs nothing else. No secrets, no write
 # scope — which is what lets it run unchanged on Dependabot's pull requests,

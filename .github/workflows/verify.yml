@@ -1,0 +1,56 @@
+# The quality gate, run on every pull request.
+#
+# The site deploys as a Cloudflare Worker, and Cloudflare's build was the only
+# check a pull request had before this file existed. That build runs
+# `astro build` and stops there, so a green tick meant the site compiled — not
+# that the colour tokens still clear WCAG AA, not that `astro check` is still
+# at zero, not that every internal link in `dist/` still resolves. Dependabot
+# opens most of the pull requests on this repository and those are precisely
+# the changes nobody reads line by line, so the tick has to stand for the
+# whole of `npm run verify` or it is worse than no tick at all.
+name: Verify
+
+on:
+  pull_request:
+  # Also on main, so the branch itself carries a status rather than only the
+  # pull requests that built it.
+  push:
+    branches: [main]
+
+# The job reads the repository and needs nothing else. No secrets, no write
+# scope — which is what lets it run unchanged on Dependabot's pull requests,
+# since those are handed a read-only token by design.
+permissions:
+  contents: read
+
+# A second push to a branch makes the first run pointless. Dependabot rebases
+# its branches whenever main moves, and with eleven of them open that queues a
+# lot of builds nobody will read the output of.
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          # .nvmrc is the version of record. `engines` in package.json states
+          # the same floor, and naming a version here too would make CI a
+          # third place to remember.
+          node-version-file: .nvmrc
+          cache: npm
+
+      # `npm ci` installs the lockfile exactly and fails if package.json and
+      # the lock have drifted apart — the one thing most worth checking on a
+      # Dependabot pull request, where the lockfile is the entire change.
+      - run: npm ci
+
+      # format:check → check:contrast → check → build → check:build →
+      # check:content, in that order. The table in CLAUDE.md says what each
+      # one catches; check:build is the one that reads the finished output
+      # rather than the source.
+      - run: npm run verify

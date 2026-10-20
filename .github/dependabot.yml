@@ -21,3 +21,20 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      # satori draws the share cards, and its 0.x "minor" releases are not
+      # minor. 0.29 -> 0.62 changed the layout model: the monogram and the
+      # title overflowed the canvas and the footer disappeared completely.
+      # Every check still went green, because `check:build` asserts that an
+      # og:image exists, not that it is legible — so this is a break that only
+      # looking at the picture catches.
+      #
+      # One package therefore fails the whole monthly group pull request, and
+      # re-diagnosing it every month costs more than the upgrade is worth.
+      # Patches inside 0.29.x still come through.
+      #
+      # Lift this as part of migrating `src/pages/og/[...slug].png.ts` to the
+      # newer layout, and not before.
+      - dependency-name: satori
+        update-types:
+          - version-update:semver-minor

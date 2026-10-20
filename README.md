@@ -26,7 +26,7 @@ project is a blog post.
 
 ## Running it
 
-Node 22.12 or newer.
+Node 22.22 or newer.
 
 ```bash
 npm install

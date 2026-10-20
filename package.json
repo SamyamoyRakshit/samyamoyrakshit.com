@@ -50,7 +50,7 @@
     "@resvg/resvg-js": "^2.6.2",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.4.1",
-    "katex": "^0.18.1",
+    "katex": "^0.19.0",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
     "satori": "^0.29.0",

@@ -83,7 +83,7 @@ export const availability = {
 export const intro = {
   /** The statement under the name in the hero. Two sentences. */
   short:
-    'I rebuild published models from the paper — the transformer, BERT, ViT — tensor by tensor in PyTorch, all three on Bengali data, all three trained end to end on one M1 laptop with 16 GB of RAM. Reading a paper and reimplementing it turn out to be very different kinds of understanding. By day I build forecasting and agentic systems at Sigmoid.',
+    'I rebuild published models from the paper, tensor by tensor in PyTorch — every one on Bengali data, every one trained end to end on one M1 laptop with 16 GB of RAM. Reading a paper and reimplementing it turn out to be very different kinds of understanding. By day I build forecasting and agentic systems at Sigmoid.',
 
   /**
    * The long form, one string per paragraph. There is no /about/ route — this
@@ -92,8 +92,8 @@ export const intro = {
   long: [
     'I have been at Sigmoid since I finished my B.Tech in 2024, first as an intern, then as an associate, now as a data scientist. The work is for global CPG, spirits, food-ingredients and food-service clients, and it has moved roughly in the order the field has: price elasticity and sales-driver attribution first, then generative and agentic systems, now demand forecasting at a scale where the engineering matters as much as the model.',
     'The two pieces I would point at: I built the whole feature-engineering pipeline behind a multi-agent product recommendation engine that has been live in a client’s sales process since June 2025, and I replaced a per-series Prophet forecast with one global LightGBM model across 9,200 series — a three-hour run became a three-minute one, and day-one error dropped about 15%.',
-    'Outside client work I rebuild published models from the paper: the transformer, BERT, the Vision Transformer. No nn.Transformer, no pre-built HuggingFace model — every component written out by hand and trained on one M1 with 16 GB of RAM. Reimplementing a paper is the fastest way I know to find out which parts of it I only thought I understood.',
-    'All three run on Bengali. The BERT is pre-trained on Bengali Wikipedia; the transformer translates English into Bengali; the ViT is trained on 1,935 photographs of the terracotta temples at Bishnupur, ten classes, a dataset that did not exist until I assembled it. That last one is also the most useful failure of the three — trained from scratch it reached 14.9%, barely above guessing, which is precisely what the paper predicts and almost nobody publishes.',
+    'Outside client work I rebuild published models from the paper: so far the transformer, BERT, GPT-2 and the Vision Transformer. No nn.Transformer, no pre-built HuggingFace model — every component written out by hand and trained on one M1 with 16 GB of RAM. Reimplementing a paper is the fastest way I know to find out which parts of it I only thought I understood.',
+    'All of them run on Bengali. The BERT is pre-trained on Bengali Wikipedia, and the GPT-2 on the same articles; the transformer translates English into Bengali; the ViT is trained on 1,935 photographs of the terracotta temples at Bishnupur, ten classes, a dataset that did not exist until I assembled it. That last one is also the most useful failure so far — trained from scratch it reached 14.9%, barely above guessing, which is precisely what the paper predicts and almost nobody publishes.',
   ],
 } as const;
 
@@ -137,8 +137,8 @@ export const socials: SocialLink[] = [
 
    Each part keeps its own Markdown file under src/content/work/, because each
    has its own paper, its own numbers and its own write-up. This is only the
-   heading they sit under. Order is set by `order:` in those files and is
-   deliberate: BERT leads because it is the strongest result on the site.
+   heading they sit under. Order is set by `order:` in those files, newest on
+   top: a new rebuild takes the highest number in use plus one.
 
    Wording is the approved copy from WEBSITE-CONTEXT.md §3.6.
    ───────────────────────────────────────────────────────────────────────── */
@@ -154,9 +154,9 @@ export const scratchProject = {
      The words are unchanged from the approved copy in WEBSITE-CONTEXT.md §3.6;
      only where they are said has changed. */
   summary:
-    'Three papers replicated tensor by tensor on Bengali data — no nn.Transformer, no nn.MultiheadAttention, no pre-built HuggingFace models.',
+    'Published papers replicated tensor by tensor on Bengali data — no nn.Transformer, no nn.MultiheadAttention, no pre-built HuggingFace models.',
   detail:
-    'Every one trained end to end from random weights on a single Apple M1 with 16 GB of RAM, and measured against published baselines on identical splits.',
+    'Every one trained end to end from random weights on a single Apple M1 with 16 GB of RAM, and measured against baselines on identical splits.',
   /* NOTE: this repo is PRIVATE as of writing. Make it public before deploying,
      or every visitor who clicks Source gets a 404 — see WEBSITE-CONTEXT.md
      §3.6, which records that it has been checked and is safe to publish. */
@@ -176,7 +176,7 @@ export const toolkit: ToolkitGroup[] = [
   { heading: 'Languages', items: ['Python', 'SQL'] },
   {
     heading: 'Deep learning',
-    items: ['PyTorch', 'Transformers', 'BERT', 'Vision Transformers'],
+    items: ['PyTorch', 'Transformers', 'BERT', 'GPT', 'Vision Transformers'],
   },
   {
     heading: 'Generative and agentic',
@@ -467,7 +467,7 @@ export const seo = {
    * 150–160 characters is the sweet spot.
    */
   description:
-    'Samyamoy Rakshit rebuilds published ML models from the paper on one laptop — the transformer, BERT, ViT — and writes up what broke. Data scientist at Sigmoid Analytics.',
+    'Samyamoy Rakshit rebuilds published ML models from the paper on one laptop and writes up what broke. Data scientist at Sigmoid Analytics.',
 
   /** Shown in the RSS feed and structured data. */
   language: 'en',

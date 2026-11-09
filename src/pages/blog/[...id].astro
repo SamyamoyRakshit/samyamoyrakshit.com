@@ -50,13 +50,11 @@ const parts = series ? await getSeries(series.name) : [];
       </a>
     </div>
 
-    {
-      /* The Contents control lives inside the header, not above it, so it
+    {/* The Contents control lives inside the header, not above it, so it
          sits beside the title rather than in a row of its own. On a screen
          with margin to spare it moves into that margin — see .toc__toggle
          below — and on one without it, it just sits in normal flow, a line
-         above the title. */
-    }
+         above the title. */}
     <header class="post__header">
       <PostToc headings={headings} part="control" />
       <h1 class="post__title">{title}</h1>
@@ -69,105 +67,95 @@ const parts = series ? await getSeries(series.name) : [];
         {updatedDate && <span class="label">Updated {formatDate(updatedDate)}</span>}
       </div>
 
-      {
-        tags.length > 0 && (
-          <ul class="post__tags">
-            {tags.map((tag) => (
-              <li>
-                <a href={`/blog/tags/${tagSlug(tag)}/`} class="tag tag-link">
-                  {tag}
-                </a>
-              </li>
-            ))}
-          </ul>
-        )
-      }
+      {tags.length > 0 && (
+        <ul class="post__tags">
+          {tags.map((tag) => (
+            <li>
+              <a href={`/blog/tags/${tagSlug(tag)}/`} class="tag tag-link">
+                {tag}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
     </header>
 
-    {
-      cover && (
-        <figure class="post__cover">
-          <Image
-            src={cover}
-            alt={coverAlt ?? ''}
-            widths={[640, 960, 1280]}
-            sizes="(min-width: 68ch) 68ch, 100vw"
-            loading="eager"
-            fetchpriority="high"
-          />
-          {
-            /* The same text as the alt, made visible — the way Medium credits
+    {cover && (
+      <figure class="post__cover">
+        <Image
+          src={cover}
+          alt={coverAlt ?? ''}
+          widths={[640, 960, 1280]}
+          sizes="(min-width: 68ch) 68ch, 100vw"
+          loading="eager"
+          fetchpriority="high"
+        />
+        {
+          /* The same text as the alt, made visible — the way Medium credits
                a hero image instead of leaving the description for a screen
                reader only. Both read from `coverAlt` rather than a second
                field, since it is already written as a real caption
                ("Figure 1 from Vaswani et al. (2017): …"), not just alt text. */
-            coverAlt && <figcaption>{coverAlt}</figcaption>
-          }
-        </figure>
-      )
-    }
+          coverAlt && <figcaption>{coverAlt}</figcaption>
+        }
+      </figure>
+    )}
 
-    {
-      /* Under the title and the cover, which is where a contents list belongs
+    {/* Under the title and the cover, which is where a contents list belongs
          and where the hand-written one used to be. With JavaScript this is
          lifted straight out to <body> and becomes the panel; this position is
-         what a reader without it gets. */
-    }
+         what a reader without it gets. */}
     <PostToc headings={headings} part="panel" />
 
     <div class="prose post__body">
       <Content />
     </div>
 
-    {
-      parts.length > 1 && (
-        <nav class="series" aria-label={`All parts of ${series!.name}`}>
-          <p class="label series__name">{series!.name}</p>
-          <ol class="series__list">
-            {parts.map((part) => {
-              const current = part.id === entry.id;
-              return (
-                <li class="series__item">
-                  <span class="series__num label tnum" aria-hidden="true">
-                    {String(part.data.series!.part).padStart(2, '0')}
+    {parts.length > 1 && (
+      <nav class="series" aria-label={`All parts of ${series!.name}`}>
+        <p class="label series__name">{series!.name}</p>
+        <ol class="series__list">
+          {parts.map((part) => {
+            const current = part.id === entry.id;
+            return (
+              <li class="series__item">
+                <span class="series__num label tnum" aria-hidden="true">
+                  {String(part.data.series!.part).padStart(2, '0')}
+                </span>
+                {current ? (
+                  <span class="series__current" aria-current="true">
+                    {part.data.title}
                   </span>
-                  {current ? (
-                    <span class="series__current" aria-current="true">
-                      {part.data.title}
-                    </span>
-                  ) : (
-                    <a href={`/blog/${part.id}/`} class="series__link">
-                      {part.data.title}
-                    </a>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
-        </nav>
-      )
-    }
+                ) : (
+                  <a href={`/blog/${part.id}/`} class="series__link">
+                    {part.data.title}
+                  </a>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+    )}
 
-    {
-      (next || prev) && (
-        <nav class="post__onward" aria-label="More posts">
-          {next && (
-            <a href={`/blog/${next.id}/`} class="onward">
-              <span class="label onward__dir">Read next</span>
-              <span class="onward__title">{next.data.title}</span>
-              <span class="onward__desc">{next.data.description}</span>
-            </a>
-          )}
-          {prev && (
-            <a href={`/blog/${prev.id}/`} class="onward onward--newer">
-              <span class="label onward__dir">More recent</span>
-              <span class="onward__title">{prev.data.title}</span>
-              <span class="onward__desc">{prev.data.description}</span>
-            </a>
-          )}
-        </nav>
-      )
-    }
+    {(next || prev) && (
+      <nav class="post__onward" aria-label="More posts">
+        {next && (
+          <a href={`/blog/${next.id}/`} class="onward">
+            <span class="label onward__dir">Read next</span>
+            <span class="onward__title">{next.data.title}</span>
+            <span class="onward__desc">{next.data.description}</span>
+          </a>
+        )}
+        {prev && (
+          <a href={`/blog/${prev.id}/`} class="onward onward--newer">
+            <span class="label onward__dir">More recent</span>
+            <span class="onward__title">{prev.data.title}</span>
+            <span class="onward__desc">{prev.data.description}</span>
+          </a>
+        )}
+      </nav>
+    )}
   </article>
 </Base>
 

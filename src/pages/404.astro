@@ -15,21 +15,19 @@ const [work, posts] = await Promise.all([getWork(), getBlogPosts()]);
     <h1 class="notfound__title">There&#8217;s nothing at this address.</h1>
     <p class="notfound__body">The link may be old, or the page may have been renamed.</p>
     <div class="notfound__actions">
-      <a href="/" class="btn">Home</a>
-      {
-        work.length > 0 && (
-          <a href="/projects/" class="btn">
-            Projects
-          </a>
-        )
-      }
-      {
-        posts.length > 0 && (
-          <a href="/blog/" class="btn">
-            Writing
-          </a>
-        )
-      }
+      <a href="/" class="btn">
+        Home
+      </a>
+      {work.length > 0 && (
+        <a href="/projects/" class="btn">
+          Projects
+        </a>
+      )}
+      {posts.length > 0 && (
+        <a href="/blog/" class="btn">
+          Writing
+        </a>
+      )}
     </div>
   </div>
 </Base>

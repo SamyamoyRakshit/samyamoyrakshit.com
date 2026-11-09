@@ -34,14 +34,12 @@ const Heading = level;
     <div class="section__body">
       <slot />
 
-      {
-        moreHref && (
-          <a href={moreHref} class="label section__more">
-            {moreLabel ?? 'See all'}
-            <span aria-hidden="true">&#8594;</span>
-          </a>
-        )
-      }
+      {moreHref && (
+        <a href={moreHref} class="label section__more">
+          {moreLabel ?? 'See all'}
+          <span aria-hidden="true">&#8594;</span>
+        </a>
+      )}
     </div>
   </div>
 </section>

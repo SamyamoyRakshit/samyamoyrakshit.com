@@ -41,27 +41,25 @@ import { epigraph } from '../config/site';
 const lines = epigraph.lines.filter(Boolean);
 ---
 
-{
-  lines.length > 0 && (
-    <div class="epigraph">
-      <div class="shell epigraph__inner">
-        <blockquote class="epigraph__quote">
-          <p class="epigraph__verse" lang={epigraph.lang}>
-            {lines.map((line) => (
-              <span class="epigraph__line">{line}</span>
-            ))}
-          </p>
+{lines.length > 0 && (
+  <div class="epigraph">
+    <div class="shell epigraph__inner">
+      <blockquote class="epigraph__quote">
+        <p class="epigraph__verse" lang={epigraph.lang}>
+          {lines.map((line) => (
+            <span class="epigraph__line">{line}</span>
+          ))}
+        </p>
 
-          <footer class="epigraph__by">
-            <cite class="epigraph__author" lang={epigraph.lang}>
-              {epigraph.author}
-            </cite>
-          </footer>
-        </blockquote>
-      </div>
+        <footer class="epigraph__by">
+          <cite class="epigraph__author" lang={epigraph.lang}>
+            {epigraph.author}
+          </cite>
+        </footer>
+      </blockquote>
     </div>
-  )
-}
+  </div>
+)}
 
 <style>
   .epigraph {

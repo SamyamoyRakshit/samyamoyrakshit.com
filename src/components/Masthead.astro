@@ -45,11 +45,9 @@ const ICON: Record<string, string> = {
 
 <div class="hero">
   <div class="shell hero__inner">
-    {
-      /* Before the words in the source, so a phone gets it above the name
+    {/* Before the words in the source, so a phone gets it above the name
         without needing `order`. The wide layout puts it back in the second
-        column by grid placement. */
-    }
+        column by grid placement. */}
     <div class="hero__figure">
       <div class="portrait">
         <Image
@@ -76,84 +74,72 @@ const ICON: Record<string, string> = {
           Read the rebuilds
           <span aria-hidden="true">&#8594;</span>
         </a>
-        {
-          email && (
-            <a href={`mailto:${email}`} class="btn">
-              Get in touch
-            </a>
-          )
-        }
+        {email && (
+          <a href={`mailto:${email}`} class="btn">
+            Get in touch
+          </a>
+        )}
       </div>
 
-      {
-        socials.length > 0 && (
-          <div class="hero__foot">
-            {socials.length > 0 && (
-              <ul class="hero__socials">
-                {socials.map((social) => (
-                  <li>
-                    <a
-                      href={social.href}
-                      class="hero__social"
-                      rel="me noopener"
-                      target="_blank"
-                      aria-label={`${identity.shortName} on ${social.network}`}
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                        <path d={ICON[social.network] ?? ICON.Link} />
-                      </svg>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )
-      }
+      {socials.length > 0 && (
+        <div class="hero__foot">
+          {socials.length > 0 && (
+            <ul class="hero__socials">
+              {socials.map((social) => (
+                <li>
+                  <a
+                    href={social.href}
+                    class="hero__social"
+                    rel="me noopener"
+                    target="_blank"
+                    aria-label={`${identity.shortName} on ${social.network}`}
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path d={ICON[social.network] ?? ICON.Link} />
+                    </svg>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   </div>
 
   <div class="shell">
     <div class="colophon-strip">
-      {
-        /* The role is set under the name a few lines up. Repeating it here
-          states one thing twice on a single screen. */
-      }
+      {/* The role is set under the name a few lines up. Repeating it here
+          states one thing twice on a single screen. */}
       {location && <span class="label colophon-strip__item">{location}</span>}
 
-      {
-        features.localClock && (
+      {features.localClock && (
+        <span
+          class="label colophon-strip__item"
+          data-local-time
+          data-tz={identity.timezone}
+          hidden
+        />
+      )}
+
+      {availability.show && (
+        <span class="label colophon-strip__item colophon-strip__status">
           <span
-            class="label colophon-strip__item"
-            data-local-time
-            data-tz={identity.timezone}
-            hidden
+            class="colophon-strip__mark"
+            data-open={availability.open ? 'true' : 'false'}
+            aria-hidden="true"
           />
-        )
-      }
+          {availability.open ? availability.label : availability.labelClosed}
+        </span>
+      )}
 
-      {
-        availability.show && (
-          <span class="label colophon-strip__item colophon-strip__status">
-            <span
-              class="colophon-strip__mark"
-              data-open={availability.open ? 'true' : 'false'}
-              aria-hidden="true"
-            />
-            {availability.open ? availability.label : availability.labelClosed}
-          </span>
-        )
-      }
-
-      {
-        /* No address here. "Get in touch" above is the mailto, and the footer
+      {/* No address here. "Get in touch" above is the mailto, and the footer
           prints the address itself in full on every page. That printed copy is
           the one that matters: a bare mailto: hands the visitor to whatever the
           OS registered as its mail handler, so someone reading Gmail in a
           browser gets Outlook, or gets nothing, with no way back to the
           address. Do not remove it from the footer without putting the visible
-          address somewhere else. */
-      }
+          address somewhere else. */}
     </div>
   </div>
 </div>

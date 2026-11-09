@@ -23,89 +23,87 @@ const roles = import.meta.env.DEV
 >
   <Section title="Experience" level="h1">
     <ol class="roles">
-      {
-        roles.map((role) => (
-          <li class="role" id={roleId(role)}>
-            <div class="role__when">
-              <span class="label tnum">
-                {role.start}&#8202;&#8211;&#8202;{role.end ?? 'present'}
-              </span>
-              {role.type && <span class="label role__type">{role.type}</span>}
-            </div>
+      {roles.map((role) => (
+        <li class="role" id={roleId(role)}>
+          <div class="role__when">
+            <span class="label tnum">
+              {role.start}&#8202;&#8211;&#8202;{role.end ?? 'present'}
+            </span>
+            {role.type && <span class="label role__type">{role.type}</span>}
+          </div>
 
-            <div class="role__body">
-              <h2 class="role__title">{role.title}</h2>
-              <p class="role__org">
-                {role.href ? (
-                  <a href={role.href} class="link">
-                    {role.org}
-                  </a>
-                ) : (
-                  role.org
-                )}
-                {role.location && <span class="role__location">{role.location}</span>}
-              </p>
+          <div class="role__body">
+            <h2 class="role__title">{role.title}</h2>
+            <p class="role__org">
+              {role.href ? (
+                <a href={role.href} class="link">
+                  {role.org}
+                </a>
+              ) : (
+                role.org
+              )}
+              {role.location && <span class="role__location">{role.location}</span>}
+            </p>
 
-              {role.award && (
-                <p class="role__award">
-                  {role.award}
-                  {/* Labelled "Certificate" rather than linking the sentence:
+            {role.award && (
+              <p class="role__award">
+                {role.award}
+                {/* Labelled "Certificate" rather than linking the sentence:
                     the reader should know they are opening a document, not
                     another page of the site. Base.astro handles the new-tab
                     and rel attributes for every external link. */}
-                  {role.awardHref && (
-                    <>
-                      {' '}
-                      <a href={role.awardHref} class="link role__award-proof">
-                        Certificate
-                      </a>
-                    </>
-                  )}
-                </p>
-              )}
+                {role.awardHref && (
+                  <>
+                    {' '}
+                    <a href={role.awardHref} class="link role__award-proof">
+                      Certificate
+                    </a>
+                  </>
+                )}
+              </p>
+            )}
 
-              {role.projects && role.projects.length > 0 && (
-                <div class="role__projects">
-                  {role.projects.map((project) => (
-                    <article class="engagement">
-                      <h3 class="engagement__name">{project.name}</h3>
+            {role.projects && role.projects.length > 0 && (
+              <div class="role__projects">
+                {role.projects.map((project) => (
+                  <article class="engagement">
+                    <h3 class="engagement__name">{project.name}</h3>
 
-                      <p class="engagement__context">
-                        {project.client && (
-                          <span class="engagement__client">{project.client}</span>
-                        )}
-                        {project.period && (
-                          <span class="engagement__period tnum">{project.period}</span>
-                        )}
-                      </p>
-
-                      {project.summary && (
-                        <p class="engagement__summary">{project.summary}</p>
+                    <p class="engagement__context">
+                      {project.client && (
+                        <span class="engagement__client">{project.client}</span>
                       )}
+                      {project.period && (
+                        <span class="engagement__period tnum">{project.period}</span>
+                      )}
+                    </p>
 
-                      {/* role="list" restores the semantics `list-style: none`
+                    {project.summary && (
+                      <p class="engagement__summary">{project.summary}</p>
+                    )}
+
+                    {/* role="list" restores the semantics `list-style: none`
                         strips in Safari — see the note in projects/index.astro. */}
-                      <ul class="engagement__points" role="list">
-                        {project.bullets.map((bullet) => (
-                          <li>{bullet}</li>
+                    <ul class="engagement__points" role="list">
+                      {project.bullets.map((bullet) => (
+                        <li>{bullet}</li>
+                      ))}
+                    </ul>
+
+                    {project.tech && project.tech.length > 0 && (
+                      <ul class="engagement__tech">
+                        {project.tech.map((item) => (
+                          <li class="tag">{item}</li>
                         ))}
                       </ul>
-
-                      {project.tech && project.tech.length > 0 && (
-                        <ul class="engagement__tech">
-                          {project.tech.map((item) => (
-                            <li class="tag">{item}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </article>
-                  ))}
-                </div>
-              )}
-            </div>
-          </li>
-        ))
-      }
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </li>
+      ))}
     </ol>
   </Section>
 </Base>

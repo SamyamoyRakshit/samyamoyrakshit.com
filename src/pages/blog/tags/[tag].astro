@@ -50,7 +50,9 @@ const count = group.posts.length;
     note={`${count} ${count === 1 ? 'post' : 'posts'}`}
   >
     {/* h2, not the default h3: the tag name above is this page's h1. */}
-    {group.posts.map((entry) => <PostRow entry={entry} level="h2" />)}
+    {group.posts.map((entry) => (
+      <PostRow entry={entry} level="h2" />
+    ))}
   </Section>
 </Base>
 

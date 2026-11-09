@@ -75,18 +75,17 @@ const isCurrent = (href: string) =>
 
 <header class="masthead-bar">
   <div class="shell masthead-bar__inner">
-    {
-      /* The full name, on every page including the homepage. It is set twice on
+    {/* The full name, on every page including the homepage. It is set twice on
         the homepage — once here, once as the <h1> — and that is fine. Anything
-        cleverer in this slot reads as a rendering fault. */
-    }
+        cleverer in this slot reads as a rendering fault. */}
     <a href="/" class="wordmark label" aria-label={`${identity.name} — home`}>
       <span class="wordmark__full">{identity.name}</span>
-      <span class="wordmark__short" aria-hidden="true">{identity.shortName}</span>
+      <span class="wordmark__short" aria-hidden="true">
+        {identity.shortName}
+      </span>
     </a>
 
-    {
-      /* Icon only, and the name lives in `aria-label` where it costs nothing.
+    {/* Icon only, and the name lives in `aria-label` where it costs nothing.
         The written word "Menu" was built here and removed: the theme toggle
         sitting immediately beside it is a bare icon, and one labelled control
         next to one unlabelled one is what reads as unconsidered. The research
@@ -98,8 +97,7 @@ const isCurrent = (href: string) =>
         CSS shows this only when `data-js` is on <html>, which the pre-paint
         script in BaseHead sets. Without JavaScript the button never appears
         and the links stay visible in two rows — the fallback is the finished
-        page, not a dead end. */
-    }
+        page, not a dead end. */}
     <button
       id="nav-toggle"
       type="button"
@@ -138,35 +136,29 @@ const isCurrent = (href: string) =>
 
     <nav aria-label="Primary" class="masthead-bar__nav" id="primary-nav">
       <ul class="nav">
-        {
-          links.map((item) => (
-            <li>
-              <a
-                href={item.href}
-                class="nav__link label"
-                aria-current={isCurrent(item.href) ? 'page' : undefined}
-              >
-                {item.label}
-              </a>
-            </li>
-          ))
-        }
+        {links.map((item) => (
+          <li>
+            <a
+              href={item.href}
+              class="nav__link label"
+              aria-current={isCurrent(item.href) ? 'page' : undefined}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))}
       </ul>
     </nav>
 
-    {
-      /* Outside the list on purpose. Changing the theme is not a destination,
+    {/* Outside the list on purpose. Changing the theme is not a destination,
         so it does not belong among the links a screen reader is offered when
         it enumerates the primary navigation — and keeping it a sibling is what
-        lets it move to the end of the first row when the bar wraps. */
-    }
-    {
-      features.themeToggle && (
-        <div class="masthead-bar__toggle">
-          <ThemeToggle />
-        </div>
-      )
-    }
+        lets it move to the end of the first row when the bar wraps. */}
+    {features.themeToggle && (
+      <div class="masthead-bar__toggle">
+        <ThemeToggle />
+      </div>
+    )}
   </div>
 </header>
 

@@ -53,12 +53,15 @@
     "katex": "^0.19.1",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
-    "satori": "^0.29.0",
+    "satori": "^0.33.5",
     "sharp": "^0.35.3",
     "tailwindcss": "^4.3.3"
   },
   "overrides": {
-    "katex": "$katex"
+    "katex": "$katex",
+    "satori": {
+      "fflate": "0.7.5"
+    }
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",

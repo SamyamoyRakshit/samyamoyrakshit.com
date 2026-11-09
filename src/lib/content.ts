@@ -13,11 +13,11 @@ const includeDrafts = import.meta.env.DEV;
 export type WorkEntry = CollectionEntry<'work'>;
 export type BlogEntry = CollectionEntry<'blog'>;
 
-/** All projects: manual `order` first, then newest year. */
+/** All projects: highest `order` first — the newest is on top — then newest year. */
 export async function getWork(): Promise<WorkEntry[]> {
   const entries = await getCollection('work', ({ data }) => includeDrafts || !data.draft);
   return entries.sort((a, b) => {
-    if (a.data.order !== b.data.order) return a.data.order - b.data.order;
+    if (a.data.order !== b.data.order) return b.data.order - a.data.order;
     return b.data.year.localeCompare(a.data.year);
   });
 }
@@ -58,6 +58,11 @@ export async function getProfessionalWork(): Promise<WorkEntry[]> {
 
 export async function getRecentPosts(limit = 3): Promise<BlogEntry[]> {
   return (await getBlogPosts()).slice(0, limit);
+}
+
+/** The homepage's rebuilds: the latest few, the same way Writing takes posts. */
+export async function getRecentScratchBuilds(limit = 3): Promise<WorkEntry[]> {
+  return (await getScratchBuilds()).slice(0, limit);
 }
 
 /**

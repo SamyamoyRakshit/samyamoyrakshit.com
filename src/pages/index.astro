@@ -14,7 +14,7 @@ import {
   isPlaceholder,
   filledList,
 } from '../config/site';
-import { getScratchBuilds, getRecentPosts } from '../lib/content';
+import { getRecentScratchBuilds, getRecentPosts } from '../lib/content';
 
 /**
  * One page that answers the whole question.
@@ -24,7 +24,10 @@ import { getScratchBuilds, getRecentPosts } from '../lib/content';
  * deeper; none of them hold anything back that belongs here. Nobody should
  * have to click to find out whether this person is worth reading.
  */
-const [scratch, posts] = await Promise.all([getScratchBuilds(), getRecentPosts(3)]);
+const [scratch, posts] = await Promise.all([
+  getRecentScratchBuilds(3),
+  getRecentPosts(3),
+]);
 
 const roles = (
   import.meta.env.DEV
@@ -87,10 +90,13 @@ const showBlog = features.blog && posts.length > 0;
   )}
 
   {/* No note on Projects. The lead block's tagline and summary directly
-      beneath said the same thing in two more ways — one repository, three
-      papers, one laptop, three times over. Experience carries no note. */}
+      beneath said the same thing in two more ways — one repository, several
+      papers, one laptop. Experience carries no note.
+
+      The latest three rebuilds, like the latest three posts under Writing;
+      /projects/ has every one. */}
   {showScratch && (
-    <Section title="Projects" moreHref="/projects/" moreLabel="All three in full">
+    <Section title="Projects" moreHref="/projects/" moreLabel="All projects">
       <ScratchProject entries={scratch} />
     </Section>
   )}

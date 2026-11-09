@@ -25,7 +25,7 @@ role: Everything — implementation, pre-training, fine-tuning, evaluation
 stack: [PyTorch, Python]
 links:
   repo: https://github.com/SamyamoyRakshit/papers-from-scratch/tree/main/BERT
-order: 1
+order: 3
 featured: true
 ---
 

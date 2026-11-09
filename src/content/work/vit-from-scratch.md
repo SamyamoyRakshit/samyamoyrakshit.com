@@ -21,7 +21,7 @@ role: Dataset collection, implementation, training, evaluation
 stack: [PyTorch, Python]
 links:
   repo: https://github.com/SamyamoyRakshit/papers-from-scratch/tree/main/ViT
-order: 3
+order: 1
 featured: true
 ---
 

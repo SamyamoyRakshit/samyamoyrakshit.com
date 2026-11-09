@@ -115,8 +115,15 @@ const work = defineCollection({
       cover: image().optional(),
       coverAlt: z.string().optional(),
 
-      /** Lower numbers sort first. Ties fall back to reverse-chronological. */
-      order: z.number().default(0),
+      /**
+       * Higher numbers sort first, so the newest goes on top: a new entry
+       * takes the highest number in use plus one. The homepage shows the top
+       * three; /projects/ shows them all.
+       *
+       * Required, because a forgotten `order` would sink a new entry to the
+       * bottom — the opposite of where the newest belongs.
+       */
+      order: z.number().int(),
 
       /** Featured projects appear on the homepage. Keep this to 3. */
       featured: z.boolean().default(false),

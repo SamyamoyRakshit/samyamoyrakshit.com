@@ -73,8 +73,8 @@ Numbers if you have them. If not, what became possible that wasn't before.
 | `stack`              | no       | Cap at five. It's not a keyword dump.                                                            |
 | `links`              | no       | Any of `live`, `repo`, `writeup`. Must be full URLs.                                             |
 | `cover` / `coverAlt` | no       | Image beside the `.md`; alt text required with it.                                               |
-| `order`              | no       | Lower sorts first. Default 0.                                                                    |
-| `featured`           | no       | Shows on the homepage. Keep to **three**.                                                        |
+| `order`              | yes      | Higher sorts first. Give a new one the highest number in use plus one, so the newest is on top.  |
+| `featured`           | no       | No effect. The homepage shows the top three by `order`.                                          |
 | `draft`              | no       | `true` = visible in dev, excluded from the built site.                                           |
 
 ### The two kinds of project

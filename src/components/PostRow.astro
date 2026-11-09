@@ -29,7 +29,9 @@ const Heading = level;
 <article class="row post-row">
   <div class="post-row__main">
     <Heading class="row-title">
-      <a href={href} class="row-link">{title}</a>
+      <a href={href} class="row-link">
+        {title}
+      </a>
       {draft && <span class="post-row__draft label">draft</span>}
     </Heading>
 
@@ -39,38 +41,32 @@ const Heading = level;
       <time class="label tnum" datetime={isoDate(pubDate)}>
         {formatDate(pubDate)}
       </time>
-      {
-        /* Telling someone what a post costs them is the cheapest way to get it
-          read. An unlabelled wall of text is the thing people bounce off. */
-      }
+      {/* Telling someone what a post costs them is the cheapest way to get it
+          read. An unlabelled wall of text is the thing people bounce off. */}
       <span class="label post-row__time">{readingTime(entry.body)}</span>
     </div>
 
-    {
-      tags.length > 0 && (
-        <ul class="post-row__tags">
-          {/* Each tag goes to its own page. Safe inside a card whose whole
+    {tags.length > 0 && (
+      <ul class="post-row__tags">
+        {/* Each tag goes to its own page. Safe inside a card whose whole
             surface is already a link: global.css gives `.row a:not(.row-link)`
             a z-index above the .row-link overlay, so these stay clickable and
             the rest of the card still opens the post. */}
-          {tags.map((tag) => (
-            <li>
-              <a href={`/blog/tags/${tagSlug(tag)}/`} class="tag tag-link">
-                {tag}
-              </a>
-            </li>
-          ))}
-        </ul>
-      )
-    }
+        {tags.map((tag) => (
+          <li>
+            <a href={`/blog/tags/${tagSlug(tag)}/`} class="tag tag-link">
+              {tag}
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
 
-    {
-      cover && (
-        <a href={href} class="post-row__thumb" tabindex="-1" aria-hidden="true">
-          <Image src={cover} alt={coverAlt ?? ''} width={280} densities={[1, 2]} />
-        </a>
-      )
-    }
+    {cover && (
+      <a href={href} class="post-row__thumb" tabindex="-1" aria-hidden="true">
+        <Image src={cover} alt={coverAlt ?? ''} width={280} densities={[1, 2]} />
+      </a>
+    )}
   </div>
 </article>
 

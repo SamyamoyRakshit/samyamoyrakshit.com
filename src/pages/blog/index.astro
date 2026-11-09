@@ -17,27 +17,23 @@ const posts = await getBlogPosts();
 
 <Base title="Writing" description={`Notes and essays by ${identity.name}.`}>
   <Section title="Writing" level="h1">
-    {
-      posts.length > 0 ? (
-        /* h2, not the default h3: the section heading above is this page's h1. */
-        posts.map((entry) => <PostRow entry={entry} level="h2" />)
-      ) : import.meta.env.DEV ? (
-        /* Development only. A live page must never address its own maintainer. */
-        <p class="empty">
-          Nothing published yet. Add
-          <code>src/content/blog/&lt;name&gt;/ARTICLE.md</code> and it will appear here
-          and in the feed.
-        </p>
-      ) : null
-    }
+    {posts.length > 0 ? (
+      /* h2, not the default h3: the section heading above is this page's h1. */
+      posts.map((entry) => <PostRow entry={entry} level="h2" />)
+    ) : import.meta.env.DEV ? (
+      /* Development only. A live page must never address its own maintainer. */
+      <p class="empty">
+        Nothing published yet. Add
+        <code>src/content/blog/&lt;name&gt;/ARTICLE.md</code> and it will appear here and
+        in the feed.
+      </p>
+    ) : null}
 
-    {
-      posts.length > 0 && (
-        <a href="/rss.xml" class="label feed">
-          RSS feed
-        </a>
-      )
-    }
+    {posts.length > 0 && (
+      <a href="/rss.xml" class="label feed">
+        RSS feed
+      </a>
+    )}
   </Section>
 </Base>
 

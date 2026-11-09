@@ -78,10 +78,9 @@ const entries = headings.filter((h) => h.depth === 2 || h.depth === 3);
 const enough = entries.length >= 4;
 ---
 
-{
-  enough && part === 'control' && (
-    <>
-      {/* The icon is a list, not a hamburger, and this is deliberate. The
+{enough && part === 'control' && (
+  <>
+    {/* The icon is a list, not a hamburger, and this is deliberate. The
           masthead already carries three bare lines for the phone menu, and two
           identical glyphs on one screen opening two different things is the
           kind of detail that makes an interface feel unconsidered. Lines with
@@ -89,80 +88,77 @@ const enough = entries.length >= 4;
           beside it for the same reason Header's own note gives: a labelled
           control measures better than a bare glyph, and here there is nothing
           adjacent forcing icon-only consistency. */}
-      <button
-        type="button"
-        class="toc__toggle"
-        id="toc-toggle"
-        aria-expanded="false"
-        aria-controls="post-toc"
+    <button
+      type="button"
+      class="toc__toggle"
+      id="toc-toggle"
+      aria-expanded="false"
+      aria-controls="post-toc"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="16"
+        height="16"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        aria-hidden="true"
       >
-        <svg
-          viewBox="0 0 24 24"
-          width="16"
-          height="16"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.7"
-          stroke-linecap="round"
-          aria-hidden="true"
-        >
-          <path d="M4 6.5h.01M4 12h.01M4 17.5h.01" />
-          <path d="M9 6.5h11M9 12h11M9 17.5h7" />
-        </svg>
-        <span class="toc__toggle-text">Contents</span>
-      </button>
-    </>
-  )
-}
+        <path d="M4 6.5h.01M4 12h.01M4 17.5h.01" />
+        <path d="M9 6.5h11M9 12h11M9 17.5h7" />
+      </svg>
+      <span class="toc__toggle-text">Contents</span>
+    </button>
+  </>
+)}
 
-{
-  enough && part === 'panel' && (
-    <>
-      {/* Rendered alongside the panel rather than in the control's half so the
+{enough && part === 'panel' && (
+  <>
+    {/* Rendered alongside the panel rather than in the control's half so the
           two always move to <body> together — the script appends both, and a
           scrim left behind in the article would dim nothing and cover
           everything. */}
-      <div class="toc__scrim" data-toc-scrim />
+    <div class="toc__scrim" data-toc-scrim />
 
-      <nav id="post-toc" class="toc__panel" aria-labelledby="toc-title">
-        <div class="toc__head">
-          <p class="label" id="toc-title">
-            Contents
-          </p>
-          <button
-            type="button"
-            class="toc__close"
-            data-toc-close
-            aria-label="Close contents"
+    <nav id="post-toc" class="toc__panel" aria-labelledby="toc-title">
+      <div class="toc__head">
+        <p class="label" id="toc-title">
+          Contents
+        </p>
+        <button
+          type="button"
+          class="toc__close"
+          data-toc-close
+          aria-label="Close contents"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            aria-hidden="true"
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="16"
-              height="16"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.7"
-              stroke-linecap="round"
-              aria-hidden="true"
-            >
-              <path d="M5.5 5.5l13 13M18.5 5.5l-13 13" />
-            </svg>
-          </button>
-        </div>
+            <path d="M5.5 5.5l13 13M18.5 5.5l-13 13" />
+          </svg>
+        </button>
+      </div>
 
-        <ol class="toc__list">
-          {entries.map((h) => (
-            <li class:list={['toc__item', `toc__item--h${h.depth}`]}>
-              <a href={`#${h.slug}`} class="toc__link">
-                {h.text}
-              </a>
-            </li>
-          ))}
-        </ol>
-      </nav>
-    </>
-  )
-}
+      <ol class="toc__list">
+        {entries.map((h) => (
+          <li class:list={['toc__item', `toc__item--h${h.depth}`]}>
+            <a href={`#${h.slug}`} class="toc__link">
+              {h.text}
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  </>
+)}
 
 <style>
   /* --- The control ---------------------------------------------------- */

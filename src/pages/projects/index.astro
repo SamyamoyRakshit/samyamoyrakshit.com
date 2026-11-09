@@ -58,90 +58,88 @@ const noteParts = `${scratchProject.summary} ${scratchProject.detail}`.split(
       {noteParts.map((part) => (SYMBOL.test(part) ? <code>{part}</code> : part))}
     </p>
 
-    {
-      builds.length > 0 ? (
-        <ol class="builds">
-          {builds.map((entry) => (
-            <li class="build" id={entry.id}>
-              <h2 class="build__title">{heading(entry)}</h2>
-              <p class="build__repo">{scratchProject.name}</p>
+    {builds.length > 0 ? (
+      <ol class="builds">
+        {builds.map((entry) => (
+          <li class="build" id={entry.id}>
+            <h2 class="build__title">{heading(entry)}</h2>
+            <p class="build__repo">{scratchProject.name}</p>
 
-              {entry.data.paper && (
-                <p class="build__cite">
-                  {entry.data.paper.url ? (
-                    <a href={entry.data.paper.url} class="build__paper-link">
-                      <cite>{entry.data.paper.title}</cite>
-                    </a>
-                  ) : (
+            {entry.data.paper && (
+              <p class="build__cite">
+                {entry.data.paper.url ? (
+                  <a href={entry.data.paper.url} class="build__paper-link">
                     <cite>{entry.data.paper.title}</cite>
-                  )}
-                  <span class="build__sep" aria-hidden="true">
-                    ·
-                  </span>
-                  <span class="tnum">
-                    {entry.data.paper.authors}, {entry.data.paper.year}
-                  </span>
-                </p>
-              )}
+                  </a>
+                ) : (
+                  <cite>{entry.data.paper.title}</cite>
+                )}
+                <span class="build__sep" aria-hidden="true">
+                  ·
+                </span>
+                <span class="tnum">
+                  {entry.data.paper.authors}, {entry.data.paper.year}
+                </span>
+              </p>
+            )}
 
-              <p class="build__summary">{entry.data.summary}</p>
+            <p class="build__summary">{entry.data.summary}</p>
 
-              {entry.data.specs.length > 0 && (
-                <dl class="build__specs tnum">
-                  {entry.data.specs.map((spec) => (
-                    <div class="build__spec">
-                      <dt>{spec.label}</dt>
-                      <dd>{spec.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              )}
+            {entry.data.specs.length > 0 && (
+              <dl class="build__specs tnum">
+                {entry.data.specs.map((spec) => (
+                  <div class="build__spec">
+                    <dt>{spec.label}</dt>
+                    <dd>{spec.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
 
-              {/* role="list" is not redundant: this <ul> sets `list-style: none`,
+            {/* role="list" is not redundant: this <ul> sets `list-style: none`,
                 and Safari drops list semantics from a list with no marker, so
                 VoiceOver stops announcing "list, 3 items". The role puts them
                 back. The comment sits out here rather than inside the `&&`
                 group below because `{...}` in that position parses as an object
                 literal, not a comment — it costs 18 type errors. */}
-              {entry.data.highlights.length > 0 && (
-                <ul class="build__points" role="list">
-                  {entry.data.highlights.map((point) => (
-                    <li>{point}</li>
-                  ))}
-                </ul>
-              )}
+            {entry.data.highlights.length > 0 && (
+              <ul class="build__points" role="list">
+                {entry.data.highlights.map((point) => (
+                  <li>{point}</li>
+                ))}
+              </ul>
+            )}
 
-              {entry.data.stack.length > 0 && (
-                <ul class="build__stack">
-                  {entry.data.stack.map((item) => (
-                    <li class="tag">{item}</li>
-                  ))}
-                </ul>
-              )}
+            {entry.data.stack.length > 0 && (
+              <ul class="build__stack">
+                {entry.data.stack.map((item) => (
+                  <li class="tag">{item}</li>
+                ))}
+              </ul>
+            )}
 
-              {/* Blog goes to this paper's own post, Source to this paper's own
+            {/* Blog goes to this paper's own post, Source to this paper's own
                 folder — so no two boxes produce the same pair of links. */}
-              <div class="build__links">
-                <a href={writeupHref(entry.id)} class="label build__link">
-                  Blog
+            <div class="build__links">
+              <a href={writeupHref(entry.id)} class="label build__link">
+                Blog
+              </a>
+              {entry.data.links.repo && (
+                <a href={entry.data.links.repo} class="label build__link">
+                  Source
                 </a>
-                {entry.data.links.repo && (
-                  <a href={entry.data.links.repo} class="label build__link">
-                    Source
-                  </a>
-                )}
-              </div>
-            </li>
-          ))}
-        </ol>
-      ) : import.meta.env.DEV ? (
-        /* Development only. A live page must never address its own maintainer. */
-        <p class="empty">
-          Nothing here yet. Add a Markdown file with <code>kind: scratch</code> to
-          <code>src/content/work/</code> and it will appear.
-        </p>
-      ) : null
-    }
+              )}
+            </div>
+          </li>
+        ))}
+      </ol>
+    ) : import.meta.env.DEV ? (
+      /* Development only. A live page must never address its own maintainer. */
+      <p class="empty">
+        Nothing here yet. Add a Markdown file with <code>kind: scratch</code> to
+        <code>src/content/work/</code> and it will appear.
+      </p>
+    ) : null}
   </Section>
 </Base>
 

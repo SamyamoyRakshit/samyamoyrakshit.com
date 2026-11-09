@@ -129,16 +129,12 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
 <meta property="og:image:height" content="630" />
 <meta property="og:site_name" content={identity.name} />
 <meta property="og:locale" content={seo.locale} />
-{
-  publishedTime && (
-    <meta property="article:published_time" content={publishedTime.toISOString()} />
-  )
-}
-{
-  modifiedTime && (
-    <meta property="article:modified_time" content={modifiedTime.toISOString()} />
-  )
-}
+{publishedTime && (
+  <meta property="article:published_time" content={publishedTime.toISOString()} />
+)}
+{modifiedTime && (
+  <meta property="article:modified_time" content={modifiedTime.toISOString()} />
+)}
 
 <!-- Twitter / X -->
 <meta name="twitter:card" content="summary_large_image" />
@@ -146,11 +142,9 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
 <meta name="twitter:description" content={safeDescription} />
 <meta name="twitter:image" content={ogImage} />
 
-{
-  seo.googleSiteVerification && (
-    <meta name="google-site-verification" content={seo.googleSiteVerification} />
-  )
-}
+{seo.googleSiteVerification && (
+  <meta name="google-site-verification" content={seo.googleSiteVerification} />
+)}
 
 <!-- Self-hosted, subset, preloaded, with fallback metrics to prevent shift -->
 <Font cssVariable="--f-sans" preload />
@@ -182,7 +176,6 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
 <Font cssVariable="--f-bengali" preload={preloadBengali} />
 
 <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
-
 <!--
   Applies the saved theme before first paint. Inline and synchronous on
   purpose: any deferral here is a visible flash of the wrong colour scheme.

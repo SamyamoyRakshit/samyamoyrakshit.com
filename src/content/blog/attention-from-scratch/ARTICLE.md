@@ -409,11 +409,13 @@ Why this matters: the attention mechanism can learn to attend by **relative offs
                  depends only on k, not pos
 ```
 
-This is also why fixed sinusoids can **extrapolate** to sequences longer than any seen in training — the property the paper cites for choosing them (Section 3.5) — the rotation rule keeps working past the training range. Learned positional embeddings cannot do this; they simply have no row for position 5001.
+This is also why fixed sinusoids may **extrapolate** to sequences longer than any seen in training — the property the paper cites for choosing them (Section 3.5) — the rotation rule keeps working past the training range. Learned positional embeddings cannot do this; they simply have no row for position 5001.
 
 > **Sources for this property** (both excellent):
 > - Amirhossein Kazemnejad, ["Transformer Architecture: The Positional Encoding"](https://kazemnejad.com/blog/transformer_architecture_positional_encoding/)
 > - Timo Denk, ["Linear Relationships in the Transformer's Positional Encoding"](https://blog.timodenk.com/linear-relationships-in-the-transformers-positional-encoding/)
+
+**Want the long version?** [Let's understand Positional Encoding from High School Physics](/blog/positional-encoding-from-high-school-physics/) rebuilds sections 1.2 and 1.3 from a wall clock, with live figures.
 
 ---
 

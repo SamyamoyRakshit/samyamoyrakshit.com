@@ -1,0 +1,1900 @@
+---
+/**
+ * Live figures for the positional-encoding post.
+ *
+ * One component, fourteen figures, picked by `name`:
+ *
+ *   <PeFigure name="minute" />
+ *
+ * The markup here is only the frame of each figure — controls, readouts, an
+ * empty <svg> or <canvas>. Everything drawn inside is built by
+ * `pe-figures.js`, which looks for each figure by id and skips the ones that
+ * are not on the page. That is why the styles are `is:global`: Astro's scoped
+ * styles do not reach elements a script creates.
+ *
+ * Colours: surfaces, ink and rules are the site tokens. The six data colours
+ * (--sin, --cos, --shift and the heatmap's --neg / --mid / --pos) are declared
+ * here with light-dark(), so they follow the theme toggle like everything else.
+ *
+ * Symbols in table headers go through KaTeX at build time, the same as the
+ * `$...$` in the post, so a θ in a figure's table matches the θ in the text.
+ */
+import katex from 'katex';
+
+const tex = (src: string) => katex.renderToString(src, { throwOnError: true });
+
+interface Props {
+  name:
+    | 'circle'
+    | 'minute'
+    | 'speeds'
+    | 'three-hands'
+    | 'binary'
+    | 'hand-one'
+    | 'dials'
+    | 'wavelengths'
+    | 'two-numbers'
+    | 'heat'
+    | 'rotate'
+    | 'block'
+    | 'dot'
+    | 'look';
+}
+const { name } = Astro.props;
+---
+
+{name === 'circle' && (
+  <figure class="pe">
+    <div class="legend">
+      <span>
+        <i class="sw sw-sin" />
+        height = sin θ
+      </span>
+      <span>
+        <i class="sw sw-cos" />
+        sideways = cos θ
+      </span>
+      <span>the hand has length 1</span>
+    </div>
+    <div class="split">
+      <svg
+        id="c1-dial"
+        class="dial-lg"
+        viewBox="0 0 240 240"
+        role="img"
+        aria-label="A hand of length 1 on a circle. A teal bar shows the height of its tip, an orange bar shows its sideways position."
+      />
+      <div class="chartbox" id="c1-box">
+        <svg
+          id="c1-wave"
+          class="chart"
+          role="img"
+          aria-label="Height and sideways position of the tip plotted against the angle, over two full turns. Both are waves that repeat every 2 pi."
+        />
+      </div>
+    </div>
+    <div class="controls">
+      <button class="pbtn" type="button" id="c1-play" aria-pressed="false">
+        Play
+      </button>
+      <div class="slider">
+        <label for="c1-theta">Turn the hand</label>
+        <input type="range" id="c1-theta" min="0" max="12.56" step="0.01" value="0.64" />
+      </div>
+    </div>
+    <dl class="readout">
+      <div>
+        <dt>angle θ</dt>
+        <dd id="c1-r-ang" />
+      </div>
+      <div>
+        <dt>same angle in turns</dt>
+        <dd id="c1-r-turn" />
+      </div>
+      <div>
+        <dt>height, sin θ</dt>
+        <dd id="c1-r-sin" />
+      </div>
+      <div>
+        <dt>sideways, cos θ</dt>
+        <dd id="c1-r-cos" />
+      </div>
+      <div>
+        <dt>height² + sideways²</dt>
+        <dd id="c1-r-sq" />
+      </div>
+    </dl>
+    <figcaption>
+      One hand, two numbers. After 2π the hand is back where it started, so both curves
+      repeat.
+    </figcaption>
+  </figure>
+)}
+
+{name === 'minute' && (
+  <figure class="pe">
+    <p class="fig-title">The minute hand, starting at 12 o’clock</p>
+    <p class="fig-sub">
+      Its speed never changes: ω = 2π ÷ 60 ≈ 0.1047 radians per minute.
+    </p>
+    <div class="legend">
+      <span>
+        <i class="sw sw-shift" />
+        angle turned so far, θ
+      </span>
+    </div>
+    <div class="side">
+      <svg
+        id="ck-svg"
+        class="clock"
+        viewBox="0 0 260 260"
+        role="img"
+        aria-label="A wall clock face with one hand, the minute hand. A shaded wedge marks the angle the hand has turned since 12 o’clock."
+      />
+      <div class="tbl">
+        <table>
+          <thead>
+            <tr>
+              <th align="right">
+                <Fragment set:html={tex('t')} />, minutes
+              </th>
+              <th align="right">
+                <Fragment set:html={tex('\\theta = \\omega \\times t')} />
+              </th>
+              <th align="right">in degrees</th>
+              <th>the hand points at</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="num" align="right">
+                0
+              </td>
+              <td class="num" align="right">
+                0 rad
+              </td>
+              <td class="num" align="right">
+                0°
+              </td>
+              <td>12</td>
+            </tr>
+            <tr>
+              <td class="num" align="right">
+                15
+              </td>
+              <td class="num" align="right">
+                1.571 rad
+              </td>
+              <td class="num" align="right">
+                90°
+              </td>
+              <td>3</td>
+            </tr>
+            <tr>
+              <td class="num" align="right">
+                20
+              </td>
+              <td class="num" align="right">
+                2.094 rad
+              </td>
+              <td class="num" align="right">
+                120°
+              </td>
+              <td>4</td>
+            </tr>
+            <tr>
+              <td class="num" align="right">
+                30
+              </td>
+              <td class="num" align="right">
+                3.142 rad
+              </td>
+              <td class="num" align="right">
+                180°
+              </td>
+              <td>6</td>
+            </tr>
+            <tr>
+              <td class="num" align="right">
+                60
+              </td>
+              <td class="num" align="right">
+                6.283 rad
+              </td>
+              <td class="num" align="right">
+                360°
+              </td>
+              <td>12 again</td>
+            </tr>
+            <tr>
+              <td class="num" align="right">
+                75
+              </td>
+              <td class="num" align="right">
+                7.854 rad
+              </td>
+              <td class="num" align="right">
+                450°
+              </td>
+              <td>3 again</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="pbtn" type="button" id="ck-play" aria-pressed="false">
+        Play
+      </button>
+      <div class="slider">
+        <label for="ck-t">
+          Minutes passed, <var>t</var>
+        </label>
+        <input type="range" id="ck-t" min="0" max="120" step="1" value="20" />
+        <output id="ck-out" for="ck-t" />
+      </div>
+      <span class="chips">
+        Jump to
+        <button class="pbtn" type="button" data-ck="15">
+          15
+        </button>
+        <button class="pbtn" type="button" data-ck="20">
+          20
+        </button>
+        <button class="pbtn" type="button" data-ck="30">
+          30
+        </button>
+        <button class="pbtn" type="button" data-ck="60">
+          60
+        </button>
+        <button class="pbtn" type="button" data-ck="75">
+          75
+        </button>
+      </span>
+    </div>
+    <dl class="readout">
+      <div>
+        <dt>
+          angle turned, θ = ω × <var>t</var>
+        </dt>
+        <dd id="ck-r-th" />
+      </div>
+      <div>
+        <dt>
+          full turns so far, <var>t</var> ÷ 60
+        </dt>
+        <dd id="ck-r-turn" />
+      </div>
+    </dl>
+    <p class="note-live" id="ck-note" aria-live="polite" />
+    <figcaption>
+      The angle keeps growing, but after 60 minutes the hand is back at the 12 and
+      repeats.
+    </figcaption>
+  </figure>
+)}
+
+{name === 'speeds' && (
+  <figure class="pe">
+    <p class="fig-title">Three hands, three speeds</p>
+    <p class="fig-sub">
+      Height of each hand over 20 steps. The shaded band is one full turn, the wavelength.
+    </p>
+    <div class="speed-rows" id="c2-rows" />
+    <div class="controls">
+      <button class="pbtn" type="button" id="c2-play" aria-pressed="false">
+        Play
+      </button>
+      <div class="slider">
+        <label for="c2-t">
+          Time <var>t</var>
+        </label>
+        <input type="range" id="c2-t" min="0" max="20" step="0.05" value="4" />
+        <output id="c2-out" for="c2-t" />
+      </div>
+    </div>
+    <figcaption>
+      Same time, different speeds. Halving ω doubles the wavelength.
+    </figcaption>
+  </figure>
+)}
+
+{name === 'three-hands' && (
+  <figure class="pe">
+    <p class="fig-title">Three hands, one time</p>
+    <p class="fig-sub">
+      Counting from 12:00:00. The clock reads <b id="c3k-time" />.
+    </p>
+    <div class="side">
+      <svg
+        id="c3k-svg"
+        class="clock"
+        viewBox="0 0 260 260"
+        role="img"
+        aria-label="A wall clock with an hour hand, a minute hand and a second hand, each turning at its own speed."
+      />
+      <div class="tbl">
+        <table>
+          <thead>
+            <tr>
+              <th>hand</th>
+              <th align="right">one full turn takes</th>
+              <th align="right">against the hand before</th>
+              <th align="right">turns so far</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="nw">
+                <i class="key key-sec" />
+                second
+              </td>
+              <td class="num" align="right">
+                60 s
+              </td>
+              <td class="num" align="right" />
+              <td class="num" align="right" id="c3k-s" />
+            </tr>
+            <tr>
+              <td class="nw">
+                <i class="key key-min" />
+                minute
+              </td>
+              <td class="num" align="right">
+                3,600 s
+              </td>
+              <td class="num" align="right">
+                × 60
+              </td>
+              <td class="num" align="right" id="c3k-m" />
+            </tr>
+            <tr>
+              <td class="nw">
+                <i class="key key-hr" />
+                hour
+              </td>
+              <td class="num" align="right">
+                43,200 s
+              </td>
+              <td class="num" align="right">
+                × 12
+              </td>
+              <td class="num" align="right" id="c3k-h" />
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="pbtn" type="button" id="c3k-play" aria-pressed="false">
+        Play
+      </button>
+      <div class="slider">
+        <label for="c3k-t">Seconds passed</label>
+        <input type="range" id="c3k-t" min="0" max="3600" step="1" value="1570" />
+        <output id="c3k-out" for="c3k-t" />
+      </div>
+    </div>
+    <figcaption>
+      Drag across the whole hour: 60 turns, 1 turn and one twelfth of a turn. Play runs at
+      30 times real speed.
+    </figcaption>
+  </figure>
+)}
+
+{name === 'binary' && (
+  <figure class="pe">
+    <p class="fig-title">Counting from 0 to 15 in binary</p>
+    <p class="fig-sub">One row per bit. A filled square is a 1.</p>
+    <div class="scroll-x">
+      <svg
+        id="c3-svg"
+        viewBox="0 0 324 92"
+        width="324"
+        height="92"
+        role="img"
+        aria-label="The numbers 0 to 15 in binary. The lowest bit flips every step, the next every 2 steps, the next every 4, the highest every 8."
+      />
+    </div>
+    <figcaption>
+      Each row is a square wave whose wavelength is double the row above.
+    </figcaption>
+  </figure>
+)}
+
+{name === 'hand-one' && (
+  <figure class="pe">
+    <p class="fig-title">
+      Hand 1 of a model with d<sub>model</sub> = 4
+    </p>
+    <p class="fig-sub">Its speed never changes: ω = 0.01 radians per position.</p>
+    <div class="legend">
+      <span>
+        <i class="sw sw-sin" />
+        height = sin θ, stored in column 2
+      </span>
+      <span>
+        <i class="sw sw-cos" />
+        sideways = cos θ, stored in column 3
+      </span>
+    </div>
+    <div class="side">
+      <svg
+        id="p1-svg"
+        class="dial-lg"
+        viewBox="0 0 240 240"
+        role="img"
+        aria-label="A slow hand on a circle. It starts pointing right and turns anticlockwise by 0.01 radians for each position."
+      />
+      <div class="tbl">
+        <table>
+          <thead>
+            <tr>
+              <th align="right">
+                <Fragment set:html={tex('\\mathit{pos}')} />
+              </th>
+              <th align="right">
+                <Fragment set:html={tex('\\theta = 0.01 \\times \\mathit{pos}')} />
+              </th>
+              <th align="right">turns</th>
+              <th align="right">
+                <Fragment set:html={tex('\\sin\\theta')} />
+              </th>
+              <th align="right">
+                <Fragment set:html={tex('\\cos\\theta')} />
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="num" align="right">
+                0
+              </td>
+              <td class="num" align="right">
+                0 rad
+              </td>
+              <td class="num" align="right">
+                0
+              </td>
+              <td class="num" align="right">
+                0.0000
+              </td>
+              <td class="num" align="right">
+                1.0000
+              </td>
+            </tr>
+            <tr>
+              <td class="num" align="right">
+                34
+              </td>
+              <td class="num" align="right">
+                0.34 rad
+              </td>
+              <td class="num" align="right">
+                0.05
+              </td>
+              <td class="num" align="right">
+                0.3335
+              </td>
+              <td class="num" align="right">
+                0.9428
+              </td>
+            </tr>
+            <tr>
+              <td class="num" align="right">
+                157
+              </td>
+              <td class="num" align="right">
+                1.57 rad
+              </td>
+              <td class="num" align="right">
+                0.25
+              </td>
+              <td class="num" align="right">
+                1.0000
+              </td>
+              <td class="num" align="right">
+                0.0008
+              </td>
+            </tr>
+            <tr>
+              <td class="num" align="right">
+                314
+              </td>
+              <td class="num" align="right">
+                3.14 rad
+              </td>
+              <td class="num" align="right">
+                0.50
+              </td>
+              <td class="num" align="right">
+                0.0016
+              </td>
+              <td class="num" align="right">
+                −1.0000
+              </td>
+            </tr>
+            <tr>
+              <td class="num" align="right">
+                628
+              </td>
+              <td class="num" align="right">
+                6.28 rad
+              </td>
+              <td class="num" align="right">
+                1.00
+              </td>
+              <td class="num" align="right">
+                −0.0032
+              </td>
+              <td class="num" align="right">
+                1.0000
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="vecline" id="p1-vec" aria-live="off" />
+    <div class="controls">
+      <button class="pbtn" type="button" id="p1-play" aria-pressed="false">
+        Play
+      </button>
+      <div class="slider">
+        <label for="p1-pos">
+          Position <var>pos</var>
+        </label>
+        <input type="range" id="p1-pos" min="0" max="700" step="1" value="34" />
+        <output id="p1-out" for="p1-pos" />
+      </div>
+      <span class="chips">
+        Jump to
+        <button class="pbtn" type="button" data-p1="34">
+          34
+        </button>
+        <button class="pbtn" type="button" data-p1="157">
+          157
+        </button>
+        <button class="pbtn" type="button" data-p1="314">
+          314
+        </button>
+        <button class="pbtn" type="button" data-p1="628">
+          628
+        </button>
+      </span>
+    </div>
+    <dl class="readout">
+      <div>
+        <dt>
+          angle, θ = 0.01 × <var>pos</var>
+        </dt>
+        <dd id="p1-r-th" />
+      </div>
+      <div>
+        <dt>
+          full turns so far, <var>pos</var> ÷ 628.3
+        </dt>
+        <dd id="p1-r-turn" />
+      </div>
+    </dl>
+    <figcaption>
+      157, 314 and 628 are this hand’s quarter turn, half turn and full turn.
+    </figcaption>
+  </figure>
+)}
+
+{name === 'dials' && (
+  <figure class="pe">
+    <div class="legend">
+      <span>
+        <i class="sw sw-sin" />
+        height, goes in the even column
+      </span>
+      <span>
+        <i class="sw sw-cos" />
+        sideways, goes in the odd column
+      </span>
+    </div>
+    <div class="dials" id="c4-dials" />
+    <p class="vecline" id="c4-vec" aria-live="off" />
+    <div class="controls">
+      <button class="pbtn" type="button" id="c4-play" aria-pressed="false">
+        Play
+      </button>
+      <button class="pbtn" type="button" id="c4-dec" aria-label="One position back">
+        −1
+      </button>
+      <button class="pbtn" type="button" id="c4-inc" aria-label="One position forward">
+        +1
+      </button>
+      <div class="slider">
+        <label for="c4-pos">
+          Position <var>pos</var>
+        </label>
+        <input type="range" id="c4-pos" min="0" max="100" step="1" value="34" />
+        <output id="c4-out" for="c4-pos" />
+      </div>
+      <span class="chips">
+        Jump to
+        <button class="pbtn" type="button" data-jump="0">
+          0
+        </button>
+        <button class="pbtn" type="button" data-jump="34">
+          34
+        </button>
+        <button class="pbtn" type="button" data-jump="44">
+          44
+        </button>
+        <button class="pbtn" type="button" data-jump="63">
+          63
+        </button>
+      </span>
+    </div>
+    <figcaption>
+      Four hands for d_model = 8. Under each dial are the two columns that hand fills.
+    </figcaption>
+  </figure>
+)}
+
+{name === 'wavelengths' && (
+  <figure class="pe">
+    <p class="fig-title">Wavelength of every hand</p>
+    <p class="fig-sub">
+      Up the side: positions needed for one full turn. Across the bottom: hand number.
+    </p>
+    <div class="chartbox" id="c5-box">
+      <svg
+        id="c5-svg"
+        class="chart"
+        role="img"
+        aria-label="Wavelength of each hand. On a log scale the points fall on a straight line between 2 pi and 10000 times 2 pi."
+      />
+      <div class="tip-box" id="c5-tip" hidden />
+    </div>
+    <div class="controls">
+      <span class="seg" id="c5-d">
+        <span>
+          <var>d</var>
+          <sub>model</sub>
+        </span>
+        <span>
+          <button class="pbtn" type="button" data-d="8" aria-pressed="true">
+            8
+          </button>
+          <button class="pbtn" type="button" data-d="64" aria-pressed="false">
+            64
+          </button>
+          <button class="pbtn" type="button" data-d="512" aria-pressed="false">
+            512
+          </button>
+        </span>
+      </span>
+      <span class="seg" id="c5-scale">
+        Vertical scale
+        <span>
+          <button class="pbtn" type="button" data-scale="log" aria-pressed="true">
+            Log
+          </button>
+          <button class="pbtn" type="button" data-scale="lin" aria-pressed="false">
+            Linear
+          </button>
+        </span>
+      </span>
+    </div>
+    <p class="note-live" id="c5-note" aria-live="polite" />
+    <figcaption>
+      The two horizontal lines are the paper’s limits, 2π and 10000 · 2π. Hover or tap a
+      point for its value.
+    </figcaption>
+  </figure>
+)}
+
+{name === 'two-numbers' && (
+  <figure class="pe">
+    <div class="side">
+      <svg
+        viewBox="0 0 300 240"
+        width="300"
+        class="rot-dial"
+        role="img"
+        aria-label="Two hands, A and B, with their tips at the same height 0.6 but on opposite sides of the circle."
+      >
+        <line x1="30" y1="125" x2="270" y2="125" class="axis" />
+        <line x1="150" y1="20" x2="150" y2="230" class="axis" />
+        <circle cx="150" cy="125" r="95" class="rim" />
+        <line x1="40" y1="68" x2="260" y2="68" class="ref" />
+        <line x1="150" y1="125" x2="226" y2="125" class="seg-cos" />
+        <line x1="150" y1="125" x2="74" y2="125" class="seg-cos" />
+        <line x1="226" y1="125" x2="226" y2="68" class="seg-sin" />
+        <line x1="74" y1="125" x2="74" y2="68" class="seg-sin" />
+        <line x1="150" y1="125" x2="226" y2="68" class="hand" />
+        <line x1="150" y1="125" x2="74" y2="68" class="hand" />
+        <circle cx="226" cy="68" r="6" class="tip" />
+        <circle cx="74" cy="68" r="6" class="tip" />
+        <text x="150" y="60" text-anchor="middle" class="lbl">
+          same height, 0.6
+        </text>
+        <text x="243" y="62" text-anchor="middle" class="lbl-strong">
+          A
+        </text>
+        <text x="57" y="62" text-anchor="middle" class="lbl-strong">
+          B
+        </text>
+        <text x="188" y="142" text-anchor="middle" class="tick">
+          +0.8
+        </text>
+        <text x="112" y="142" text-anchor="middle" class="tick">
+          −0.8
+        </text>
+      </svg>
+      <div class="tbl">
+        <table>
+          <thead>
+            <tr>
+              <th>hand</th>
+              <th align="right">angle</th>
+              <th align="right">
+                <i class="sw sw-sin" />
+                <Fragment set:html={tex('\\sin')} />
+              </th>
+              <th align="right">
+                <i class="sw sw-cos" />
+                <Fragment set:html={tex('\\cos')} />
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>A</td>
+              <td class="num" align="right">
+                0.64 rad (36.9°)
+              </td>
+              <td class="num" align="right">
+                +0.6
+              </td>
+              <td class="num" align="right">
+                +0.8
+              </td>
+            </tr>
+            <tr>
+              <td>B</td>
+              <td class="num" align="right">
+                2.50 rad (143.1°)
+              </td>
+              <td class="num" align="right">
+                +0.6
+              </td>
+              <td class="num" align="right">
+                −0.8
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <figcaption>
+      Hands A and B are at the same height. Only the sideways position tells them apart.
+    </figcaption>
+  </figure>
+)}
+
+{name === 'heat' && (
+  <figure class="pe">
+    <div class="scale">
+      <span>−1</span>
+      <i />
+      <span>+1</span>
+      <span>&nbsp;grey is 0</span>
+    </div>
+    <div class="chartbox" id="c7-box">
+      <canvas
+        id="c7-canvas"
+        role="img"
+        aria-label="Heatmap of the positional encoding for 64 columns and 100 positions. Top rows flicker quickly from position to position. Bottom rows hardly change."
+      />
+      <div class="tip-box" id="c7-tip" hidden />
+    </div>
+    <div class="controls">
+      <span class="seg" id="c7-n">
+        Positions shown
+        <span>
+          <button class="pbtn" type="button" data-s="1" aria-pressed="true">
+            First 100
+          </button>
+          <button class="pbtn" type="button" data-s="10" aria-pressed="false">
+            First 1,000
+          </button>
+          <button class="pbtn" type="button" data-s="100" aria-pressed="false">
+            First 10,000
+          </button>
+        </span>
+      </span>
+    </div>
+    <p class="note-live" id="c7-note" aria-live="polite" />
+    <figcaption>
+      The table pe for d_model = 64, lying on its side. Hover or tap a cell for its value.
+    </figcaption>
+  </figure>
+)}
+
+{name === 'rotate' && (
+  <figure class="pe">
+    <div class="legend">
+      <span>
+        <i class="sw sw-open" />
+        PE(pos), the pair you hold
+      </span>
+      <span>
+        <i class="sw sw-shift sw-dot" />
+        PE(pos+k), the pair you want
+      </span>
+      <span>arc = the extra turn ω · k</span>
+    </div>
+    <div class="rot">
+      <svg
+        id="c8-svg"
+        class="rot-dial"
+        viewBox="0 0 300 300"
+        role="img"
+        aria-label="A circle with the hand at position pos and the hand at position pos plus k. An arc shows the turn between them."
+      />
+      <div class="rot-math">
+        <div class="scroll-x">
+          <div class="eqrow">
+            <div class="mx-col">
+              <span class="mx-cap">
+                shift matrix
+                <br />
+                from k and ω only
+              </span>
+              <div class="mx num k" id="c8-M" style="--c:2">
+                <span id="c8-m11" />
+                <span id="c8-m12" />
+                <span id="c8-m21" />
+                <span id="c8-m22" />
+              </div>
+            </div>
+            <span class="op">×</span>
+            <div class="mx-col">
+              <span class="mx-cap">
+                old pair
+                <br />
+                sin, cos
+              </span>
+              <div class="mx num" id="c8-V" style="--c:1">
+                <span id="c8-v1" />
+                <span id="c8-v2" />
+              </div>
+            </div>
+            <span class="op">=</span>
+            <div class="mx-col">
+              <span class="mx-cap">
+                new pair
+                <br />
+                sin, cos
+              </span>
+              <div class="mx num" id="c8-R" style="--c:1">
+                <span id="c8-r1" />
+                <span id="c8-r2" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <dl class="readout readout--tight">
+          <div>
+            <dt>angle now, ω · pos</dt>
+            <dd id="c8-a" />
+          </div>
+          <div>
+            <dt>extra turn, ω · k</dt>
+            <dd id="c8-b" />
+          </div>
+          <div>
+            <dt>direct: sin, cos at pos+k</dt>
+            <dd id="c8-chk" />
+          </div>
+        </dl>
+      </div>
+    </div>
+    <div class="controls">
+      <span class="seg" id="c8-w">
+        Hand
+        <span>
+          <button class="pbtn" type="button" data-w="1" aria-pressed="true">
+            ω = 1
+          </button>
+          <button class="pbtn" type="button" data-w="0.1" aria-pressed="false">
+            ω = 0.1
+          </button>
+        </span>
+      </span>
+      <div class="slider">
+        <label for="c8-pos">
+          Position <var>pos</var>
+        </label>
+        <input type="range" id="c8-pos" min="0" max="40" step="1" value="12" />
+        <output id="c8-pos-out" for="c8-pos" />
+      </div>
+      <div class="slider">
+        <label for="c8-k">
+          Offset <var>k</var>
+        </label>
+        <input type="range" id="c8-k" min="-10" max="10" step="1" value="3" />
+        <output id="c8-k-out" for="c8-k" />
+      </div>
+    </div>
+    <p class="note-live" id="c8-note" aria-live="polite">
+      Move pos first, then k, and watch which numbers react.
+    </p>
+    <figcaption>
+      One matrix per offset k, valid at every position. A negative k turns the hand
+      backwards.
+    </figcaption>
+  </figure>
+)}
+
+{name === 'block' && (
+  <figure class="pe">
+    <p class="fig-title">
+      The shift matrix for d<sub>model</sub> = 8
+    </p>
+    <p class="fig-sub">
+      It moves the stamp of position 34 by k positions. Pick a row to see its recipe.
+    </p>
+    <div class="scroll-x">
+      <div class="bm" id="bm-grid" />
+    </div>
+    <p class="note-live" id="bm-note" aria-live="polite" />
+    <div class="controls">
+      <div class="slider">
+        <label for="bm-k">
+          Offset <var>k</var>
+        </label>
+        <input type="range" id="bm-k" min="-10" max="10" step="1" value="3" />
+        <output id="bm-k-out" for="bm-k" />
+      </div>
+    </div>
+    <div class="tbl below">
+      <table>
+        <thead>
+          <tr>
+            <th>hand</th>
+            <th align="right">
+              speed <Fragment set:html={tex('\\omega_i')} />
+            </th>
+            <th align="right">
+              extra turn, <Fragment set:html={tex('\\omega_i \\times k')} />
+            </th>
+            <th align="right">its cosine</th>
+            <th align="right">its sine</th>
+          </tr>
+        </thead>
+        <tbody id="bm-hands" />
+      </table>
+    </div>
+    <figcaption>
+      Violet cells depend on k. Grey cells are always 0. The old stamp sits above the
+      columns that read it.
+    </figcaption>
+  </figure>
+)}
+
+{name === 'dot' && (
+  <figure class="pe">
+    <p class="fig-title">
+      Dot product of the stamp at p with the stamp at every position q
+    </p>
+    <p class="fig-sub">
+      d<sub>model</sub> = 512, so 256 hands. The highest possible score is 256, when every
+      hand adds cos 0 = 1.
+    </p>
+    <div class="chartbox" id="c9-box">
+      <svg
+        id="c9-svg"
+        class="chart"
+        role="img"
+        aria-label="Dot product of the positional encoding at p with every other position. A sharp peak at q equals p, falling away the same on both sides."
+      />
+      <div class="tip-box" id="c9-tip" hidden />
+    </div>
+    <div class="controls">
+      <div class="slider">
+        <label for="c9-p">
+          Position <var>p</var>
+        </label>
+        <input type="range" id="c9-p" min="0" max="100" step="1" value="40" />
+        <output id="c9-out" for="c9-p" />
+      </div>
+    </div>
+    <figcaption>
+      Slide p. The shape moves with it and never changes. Hover or tap for values.
+    </figcaption>
+  </figure>
+)}
+
+{name === 'look' && (
+  <figure class="pe">
+    <p class="fig-title">Score of the word at t against every position s</p>
+    <p class="fig-sub">
+      W<sub>Q</sub> turns every hand back 3 steps. W<sub>K</sub> leaves the stamp alone.
+      The highest possible score is the number of hands, d<sub>model</sub>/2.
+    </p>
+    <div class="legend">
+      <span>
+        <i class="sw sw-shift" />
+        highest score, three back
+      </span>
+      <span>
+        <i class="sw sw-ink" />
+        the word doing the looking, at t
+      </span>
+      <span>
+        <i class="sw sw-bar" />
+        every other position
+      </span>
+    </div>
+    <div class="chartbox" id="lb-box">
+      <svg
+        id="lb-svg"
+        class="chart"
+        role="img"
+        aria-label="Bar chart of attention scores by position. The tallest bar is always three positions before the word doing the looking."
+      />
+      <div class="tip-box" id="lb-tip" hidden />
+    </div>
+    <div class="controls">
+      <div class="slider">
+        <label for="lb-t">
+          Looking word, <var>t</var>
+        </label>
+        <input type="range" id="lb-t" min="3" max="40" step="1" value="10" />
+        <output id="lb-out" for="lb-t" />
+      </div>
+      <span class="seg" id="lb-d">
+        <span>
+          <var>d</var>
+          <sub>model</sub>
+        </span>
+        <span>
+          <button class="pbtn" type="button" data-d="8" aria-pressed="false">
+            8
+          </button>
+          <button class="pbtn" type="button" data-d="64" aria-pressed="true">
+            64
+          </button>
+          <button class="pbtn" type="button" data-d="512" aria-pressed="false">
+            512
+          </button>
+        </span>
+      </span>
+    </div>
+    <p class="note-live" id="lb-note" aria-live="polite" />
+    <figcaption>
+      Slide t. The violet bar stays three places before the looking word, and the weights
+      never change.
+    </figcaption>
+  </figure>
+)}
+
+<script>
+  import './pe-figures.js';
+</script>
+
+<style is:global>
+  .pe {
+    --surface: var(--paper-raised);
+    --well: var(--paper-sunken);
+    --ink-2: var(--ink-muted);
+    --muted: var(--ink-faint);
+    --line: var(--rule);
+    --axis: var(--rule-strong);
+    /* height, sideways, an amount of turning */
+    --sin: light-dark(#0f8f7a, #1aa586);
+    --cos: light-dark(#e0622b, #dd6630);
+    --shift: light-dark(#6250d6, #9085e9);
+    /* value scale for the heatmap: -1, 0, +1 */
+    --neg: light-dark(#2a78d6, #3987e5);
+    --mid: light-dark(#eceef1, #2b3038);
+    --pos: light-dark(#e34948, #e66767);
+
+    min-width: 0;
+    padding: 1rem 1rem 1.05rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+  .pe * {
+    box-sizing: border-box;
+  }
+  .pe sub,
+  .pe sup {
+    line-height: 0;
+  }
+  .pe .fig-title {
+    margin: 0 0 0.15rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+  .pe .fig-sub {
+    margin: 0 0 0.6rem;
+    color: var(--ink-2);
+    font-size: 0.85rem;
+  }
+  .pe .fig-sub b {
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .pe .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1.2rem;
+    margin-bottom: 0.6rem;
+    color: var(--ink-2);
+    font-size: 0.86rem;
+  }
+  .pe .sw {
+    display: inline-block;
+    width: 0.78em;
+    height: 0.78em;
+    margin-right: 0.42em;
+    border-radius: 2px;
+    vertical-align: -0.04em;
+  }
+  .pe .sw-sin {
+    background: var(--sin);
+  }
+  .pe .sw-cos {
+    background: var(--cos);
+  }
+  .pe .sw-shift {
+    background: var(--shift);
+  }
+  .pe .sw-ink {
+    background: var(--ink);
+  }
+  .pe .sw-bar {
+    background: color-mix(in srgb, var(--muted) 70%, var(--surface));
+  }
+  .pe .sw-open {
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    background: var(--surface);
+  }
+  .pe .sw-dot {
+    border-radius: 50%;
+  }
+  .pe .split {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+  .pe .split > .chartbox {
+    flex: 1 1 280px;
+  }
+  .pe .chartbox {
+    position: relative;
+    min-width: 0;
+    touch-action: pan-y;
+  }
+  .pe svg.chart {
+    display: block;
+    width: 100%;
+  }
+  .pe #c3-svg {
+    max-width: 100%;
+    height: auto;
+  }
+  .pe .dial-lg {
+    flex: 0 0 auto;
+    width: 240px;
+    max-width: 100%;
+    height: auto;
+  }
+  .pe .scroll-x {
+    overflow-x: auto;
+  }
+  .pe .side {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem 1.6rem;
+  }
+  .pe .side > .tbl {
+    flex: 1 1 15rem;
+  }
+
+  .pe .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 0.9rem;
+    margin-top: 0.95rem;
+  }
+  .pe .slider {
+    display: flex;
+    flex: 1 1 15rem;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+  }
+  .pe .slider label {
+    color: var(--ink-2);
+    font-size: 0.88rem;
+    white-space: nowrap;
+  }
+  .pe .slider input {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: var(--ink-2);
+  }
+  .pe .slider output {
+    min-width: 3.2ch;
+    font-family: var(--font-mono);
+    font-size: 0.86rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  .pe .pbtn {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--axis);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 500;
+    line-height: 1.2;
+    cursor: pointer;
+  }
+  .pe .pbtn:hover {
+    border-color: var(--ink);
+  }
+  .pe .pbtn[aria-pressed='true'] {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--surface);
+  }
+  .pe .seg {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--ink-2);
+    font-size: 0.86rem;
+  }
+  .pe .seg > span {
+    white-space: nowrap;
+  }
+  .pe .seg .pbtn {
+    margin-left: -1px;
+    border-radius: 0;
+  }
+  .pe .seg .pbtn:first-of-type {
+    margin-left: 0;
+    border-radius: 6px 0 0 6px;
+  }
+  .pe .seg .pbtn:last-of-type {
+    border-radius: 0 6px 6px 0;
+  }
+  .pe .chips {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--ink-2);
+    font-size: 0.86rem;
+  }
+  .pe .readout {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 0.35rem 1.2rem;
+    margin: 0.9rem 0 0;
+    font-size: 0.88rem;
+  }
+  .pe .readout--tight {
+    margin-top: 0;
+  }
+  .pe .readout div {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid var(--line);
+  }
+  .pe .readout dt {
+    color: var(--ink-2);
+  }
+  .pe .readout dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .pe .note-live {
+    min-height: 1.5em;
+    margin: 0.7rem 0 0;
+    color: var(--ink-2);
+    font-size: 0.88rem;
+  }
+  .pe .tip-box {
+    position: absolute;
+    z-index: 2;
+    max-width: min(17rem, 92%);
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.35;
+    pointer-events: none;
+  }
+
+  /* marks */
+  .pe svg text {
+    fill: var(--muted);
+    font-family: var(--font-body);
+    font-size: 11px;
+  }
+  .pe .tick {
+    font-variant-numeric: tabular-nums;
+  }
+  .pe svg text.axis-title,
+  .pe svg text.lbl {
+    fill: var(--ink-2);
+    font-size: 11.5px;
+  }
+  .pe svg text.lbl-strong {
+    fill: var(--ink);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .pe .gl {
+    fill: none;
+    stroke: var(--line);
+    stroke-width: 1;
+  }
+  .pe .axis {
+    fill: none;
+    stroke: var(--axis);
+    stroke-width: 1;
+  }
+  .pe .ref {
+    fill: none;
+    stroke: var(--ink-2);
+    stroke-width: 1;
+  }
+  .pe .rim {
+    fill: none;
+    stroke: var(--axis);
+    stroke-width: 1.5;
+  }
+  .pe .hand {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+  .pe .hand-shift {
+    stroke: var(--shift);
+  }
+  .pe .tip {
+    fill: var(--ink);
+    stroke: var(--surface);
+    stroke-width: 2;
+  }
+  .pe .tip-open {
+    fill: var(--surface);
+    stroke: var(--ink);
+    stroke-width: 2.5;
+  }
+  .pe .seg-sin {
+    fill: none;
+    stroke: var(--sin);
+    stroke-width: 4;
+    stroke-linecap: round;
+  }
+  .pe .seg-cos {
+    fill: none;
+    stroke: var(--cos);
+    stroke-width: 4;
+    stroke-linecap: round;
+  }
+  .pe .angle-arc {
+    fill: none;
+    stroke: var(--ink-2);
+    stroke-width: 1.5;
+  }
+  .pe .ln {
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .pe .ln-sin {
+    stroke: var(--sin);
+  }
+  .pe .ln-cos {
+    stroke: var(--cos);
+  }
+  .pe .ln-shift {
+    stroke: var(--shift);
+  }
+  .pe .ln-ink {
+    stroke: var(--muted);
+    stroke-width: 1.5;
+  }
+  .pe .ln-strong {
+    stroke: var(--ink);
+  }
+  .pe .mk {
+    stroke: var(--surface);
+    stroke-width: 2;
+  }
+  .pe .mk-sin {
+    fill: var(--sin);
+  }
+  .pe .mk-cos {
+    fill: var(--cos);
+  }
+  .pe .mk-shift {
+    fill: var(--shift);
+  }
+  .pe .mk-ink {
+    fill: var(--ink);
+  }
+  .pe .mk-hover {
+    fill: var(--surface);
+    stroke: var(--ink);
+    stroke-width: 2;
+  }
+  .pe .arrow-shift {
+    fill: var(--shift);
+    stroke: none;
+  }
+  .pe .cursor {
+    fill: none;
+    stroke: var(--axis);
+    stroke-width: 1;
+  }
+  .pe .band {
+    fill: var(--well);
+  }
+  .pe .bit {
+    fill: var(--well);
+  }
+  .pe .bit.on {
+    fill: var(--ink-2);
+  }
+  .pe .bar {
+    fill: color-mix(in srgb, var(--muted) 70%, var(--surface));
+  }
+  .pe .bar-peak {
+    fill: var(--shift);
+  }
+  .pe .bar-self {
+    fill: var(--ink);
+  }
+
+  /* wall clock: drawn from plain circles and lines */
+  .pe .clock {
+    flex: 0 0 auto;
+    width: 250px;
+    max-width: 100%;
+    height: auto;
+  }
+  .pe .clock-rim {
+    fill: var(--surface);
+    stroke: var(--axis);
+    stroke-width: 2;
+  }
+  .pe .clock-tick {
+    fill: none;
+    stroke: var(--axis);
+    stroke-width: 1;
+    stroke-linecap: round;
+  }
+  .pe .clock-tick.big {
+    stroke: var(--ink-2);
+    stroke-width: 2;
+  }
+  .pe svg text.clock-num {
+    fill: var(--ink);
+    font-size: 15px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .pe .clock-hand {
+    fill: none;
+    stroke: var(--ink);
+    stroke-linecap: round;
+  }
+  .pe .clock-hand.min {
+    stroke-width: 4.5;
+  }
+  .pe .clock-hand.hr {
+    stroke-width: 7.5;
+  }
+  .pe .clock-hand.sec {
+    stroke: var(--ink-2);
+    stroke-width: 1.75;
+  }
+  .pe .clock-cap {
+    fill: var(--ink);
+    stroke: var(--surface);
+    stroke-width: 2;
+  }
+  .pe .wedge {
+    fill: color-mix(in srgb, var(--shift) 24%, transparent);
+    stroke: var(--shift);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+  }
+  .pe .wedge-lap {
+    fill: color-mix(in srgb, var(--shift) 10%, transparent);
+    stroke: none;
+  }
+  .pe .key {
+    display: inline-block;
+    margin-right: 0.55em;
+    border-radius: 2px;
+    background: var(--ink);
+    vertical-align: middle;
+  }
+  .pe .key-sec {
+    width: 1.5em;
+    height: 2px;
+    background: var(--ink-2);
+  }
+  .pe .key-min {
+    width: 1.5em;
+    height: 4px;
+  }
+  .pe .key-hr {
+    width: 1em;
+    height: 7px;
+  }
+
+  /* three speeds */
+  .pe .speed-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+  .pe .speed-row {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    min-width: 0;
+  }
+  .pe .dial-sm {
+    flex: 0 0 64px;
+    width: 64px;
+    height: 64px;
+  }
+  .pe .speed-main {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .pe .speed-label {
+    margin: 0 0 0.15rem;
+    color: var(--ink-2);
+    font-size: 0.86rem;
+  }
+  .pe .speed-label b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* dials */
+  .pe .dials {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9.4rem, 1fr));
+    gap: 1.1rem 1rem;
+  }
+  .pe .dial-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+  }
+  .pe .dial-md {
+    align-self: center;
+    width: 100%;
+    max-width: 132px;
+    height: auto;
+  }
+  .pe .dial-name {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+  }
+  .pe .dial-name span {
+    margin-left: 0.5em;
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 400;
+  }
+  .pe .dial-ang {
+    margin: 0;
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .pe .vecline {
+    margin: 0.9rem 0 0;
+    padding: 0.5rem 0.7rem;
+    border-radius: 6px;
+    background: var(--well);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+  /* the two columns of pe that one hand fills, shown under its dial */
+  .pe .strip-cells {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin-top: 0.15rem;
+  }
+  .pe .strip-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+    min-width: 0;
+    padding: 0.35rem 0.2rem 0.3rem;
+    border-radius: 3px;
+    background: var(--well);
+  }
+  .pe .strip-col,
+  .pe .strip-kind {
+    color: var(--ink-2);
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+  .pe .strip-cell b {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* tables that carry live cells */
+  .pe .tbl {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .pe .tbl.below {
+    margin-top: 0.9rem;
+  }
+  .pe td.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .pe td.nw {
+    white-space: nowrap;
+  }
+
+  /* the 2 × 2 shift matrix */
+  .pe .eqrow {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.55rem;
+    white-space: nowrap;
+  }
+  .pe .mx-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .pe .mx-cap {
+    color: var(--ink-2);
+    font-size: 0.74rem;
+    line-height: 1.25;
+    text-align: center;
+    white-space: normal;
+  }
+  .pe .mx {
+    position: relative;
+    display: inline-grid;
+    grid-template-columns: repeat(var(--c, 2), auto);
+    gap: 0.3em 0.9em;
+    padding: 0.4em 0.65em;
+    border-radius: 2px;
+  }
+  .pe .mx::before,
+  .pe .mx::after {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0.35em;
+    border: 1.5px solid var(--ink-2);
+    content: '';
+  }
+  .pe .mx::before {
+    left: 0;
+    border-right: 0;
+  }
+  .pe .mx::after {
+    right: 0;
+    border-left: 0;
+  }
+  .pe .mx.num {
+    font-family: var(--font-mono);
+    font-size: 0.84rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .pe .mx.k {
+    background: color-mix(in srgb, var(--shift) 16%, transparent);
+  }
+  .pe .op {
+    padding-bottom: 1.05em;
+    color: var(--ink-2);
+  }
+  @keyframes pe-flash {
+    from {
+      box-shadow: 0 0 0 3px var(--shift);
+    }
+    to {
+      box-shadow: 0 0 0 3px transparent;
+    }
+  }
+  .pe .flash {
+    animation: pe-flash 0.9s ease-out;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pe .flash {
+      animation: none;
+    }
+  }
+  .pe .rot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 1.5rem;
+  }
+  .pe .rot-dial {
+    flex: 0 1 300px;
+    width: 300px;
+    max-width: 100%;
+    height: auto;
+  }
+  .pe .rot-math {
+    display: flex;
+    flex: 1 1 18rem;
+    flex-direction: column;
+    gap: 0.7rem;
+    min-width: 0;
+  }
+
+  /* the big shift matrix: old stamp along the top, new stamp down the right */
+  .pe .bm {
+    display: grid;
+    grid-template-columns: auto repeat(8, 3.3rem) 1.3rem 3.9rem;
+    gap: 2px;
+    width: max-content;
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+  }
+  .pe .bm > * {
+    display: grid;
+    place-items: center;
+    min-height: 1.75rem;
+    margin: 0;
+    padding: 0 0.25rem;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .pe .bm-h {
+    color: var(--ink-2);
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+  }
+  .pe .bm-side {
+    justify-content: end;
+    padding-right: 0.55rem;
+  }
+  .pe .bm-o,
+  .pe .bm-n {
+    background: var(--surface);
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+  .pe .bm-z {
+    background: var(--well);
+    color: var(--muted);
+  }
+  .pe .bm-b {
+    background: color-mix(in srgb, var(--shift) 20%, var(--surface));
+  }
+  .pe .bm-rl {
+    justify-content: start;
+    padding: 0 0.6rem 0 0.35rem;
+    border: 0;
+    background: none;
+    color: var(--ink-2);
+    font-family: var(--font-body);
+    font-size: 0.74rem;
+    cursor: pointer;
+  }
+  .pe .bm-first {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--surface);
+  }
+  .pe .bm-rl:hover {
+    color: var(--ink);
+  }
+  .pe .bm-rl[aria-pressed='true'] {
+    background: var(--well);
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .pe .bm .on {
+    box-shadow: inset 0 0 0 2px var(--ink);
+  }
+
+  .pe .scale {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+    color: var(--ink-2);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .pe .scale i {
+    flex: 0 0 8rem;
+    height: 0.6rem;
+    border-radius: 2px;
+    background: linear-gradient(to right, var(--neg), var(--mid), var(--pos));
+  }
+  .pe canvas {
+    display: block;
+    width: 100%;
+  }
+
+  @media (max-width: 520px) {
+    .pe {
+      padding: 0.85rem 0.8rem 0.95rem;
+    }
+    .pe .mx.num {
+      font-size: 0.76rem;
+    }
+    .pe .mx {
+      gap: 0.3em 0.6em;
+      padding: 0.4em 0.5em;
+    }
+  }
+
+  /* A note that holds more than one paragraph: the question, then its answer. */
+  .prose .note > p + p {
+    margin-top: 0.6em;
+  }
+
+  /* The site sets table headers in capitals, and θ in capitals is Θ, a
+     different letter. Maths and code in a header keep their case and their
+     spacing; the words around them stay in capitals like every other table. */
+  .prose th :is(.katex, code) {
+    text-transform: none;
+    letter-spacing: normal;
+  }
+</style>

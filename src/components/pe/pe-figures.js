@@ -230,8 +230,11 @@ const aim = (el, C, len, tail, turn) => {
     mS = S('circle', { r: 5, class: 'mk mk-sin' }, wave);
     update();
   }
+  /* Play keeps its own time. The slider rounds to its step, so a small tick
+     on a fast screen would be rounded back and the hand would never move. */
+  let tNow = +slider.value;
   function update() {
-    const th = +slider.value,
+    const th = tNow,
       s = Math.sin(th),
       c = Math.cos(th);
     point(th);
@@ -256,11 +259,14 @@ const aim = (el, C, len, tail, turn) => {
       set(mC, { cx: sx(th), cy: sy(c) });
     }
   }
-  slider.addEventListener('input', update);
+  slider.addEventListener('input', () => {
+    tNow = +slider.value;
+    update();
+  });
   player($('#c1-play'), (dt) => {
-    let v = +slider.value + dt * 1.1;
-    if (v > 12.56) v = 0;
-    slider.value = v;
+    tNow += dt * 1.1;
+    if (tNow > 12.56) tNow = 0;
+    slider.value = tNow;
     update();
   });
   update();
@@ -345,6 +351,8 @@ const aim = (el, C, len, tail, turn) => {
   const host = $('#c2-rows'),
     slider = $('#c2-t'),
     out = $('#c2-out');
+  /* Play keeps its own time; see figCircle for why it cannot live in the slider. */
+  let tNow = +slider.value;
   const Hh = 88,
     m = { l: 4, r: 4, t: 6, b: 20 };
   const rows = [2, 1, 0.5].map((w) => {
@@ -420,7 +428,7 @@ const aim = (el, C, len, tail, turn) => {
     return r;
   });
   function upd(r) {
-    const t = +slider.value,
+    const t = tNow,
       th = r.w * t,
       px = 36 + 28 * Math.cos(th),
       py = 36 - 28 * Math.sin(th);
@@ -433,14 +441,17 @@ const aim = (el, C, len, tail, turn) => {
     }
   }
   const update = () => {
-    out.textContent = (+slider.value).toFixed(1);
+    out.textContent = tNow.toFixed(1);
     rows.forEach(upd);
   };
-  slider.addEventListener('input', update);
+  slider.addEventListener('input', () => {
+    tNow = +slider.value;
+    update();
+  });
   player($('#c2-play'), (dt) => {
-    let v = +slider.value + dt * 1.5;
-    if (v > 20) v = 0;
-    slider.value = v;
+    tNow += dt * 1.5;
+    if (tNow > 20) tNow = 0;
+    slider.value = tNow;
     update();
   });
   update();

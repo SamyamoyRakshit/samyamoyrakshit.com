@@ -1,0 +1,743 @@
+---
+title: "Let's understand Positional Encoding from High School Physics"
+description: 'The sinusoidal positional encoding of "Attention Is All You Need", rebuilt from one picture: a clock hand turning at a steady speed. Live figures, and numbers to check on a calculator at every step.'
+pubDate: 2026-11-16
+tags: [transformers, positional-encoding, pytorch, from-scratch, nlp]
+cover: ./images/pe_cover.png
+coverAlt: 'Positional encoding from high school physics: θ = ω · t, one clock hand turning at a steady speed. On the right, a wall clock above four small dials that turn at speeds 1, 0.1, 0.01 and 0.001, one hand for each pair of columns of the encoding.'
+draft: false
+---
+
+{/* Where this goes in the site repo:
+     this file        -> src/content/blog/positional-encoding-from-high-school-physics/ARTICLE.mdx
+     images/          -> the same folder as this file
+     components/pe/   -> src/components/pe/
+   The figures are live, so read it with `npm run dev`. The editor preview and GitHub show only the text. */}
+
+import PeFigure from '../../../components/pe/PeFigure.astro';
+
+The positional encoding in the Transformer paper looks like a wall of sines and cosines. Underneath it is one picture from school physics, used many times over: a hand turning on a circle at a steady speed. This post builds the whole formula from that picture, with a wall clock as the running example and numbers you can check on a calculator at every step. It assumes you remember none of the physics.
+
+It is a companion to [Rebuilding "Attention Is All You Need" From Scratch](/blog/attention-from-scratch/), which covers positional encoding in two short sections ([1.2](/blog/attention-from-scratch/#12-positional-encoding-telling-the-model-where-each-word-is) and [1.3](/blog/attention-from-scratch/#13-relative-position-the-property-that-makes-sinusoids-special)). Here the same module gets a whole post. The code is [`positional_encoding.py`](https://github.com/SamyamoyRakshit/papers-from-scratch/blob/main/transformer/models/modules/positional_encoding.py), and section 11 reads it line by line.
+
+These are the two sentences from section 3.5 of the paper that the post decodes:
+
+> The wavelengths form a geometric progression from 2π to 10000 · 2π. We chose this function because we hypothesized it would allow the model to easily learn to attend by relative positions, since for any fixed offset k, PE(pos+k) can be represented as a linear function of PE(pos).
+
+The first sentence is explained in section 5 and the last part in section 8. The middle, about attending by relative positions, is section 10. Every figure with a slider is live, and nothing moves until you drag or press Play.
+
+## 1. Why a Transformer has to be told the order
+
+"Dog bites man" and "man bites dog" use the same three words. Only the order tells you who got bitten.
+
+Older models read one word at a time, so they knew the order for free. A Transformer reads every word at once. Its attention step compares each word with every other word, and nothing in that comparison says which word came first. Shuffle the input words and every word gets exactly the same output as before, just in its new place.
+
+So each word is stamped with its position before attention sees it. A word is already a list of $d_{\text{model}}$ numbers, its embedding. We build a second list of $d_{\text{model}}$ numbers that depends only on the position, called $PE(\mathit{pos})$, and add the two lists together. Positions are counted from 0, so the first word is at $\mathit{pos} = 0$ and the second at $\mathit{pos} = 1$.
+
+<p class="note"><strong>Words and tokens.</strong> A model really reads tokens, which can be whole words or pieces of words, and a position is the index of a token. This post says "word" where the difference does not matter.</p>
+
+The question is which numbers to put in the stamp. Two obvious ideas fail.
+
+- **Use the position itself: 0, 1, 2, … 500.** The numbers grow without limit. A stamp of 500 would drown a word vector whose entries are small.
+- **Squash it into 0 to 1** by dividing by the sentence length. Now 0.5 means word 5 in a ten-word sentence and word 50 in a hundred-word one. One step no longer means the same thing in every sentence.
+
+A good stamp gives each position its own value, stays inside a small fixed range, makes a step of $k$ words look the same in every sentence, and involves no randomness. A clock face does all four. To see why, we need one piece of physics.
+
+## 2. The only physics you need: a hand going round a circle
+
+One idea from school physics does all the work here: angular velocity, which only means how fast something turns. This section builds up to it in small steps.
+
+### 2.1 Angle, and what a radian is
+
+Picture a clock hand of length 1, pinned at the centre and pointing right, at 3 o'clock. Turn it anticlockwise. The amount of turning is the angle, written $\theta$ (theta).
+
+You know degrees: a full turn is 360°. Physics and code use radians. Walk the tip of the hand along the rim for a distance equal to the hand's own length. The angle you turned through is 1 radian. The whole rim is $2\pi \approx 6.28$ hand-lengths long, so a full turn is $2\pi$ radians.
+
+Keep that number. It is the "2π" in the paper's sentence, and it only ever means one full turn. Half a turn is $\pi$ radians, which gives the conversion between the two units:
+
+$$
+\pi \text{ rad} = 180^\circ \qquad\text{so}\qquad 1 \text{ rad} = \frac{180^\circ}{\pi} \approx 57.3^\circ
+$$
+
+A quarter turn is $\pi/2 \approx 1.57$ radians, which is 90°.
+
+### 2.2 Two shadows: sine and cosine
+
+Where is the tip of the hand? You need two numbers to say. How high it is above the centre is called $\sin\theta$. How far to the right of the centre it is is called $\cos\theta$. Think of a seat on a Ferris wheel: sine is your height above the axle, cosine is how far forward of the axle you are.
+
+That is all sine and cosine are. Both stay between −1 and +1 forever, because the tip never leaves the circle.
+
+<PeFigure name="circle" />
+
+The teal bar is the height of the tip and the orange bar is its sideways position. On the right, the same two numbers are plotted against the angle.
+
+<div class="note">
+
+**School said sine is opposite ÷ hypotenuse. Why is it just the height here?**
+
+Look at the triangle in the figure. The hand is the hypotenuse, the teal bar is the opposite side and the orange bar is the adjacent side. The hand has length 1, so dividing by the hypotenuse changes nothing: $\sin\theta$ = height ÷ 1 = height, and $\cos\theta$ = sideways ÷ 1 = sideways.
+
+The figure opens at $\theta = 0.64$ radians, where the height is 0.5972 and the sideways position is 0.8021. Pythagoras confirms the hypotenuse is 1: $0.5972^2 + 0.8021^2 = 0.3566 + 0.6434 = 1$.
+
+A hand of length $r$ would give a height of $r \sin\theta$. Positional encoding always uses length 1, which is why every number it produces sits between −1 and +1.
+
+</div>
+
+### 2.3 Speed of turning: angular velocity ω
+
+Now let the hand turn at a steady speed. Angular velocity, written $\omega$ (omega), is how much angle the hand gains in one step of time. Physics books also call it angular frequency. If $\omega = 2$, the hand turns 2 radians every step.
+
+At a steady speed, the angle after $t$ steps is speed times time:
+
+$$
+\theta = \omega \cdot t \qquad\text{so}\qquad \text{height} = \sin(\omega t), \quad \text{sideways} = \cos(\omega t)
+$$
+
+This is the entire physics. Everything in positional encoding is this one line with different values of $\omega$.
+
+### 2.4 A real example: the minute hand of a wall clock
+
+Take the minute hand of a wall clock and start watching at 12 o'clock sharp. Here are the speed, the time and the angle with real numbers.
+
+- **ω, the speed.** One full turn is $2\pi$ radians and takes the minute hand 60 minutes. So $\omega = 2\pi \div 60 \approx 0.1047$ radians per minute.
+- **t, the time passed.** You wait 20 minutes.
+- **θ, where the hand is now.** $\theta = \omega \times t = 0.1047 \times 20 \approx 2.094$ radians. That is 120°, a third of a turn. The hand has moved from the 12 to the 4.
+
+<PeFigure name="minute" />
+
+The angle keeps growing for as long as you wait, but the hand has only one circle to move on. After 60 minutes it is back at the 12, and from then on it repeats: 75 minutes looks exactly like 15. That repeat distance is the wavelength, which comes next.
+
+<p class="note"><strong>Clock direction and maths direction.</strong> A wall clock starts at the 12 and turns clockwise. Maths starts at 3 o'clock and turns anticlockwise, as in the first figure. The speed, the angle turned and the time per turn are the same either way. Only the starting line and the direction differ. The rest of this post uses the maths convention, because that is the one sin and cos are defined for.</p>
+
+### 2.5 Wavelength and frequency: the same speed, said two more ways
+
+A full turn is $2\pi$ radians. A hand that gains $\omega$ radians per step needs $2\pi \div \omega$ steps to get round once. That count is the wavelength, written $\lambda$ (lambda):
+
+$$
+\lambda = \frac{2\pi}{\omega}
+$$
+
+A fast hand has a short wavelength. A slow hand has a long one. Physics calls this the period when the horizontal axis is time. The paper says wavelength because its horizontal axis is position in the sentence.
+
+Frequency, written $f$, is the wavelength turned upside down. It counts how many turns the hand makes in one step:
+
+$$
+f = \frac{1}{\lambda} \qquad\text{and}\qquad \omega = 2\pi f
+$$
+
+For the minute hand, $\lambda = 60$ minutes per turn, so $f = 1/60 \approx 0.0167$ turns per minute. Check it against the speed: $\omega = 2\pi \times (1/60) \approx 0.1047$ radians per minute, the number we started with.
+
+| symbol                | what it counts   | for the minute hand       |
+| :-------------------- | :--------------- | :------------------------ |
+| ω, angular velocity   | radians per step | 0.1047 radians per minute |
+| f, frequency          | turns per step   | 1/60 of a turn per minute |
+| λ, wavelength         | steps per turn   | 60 minutes per turn       |
+
+Know one of the three and you know the other two. The $2\pi$ in these formulas is only the exchange rate between radians and turns: one turn is $2\pi$ radians.
+
+<PeFigure name="speeds" />
+
+All three hands see the same time but turn at different speeds.
+
+## 3. You already use this machine
+
+**A wall clock.** Three hands share one time and turn at three speeds. The second hand goes round once a minute. The minute hand goes round once an hour, 60 times slower. The hour hand goes round once in 12 hours, 12 times slower again.
+
+<PeFigure name="three-hands" />
+
+The second hand alone cannot tell you the hour, because it looks the same every minute. The hour hand alone cannot tell you the second, because it barely moves. Read together, they name one moment.
+
+Notice what stays fixed and what varies. Each hand keeps its own wavelength forever: the minute hand needs 60 minutes per turn at 2:10 and at 9:45. What varies is which hand you are looking at. Positional encoding works the same way and gives its hands numbers. Hand 0 is the fastest, hand 1 the next, and so on. The formula calls that number $i$.
+
+**A car odometer.** The rightmost wheel turns once every 10 km, the next once every 100 km, the next once every 1,000 km. Each wheel is exactly 10 times slower than its neighbour. The fast wheels give fine detail. The slow wheels say roughly how far you have come.
+
+**A binary counter.** Write the numbers 0 to 15 in binary and watch each bit as its own track. This is the analogy from Amirhossein Kazemnejad's post.
+
+<PeFigure name="binary" />
+
+The 1s bit flips at every step. The 2s bit flips every 2 steps, the 4s bit every 4, the 8s bit every 8.
+
+All three are one design: several repeating dials, each slower than the one before, read together. Positional encoding is this design with two changes.
+
+- The dials are smooth. They report a sine and a cosine instead of a digit that jumps, so every value is an ordinary decimal between −1 and +1, which a neural network handles well.
+- Every dial is slower than its neighbour by the same multiplier, as on the odometer, and the multiplier is ours to choose. It does not have to be 2, 10 or 60.
+
+## 4. From clocks to the formula
+
+Here is the formula from the paper.
+
+$$
+\begin{aligned}
+PE(\mathit{pos},\, 2i)   &= \sin\!\left(\frac{\mathit{pos}}{10000^{\,2i/d_{\text{model}}}}\right) \\[4pt]
+PE(\mathit{pos},\, 2i+1) &= \cos\!\left(\frac{\mathit{pos}}{10000^{\,2i/d_{\text{model}}}}\right)
+\end{aligned}
+$$
+
+Dividing by a number is the same as multiplying by one over it. Give that multiplier a name:
+
+$$
+\omega_i = \frac{1}{10000^{\,2i/d_{\text{model}}}}
+\qquad\text{so}\qquad
+PE(\mathit{pos},\, 2i) = \sin(\omega_i \cdot \mathit{pos}), \quad
+PE(\mathit{pos},\, 2i+1) = \cos(\omega_i \cdot \mathit{pos})
+$$
+
+Compare with section 2.3: $\sin(\omega t)$ and $\cos(\omega t)$. It is the same line. The position of the word plays the role of time. Moving one word to the right is one tick of the clock.
+
+| Physics                         | The paper                                | The code, `positional_encoding.py`                 |
+| :------------------------------ | :--------------------------------------- | :------------------------------------------------- |
+| time $t$                        | $\mathit{pos}$, the word's place         | `position`                                         |
+| which hand                      | $i$, from 0 to $d_{\text{model}}/2 - 1$  | index into `div_term`                              |
+| one turning hand                | one pair of columns, $2i$ and $2i+1$     | two neighbouring columns of `pe`                   |
+| angular velocity $\omega$       | $1 / 10000^{2i/d_{\text{model}}}$        | `div_term[i]`                                      |
+| angle $\theta = \omega t$       | $\mathit{pos} / 10000^{2i/d_{\text{model}}}$ | `position * div_term`                          |
+| height of the tip               | $PE(\mathit{pos}, 2i) = \sin\theta$      | `pe[:, 0::2]`                                      |
+| sideways position of the tip    | $PE(\mathit{pos}, 2i+1) = \cos\theta$    | `pe[:, 1::2]`                                      |
+| steps per turn, $\lambda = 2\pi/\omega$ | wavelength, $2\pi \cdot 10000^{2i/d_{\text{model}}}$ | never stored. It would be `2 * math.pi / div_term[i]` |
+
+### 4.1 One hand with real numbers, next to the wall clock
+
+Take the smallest model that shows the idea, $d_{\text{model}} = 4$. It has two hands. Look at the slower one, hand 1, and fill in $\omega$, $t$ and $\theta$ exactly as we did for the minute hand.
+
+- **ω, the speed.** $\omega_1 = 1 / 10000^{2 \cdot 1/4} = 1 / 10000^{0.5} = 1/100 = 0.01$ radians per position. In the code this number is `div_term[1]`.
+- **t, the time passed.** This is the word's position. Take $\mathit{pos} = 34$.
+- **θ, where the hand is now.** $\theta = 0.01 \times 34 = 0.34$ radians, about 19.5°.
+- **The two numbers that go into the stamp.** $\sin 0.34 = 0.3335$ and $\cos 0.34 = 0.9428$.
+
+The only thing that changed from the wall clock is the unit of $t$. The clock counts minutes. Positional encoding counts positions.
+
+Frequency and wavelength follow the same way.
+
+- **2π ≈ 6.283 radians** is one full turn. It is a constant, the same for every hand.
+- **f = ω / 2π** = 0.01 / 6.283 ≈ 0.0016 turns per position. The hand moves about 1/628 of a turn for each word.
+- **λ = 2π / ω** = 6.283 / 0.01 ≈ 628 positions for one full turn. Around position 628 this hand is back where it started.
+
+|                     | the minute hand          | PE hand 1, $d_{\text{model}} = 4$ |
+| :------------------ | :----------------------- | :------------------------- |
+| one step of t is    | 1 minute                 | 1 position, one word along |
+| ω, radians per step | 0.1047                   | 0.01                       |
+| f, turns per step   | 1/60                     | 1/628                      |
+| λ, steps per turn   | 60 minutes               | 628 positions              |
+| worked example      | t = 20 gives θ = 2.094 rad | pos = 34 gives θ = 0.34 rad |
+
+<PeFigure name="hand-one" />
+
+The jumps to 157, 314 and 628 are this hand's versions of the clock's 15, 30 and 60 minutes: a quarter turn, a half turn and a full turn. The hand is slow. Two neighbouring words differ by 0.01 radians, about half a degree.
+
+### 4.2 A whole stamp, built by hand
+
+A stamp is built like this. Line up $d_{\text{model}}/2$ clock hands. Hand $i$ turns $\omega_i$ radians per position. To stamp position $\mathit{pos}$, let every hand run for $\mathit{pos}$ ticks, then write down each hand's height and sideways position. That is two numbers per hand and $d_{\text{model}}$ numbers in all.
+
+With $d_{\text{model}} = 4$ there are two hands. Their speeds are $\omega_0 = 1 / 10000^0 = 1$ and $\omega_1 = 0.01$. Here is the stamp for $\mathit{pos} = 34$.
+
+| hand $i$ | speed $\omega_i$ | angle $\theta = \omega_i \times 34$ | height, $\sin\theta$ | sideways, $\cos\theta$ |
+| :----- | ------: | ---------------------: | ------------: | --------------: |
+| 0      |       1 |     34 rad, 5.41 turns |        0.5291 |         −0.8486 |
+| 1      |    0.01 |   0.34 rad, 0.05 turns |        0.3335 |          0.9428 |
+
+$$
+PE(34) = [\; 0.5291,\; -0.8486,\; 0.3335,\; 0.9428 \;]
+$$
+
+The fast hand has been round five times and is partway through its sixth lap. The slow hand has barely left the start.
+
+Do the same for every position and you get a table with one row per position. For the three-word sentence "I love AI" it starts like this, and row 34 is the stamp we just built.
+
+| word          | $\mathit{pos}$ | column 0<br />$\sin(1 \cdot \mathit{pos})$ | column 1<br />$\cos(1 \cdot \mathit{pos})$ | column 2<br />$\sin(0.01 \cdot \mathit{pos})$ | column 3<br />$\cos(0.01 \cdot \mathit{pos})$ |
+| :------------ | --: | ---------------------: | ---------------------: | ------------------------: | ------------------------: |
+| I             |   0 |                 0.0000 |                 1.0000 |                    0.0000 |                    1.0000 |
+| love          |   1 |                 0.8415 |                 0.5403 |                    0.0100 |                   0.99995 |
+| AI            |   2 |                 0.9093 |                −0.4161 |                    0.0200 |                    0.9998 |
+| the 35th word |  34 |                 0.5291 |                −0.8486 |                    0.3335 |                    0.9428 |
+
+Read the first rows as two clocks. At position 0 both hands point right, so each height is 0 and each sideways position is 1. One step later the fast hand has turned 1 radian, about 57°, and its height is 0.8415. The slow hand has turned 0.01 radian, too little to see, so it still reads almost (0, 1).
+
+The code stores exactly this table in a variable called `pe`, with one row per position and one column per dimension of the model.
+
+<div class="note">
+
+**What does `pe[34, 2:4]` mean?**
+
+Row 34, columns 2 and 3. A Python slice `2:4` starts at 2 and stops before 4. Those two columns belong to hand 1, so `pe[34, 2:4]` is its sine and cosine at position 34: [0.3335, 0.9428].
+
+</div>
+
+### 4.3 Which column belongs to which hand
+
+Hand $i$ owns two neighbouring columns. Column $2i$ holds its sine and column $2i + 1$ holds its cosine. That is all the "2i" and "2i + 1" in the formula mean.
+
+| hand $i$ | its sine goes in column $2i$ | its cosine goes in column $2i + 1$ |
+| :----- | -------------------------: | -------------------------------: |
+| 0      |                          0 |                                1 |
+| 1      |                          2 |                                3 |
+| 2      |                          4 |                                5 |
+| 3      |                          6 |                                7 |
+
+The code fills them with two slices. `pe[:, 0::2]` means every row, and every second column starting from 0: columns 0, 2, 4, 6, the sines. `pe[:, 1::2]` starts from 1 instead: columns 1, 3, 5, 7, the cosines.
+
+### 4.4 Try it with four hands
+
+With $d_{\text{model}} = 8$ there are four hands, and their speeds come out as 1, 0.1, 0.01 and 0.001 radians per position. Each is 10 times slower than the last, like odometer wheels.
+
+The 0.01 hand from section 4.1 is still here, but it is now hand 2 and fills columns 4 and 5. A hand's speed depends on its number $i$ and on $d_{\text{model}}$ together.
+
+<PeFigure name="dials" />
+
+Read the eight boxes in order and you have the stamp, which is printed again as one list. The figure opens on position 34, where columns 4 and 5 hold the 0.3335 and 0.9428 from section 4.1.
+
+Now jump to 44. Hand 0 has gone round almost exactly 7 times and is nearly back at its starting point, so by itself it can hardly tell position 44 from position 0. Hand 1 has turned 4.4 radians and settles it. Jump to 63 and both hand 0 and hand 1 are nearly back at the start. Hand 2 is then the one that tells you this is not position 0.
+
+## 5. "The wavelengths form a geometric progression from 2π to 10000 · 2π"
+
+### 5.1 Where the 2π comes from
+
+Wavelength is $2\pi / \omega$ (section 2.5). Put in $\omega_i = 1 / 10000^{2i/d_{\text{model}}}$ and you get:
+
+$$
+\lambda_i = 2\pi \cdot 10000^{\,2i/d_{\text{model}}}
+$$
+
+The first hand has $i = 0$, and anything to the power 0 is 1, so $\lambda_0 = 2\pi \approx 6.28$. In words, the fastest hand turns 1 radian per word and finishes a full turn about every 6.28 words. That is the "from 2π".
+
+### 5.2 What a geometric progression is
+
+An arithmetic progression adds the same amount at each step: 2, 4, 6, 8, 10. A geometric progression multiplies by the same amount at each step: 2, 4, 8, 16, 32.
+
+Odometer wheels are geometric, each 10 times slower. Piano keys are too: each key's pitch is about 1.06 times the one before, which is why 12 keys up is exactly double.
+
+The wavelengths are geometric because each step in $i$ multiplies $\lambda$ by the same number, $10000^{2/d_{\text{model}}}$. For $d_{\text{model}} = 8$ that number is exactly 10:
+
+| hand $i$ | columns | $\omega_i$, radians per position | wavelength, positions per turn | against the hand before |
+| :----- | :------ | ----------------------: | -----------------------------: | ----------------------: |
+| 0      | 0, 1    |                       1 |                           6.28 |                         |
+| 1      | 2, 3    |                     0.1 |                          62.83 |                    × 10 |
+| 2      | 4, 5    |                    0.01 |                         628.32 |                    × 10 |
+| 3      | 6, 7    |                   0.001 |                       6,283.19 |                    × 10 |
+
+For the paper's $d_{\text{model}} = 512$ the multiplier is about 1.037, so each of the 256 hands is 3.7% slower than the one before.
+
+<div class="note">
+
+**So a bigger i means more words per turn. Is the wavelength proportional to i?**
+
+A bigger $i$ always means a slower hand and a longer wavelength, and the growth is exponential. Proportional growth would add the same amount for each hand: 6.28, 12.57, 18.85, 25.13. The real wavelengths multiply by the same amount for each hand: 6.28, 62.83, 628.32, 6,283.19.
+
+</div>
+
+### 5.3 The wavelengths on a chart
+
+The chart has one point per hand. Across the bottom is the hand number $i$. Up the side is that hand's wavelength, the number of positions it needs for one full turn.
+
+<PeFigure name="wavelengths" />
+
+The two vertical scales show the same numbers.
+
+- **Linear.** The gridlines are equal additions apart: 0, 20,000, 40,000, 60,000. Most hands are squashed against the bottom, because their wavelengths are tiny next to the last few.
+- **Log.** The gridlines are equal multiplications apart: 1, 10, 100, 1,000, 10,000, 100,000. Multiplying by the same number always moves a point up by the same distance, so a geometric progression comes out as a straight line.
+
+### 5.4 The "to 10000 · 2π" end
+
+Hands are numbered from 0. With $d_{\text{model}}/2$ hands, the last one is number $i = d_{\text{model}}/2 - 1$. Put that into the exponent $2i/d_{\text{model}}$:
+
+$$
+\frac{2 \cdot (d_{\text{model}}/2 - 1)}{d_{\text{model}}} = \frac{d_{\text{model}} - 2}{d_{\text{model}}}
+$$
+
+That is always just short of 1. With $d_{\text{model}} = 8$ the hands are numbered 0, 1, 2, 3. The last exponent is 6/8 = 0.75, and $10000^{0.75} = 1000$. The exponent would reach 1 only for a hand number 4, and there is no such hand. So the slowest wavelength always falls a little short of $10000 \cdot 2\pi \approx 62{,}832$.
+
+The unit of that number is positions. A hand with a wavelength of 62,832 would need a text 62,832 tokens long to go round once.
+
+How far short depends on the size of the model, $d_{\text{model}}$. The last column of the table divides 62,832 by the slowest wavelength, to show how many times bigger the ceiling is. That ratio is one more step of the progression, $10000^{2/d_{\text{model}}}$.
+
+| $d_{\text{model}}$ | hands | last exponent | slowest wavelength, positions | 62,832 ÷ slowest wavelength |
+| ------: | ----: | ------------: | ----------------------------: | --------------------------: |
+|       4 |     2 |           2/4 |                           628 |                         100 |
+|       8 |     4 |           6/8 |                         6,283 |                          10 |
+|      64 |    32 |         62/64 |                        47,117 |                        1.33 |
+|     512 |   256 |       510/512 |                        60,611 |                        1.04 |
+
+Read the paper's sentence as the range the wavelengths live in: 2π is where they start and 10000 · 2π is the ceiling they approach. A tiny model stops well below the ceiling. The paper's 512-dimension model gets within 4% of it.
+
+### 5.5 Why spread the speeds like this
+
+- **Fast hands** change a lot between neighbouring words. They tell word 5 from word 6, but they repeat every few words.
+- **Slow hands** barely move between neighbours, but they do not repeat for thousands of words. They tell the start of a document from the end.
+- **Multiplying** spreads the hands evenly over every scale in between, the way a ruler has marks for millimetres, centimetres and metres instead of a thousand slightly different millimetre marks.
+
+Why 10000? It is a hyperparameter, a value the paper's authors chose, and the paper gives no derivation for it. What the choice does is make the slowest hands need tens of thousands of positions per turn. That is far longer than any sentence the model was trained on, so those hands never come back round. In the code it is the argument `n=10000`.
+
+## 6. Why every hand reports two numbers
+
+One number is not enough to know where a hand is.
+
+<PeFigure name="two-numbers" />
+
+Hands A and B are at the same height, so sine alone cannot tell them apart. Their sideways positions differ. Height and sideways position together name exactly one point on the circle.
+
+There is a second reason, and it is the one the paper cares about. With both numbers in hand, moving forward by $k$ positions becomes a plain turn of the point around the circle. Section 8 shows this. With the sine alone it cannot be done.
+
+## 7. The whole table at once
+
+Work out the stamp for positions 0, 1, 2 and so on, and stack them. That is the table the code stores in `pe`. Here it is as a picture for $d_{\text{model}} = 64$, which has 32 hands, each 1.33 times slower than the one before.
+
+<PeFigure name="heat" />
+
+Every cell is one number from `pe`. Position runs left to right and the 64 columns of `pe` run top to bottom, so the table is lying on its side.
+
+### 7.1 How to read the picture
+
+- **One row of the picture** is one column of `pe`: the sine or the cosine of one hand, followed along the text. Rows 0 and 1 belong to hand 0, rows 2 and 3 to hand 1, down to rows 62 and 63 for hand 31.
+- **One vertical slice** is one position. Read it from top to bottom and you have that position's stamp.
+- **Red is +1, blue is −1, grey is 0.** In a sine row, red means the tip of the hand is at the top of its circle and blue means it is at the bottom. In a cosine row, red means the hand points right and blue means it points left.
+- **The left edge is position 0.** Every hand points right there, so every sine is 0 and every cosine is 1. That is why the edge alternates grey and red.
+- **Top rows flicker.** Hand 0 goes round every 6.28 positions, so its two rows swing between red and blue every few cells.
+- **Middle rows show wide bands.** Those hands need tens or hundreds of positions per turn.
+- **Bottom rows look frozen.** Over 100 positions those hands have hardly moved. Their sine rows stay near 0 and their cosine rows stay near +1, which gives the bottom its grey and red stripes.
+
+It is the smooth version of the binary stripes in section 3: fast tracks at one end, slow tracks at the other.
+
+### 7.2 Do the bottom rows ever change?
+
+Yes. No hand ever stops turning. A slow hand needs a longer text before its movement shows. Switch the figure to the first 1,000 or 10,000 positions and the frozen stripes turn into bands.
+
+A rough rule: a hand matters over a text if it turns at least 1 radian, about 57°, between the first word and the last.
+
+| positions shown | hands that turn at least 1 radian | rows of the picture that visibly change |
+| :-------------- | :-------------------------------- | :-------------------------------------- |
+| first 100       | hands 0 to 15, half of the 32     | rows 0 to 31                            |
+| first 1,000     | hands 0 to 23, three quarters     | rows 0 to 47                            |
+| first 10,000    | all 32 hands                      | all 64 rows                             |
+
+Each time the text gets 10 times longer, 8 more hands come into play, because in this model 8 hands make up one factor of 10 in speed. In a short sentence the slow hands are close to constant and say little. In a long document they are what separates the first page from the tenth.
+
+## 8. "PE(pos+k) can be represented as a linear function of PE(pos)"
+
+### 8.1 The question
+
+You know the stamp at position $\mathit{pos}$. Someone asks for the stamp $k$ positions later. For one hand, that means you hold $\sin(\omega \cdot \mathit{pos})$ and $\cos(\omega \cdot \mathit{pos})$, and you want $\sin(\omega(\mathit{pos}+k))$ and $\cos(\omega(\mathit{pos}+k))$.
+
+In clock terms this is easy. In $k$ more ticks the hand turns a further $\omega k$ radians. That extra turn does not depend on where the hand is now. Three more minutes move the minute hand by 3 × 0.1047 ≈ 0.314 radians, which is 18°, whether it is 2:10 or 9:45.
+
+The paper's claim is that this turn can be done with nothing more than multiplying and adding the two numbers you already hold.
+
+### 8.2 What "linear function" means
+
+A linear function of two numbers $a$ and $b$ is any recipe of this shape:
+
+$$
+\text{new} = (\text{a fixed number}) \times a + (\text{another fixed number}) \times b
+$$
+
+There is no squaring, no multiplying $a$ by $b$, and no fresh sine to compute. Only fixed multipliers and addition.
+
+### 8.3 The identity that does it
+
+School trigonometry has a rule for the sine and cosine of two angles added together:
+
+$$
+\begin{aligned}
+\sin(A + B) &= \sin A \cos B + \cos A \sin B \\
+\cos(A + B) &= \cos A \cos B - \sin A \sin B
+\end{aligned}
+$$
+
+Let $A = \omega \cdot \mathit{pos}$, where the hand is now, and $B = \omega k$, the extra turn. Substitute and regroup:
+
+$$
+\begin{aligned}
+\sin(\omega(\mathit{pos}+k)) &= \cos(\omega k) \cdot \sin(\omega \cdot \mathit{pos}) + \sin(\omega k) \cdot \cos(\omega \cdot \mathit{pos}) \\
+\cos(\omega(\mathit{pos}+k)) &= -\sin(\omega k) \cdot \sin(\omega \cdot \mathit{pos}) + \cos(\omega k) \cdot \cos(\omega \cdot \mathit{pos})
+\end{aligned}
+$$
+
+Look at the right-hand sides. $\sin(\omega \cdot \mathit{pos})$ and $\cos(\omega \cdot \mathit{pos})$ are the two numbers you already hold. The multipliers in front of them, $\cos(\omega k)$ and $\sin(\omega k)$, contain only $k$ and $\omega$, never $\mathit{pos}$. Once $k$ is fixed they are four fixed numbers. So the new pair is fixed multipliers times the old pair, added up. That is a linear function, which is the paper's claim.
+
+<div class="note">
+
+**Are the multipliers really the same at every position?**
+
+Yes. Take the hand with $\omega = 0.01$ and an offset of $k = 10$. The extra turn is 0.01 × 10 = 0.1 radians, so the multipliers are $\cos 0.1 = 0.9950$ and $\sin 0.1 = 0.0998$.
+
+From position 34, where the pair is (0.3335, 0.9428): 0.9950 × 0.3335 + 0.0998 × 0.9428 = 0.4259. That is $\sin 0.44$, the sine at position 44.
+
+From position 500, where the pair is (−0.9589, 0.2837), with the same two multipliers: 0.9950 × (−0.9589) + 0.0998 × 0.2837 = −0.9258. That is $\sin 5.10$, the sine at position 510.
+
+</div>
+
+### 8.4 The same thing as a small grid
+
+Write the four multipliers as a 2 × 2 grid, called a matrix. Each row of the grid is one recipe. The top row says: new sin = $\cos(\omega k)$ × old sin + $\sin(\omega k)$ × old cos. The bottom row gives the new cos the same way.
+
+$$
+\begin{bmatrix} \sin\omega(\mathit{pos}+k) \\ \cos\omega(\mathit{pos}+k) \end{bmatrix}
+=
+\begin{bmatrix} \cos\omega k & \sin\omega k \\ -\sin\omega k & \cos\omega k \end{bmatrix}
+\begin{bmatrix} \sin(\omega \cdot \mathit{pos}) \\ \cos(\omega \cdot \mathit{pos}) \end{bmatrix}
+$$
+
+This grid is a rotation matrix. It turns the point round the circle by the angle $\omega k$. Timo Denk's post proves the claim in exactly this form.
+
+<PeFigure name="rotate" />
+
+Move pos and the point travels round the circle, but the four numbers in the shift matrix stay exactly the same. Move k and the matrix changes, along with the arc between the two points. The last readout computes the answer directly, to check the matrix.
+
+### 8.5 The figure, number by number
+
+The figure opens on the fast hand, $\omega = 1$, at $\mathit{pos} = 12$ with $k = 3$.
+
+1. **The pair you hold.** The hand has turned 1 × 12 = 12 radians, so the open dot sits at $(\sin 12, \cos 12) = (-0.5366,\ 0.8439)$.
+2. **The extra turn.** Three more positions add 1 × 3 = 3 radians, about 172°. That is the violet arc.
+3. **The matrix.** Its entries are $\cos 3 = -0.9900$ and $\sin 3 = 0.1411$. Nothing about position 12 went into them.
+4. **Multiply and add,** one row of the matrix at a time.
+
+$$
+\begin{aligned}
+\text{new sin} &= (-0.9900)(-0.5366) + (0.1411)(0.8439) = 0.5312 + 0.1191 = 0.6503 \\
+\text{new cos} &= (-0.1411)(-0.5366) + (-0.9900)(0.8439) = 0.0757 - 0.8354 = -0.7597
+\end{aligned}
+$$
+
+Check against position 15 directly: $\sin 15 = 0.6503$ and $\cos 15 = -0.7597$. They match.
+
+**From position 7, with the same four numbers.** Drag pos to 7. The old pair is $(\sin 7, \cos 7) = (0.6570,\ 0.7539)$.
+
+$$
+\begin{aligned}
+\text{new sin} &= (-0.9900)(0.6570) + (0.1411)(0.7539) = -0.6504 + 0.1064 = -0.5440 \\
+\text{new cos} &= (-0.1411)(0.6570) + (-0.9900)(0.7539) = -0.0927 - 0.7464 = -0.8391
+\end{aligned}
+$$
+
+Check against position 10 directly: $\sin 10 = -0.5440$ and $\cos 10 = -0.8391$. They match.
+
+### 8.6 All hands at once
+
+The full stamp has $d_{\text{model}}/2$ hands. Each hand gets its own 2 × 2 turn, by its own angle $\omega_i k$. Put those small grids down the diagonal of one big $d_{\text{model}} \times d_{\text{model}}$ matrix, with zeros everywhere else. That single matrix takes the whole of $PE(\mathit{pos})$ to $PE(\mathit{pos}+k)$.
+
+<PeFigure name="block" />
+
+Each new value sits at the end of the row that builds it. Move k and every violet number changes, while no grey cell ever does. Three things to notice.
+
+- **A row builds one new number. A column reads one old number.** The row labelled "new col 2" builds the new value of column 2. Its entry under col 3 says how much of the old column 3 to use.
+- **The entries are cosines and sines of ω × k.** They are never ω × k itself. Each hand has one extra turn, and its block holds the cosine and sine of that turn, laid out exactly like the 2 × 2 grid in section 8.4. The two rows of a block share the same angle.
+- **The zeros mean the hands never mix.** Hand 1's new pair is made from hand 1's old pair and nothing else, so every entry that would connect it to another hand is 0. That leaves the blocks sitting on the diagonal.
+
+### 8.7 Why the authors wanted this
+
+Attention is built from matrix multiplications, and a matrix multiplication is a linear function. If "the word $k$ places away" can be reached from "this word" by one fixed matrix, the same at every position, then a layer has a simple way to express "look 3 words back" without learning a separate rule for every position. Section 10 builds that rule by hand. First, one more property of the stamp.
+
+## 9. A second gift: closeness depends only on distance
+
+Attention scores come from dot products. A dot product takes two lists of the same length, multiplies them entry by entry and adds up the results.
+
+Take any two positions in a text and call them $p$ and $q$. In "the big red car is fast", counting from 0, "big" is at $p = 1$ and "car" is at $q = 3$.
+
+Look at one hand. Its part of the stamp at $p$ is the pair $(\sin \omega p, \cos \omega p)$. Its part of the stamp at $q$ is $(\sin \omega q, \cos \omega q)$. The dot product of the two pairs is sine times sine plus cosine times cosine, and school trigonometry turns that into a single cosine:
+
+$$
+\sin(\omega p) \sin(\omega q) + \cos(\omega p) \cos(\omega q) = \cos(\omega(p - q))
+$$
+
+<div class="note">
+
+**Where does that identity come from?**
+
+From the second line of section 8.3: $\cos(A + B) = \cos A \cos B - \sin A \sin B$. Put $-B$ in place of $B$. A cosine ignores the sign of its angle and a sine flips with it, so the minus becomes a plus: $\cos(A - B) = \cos A \cos B + \sin A \sin B$. Now set $A = \omega p$ and $B = \omega q$.
+
+With numbers, for the fast hand ($\omega = 1$) and the two words above: $\sin 1 \sin 3 + \cos 1 \cos 3$ = 0.841 × 0.141 + 0.540 × (−0.990) = 0.119 − 0.535 = −0.416. And $\cos(1 - 3) = \cos(-2) = -0.416$.
+
+</div>
+
+In clock terms the result is the cosine of the angle between the two hand positions: +1 when they point the same way, 0 at a right angle, −1 when opposite. Add up over all the hands:
+
+$$
+PE(p) \cdot PE(q) = \cos(\omega_0 (p - q)) + \cos(\omega_1 (p - q)) + \dots \quad \text{one term per hand}
+$$
+
+Only $p - q$ appears. With $d_{\text{model}} = 8$, positions 3 and 7 score $\cos 4 + \cos 0.4 + \cos 0.04 + \cos 0.004$ = −0.65 + 0.92 + 1.00 + 1.00 = 2.27. Positions 103 and 107 are also 4 apart, so they score exactly the same 2.27.
+
+<PeFigure name="dot" />
+
+The peak is at $q = p$, where every hand agrees with itself. Two cautions.
+
+- The curve is a mirror image left and right. The dot product knows how far apart two positions are, but it cannot tell ahead from behind. Direction lives in the rotation of section 8, where $+k$ and $-k$ turn the hand opposite ways.
+- The model never computes this raw dot product. The stamp is added to the word vector, and the sum is multiplied by learned matrices before any score is taken. The chart shows the structure that is available for the model to use.
+
+## 10. What the two facts are for: attending by relative position
+
+### 10.1 The maths is exact. Its use is a hypothesis.
+
+The paper's sentence packs two different statements together.
+
+- **"PE(pos+k) can be represented as a linear function of PE(pos)."** This is a fact about the table. It holds for every pos and every k, to the last decimal place. Section 11 checks it in a few lines of PyTorch.
+- **"It would allow the model to easily learn to attend by relative positions."** This is a hope about training, and the authors say so with the word "hypothesized". Nothing in the architecture makes the model use the property.
+
+### 10.2 The stamp is fixed. What learns is the reader.
+
+The stamp is never trained. The code stores it with `register_buffer`, which saves it with the model and keeps it away from the optimiser.
+
+What is trained are two matrices inside every attention layer. The paper calls them $W_Q$ and $W_K$, and [the attention module](https://github.com/SamyamoyRakshit/papers-from-scratch/blob/main/transformer/models/modules/multi_head_attention.py) calls them `W_q` and `W_k`. They take a word's vector, stamp included, and turn it into the query and the key that attention compares.
+
+A wall clock works the same way. The clock learns nothing. You learned to read it.
+
+### 10.3 "Look 3 words back", built by hand
+
+Attention gives every pair of words a score. The word doing the looking supplies a query vector, the word being looked at supplies a key vector, and the score is their dot product. A higher score means more attention.
+
+Suppose a layer wanted the rule "look at the word 3 places back". Here is a set of weights that does it. To keep it simple, pretend a word is only its stamp.
+
+- **Let $W_K$ do nothing.** The key of the word at position $s$ is then its stamp, $PE(s)$.
+- **Let $W_Q$ be the shift matrix of section 8.6 with $k = -3$.** The query of the word at position $t$ is then $PE(t - 3)$: its own stamp with every hand turned back three steps.
+
+Check one hand, the one with $\omega = 0.1$, for the word at $t = 10$. Turning it back three steps is a turn of 0.3 radians, which uses $\cos 0.3 = 0.955$ and $\sin 0.3 = 0.296$.
+
+$$
+\begin{aligned}
+\text{old pair} &= (\sin 1.0,\ \cos 1.0) = (0.841,\ 0.540) \\
+\text{new sin} &= (0.955)(0.841) - (0.296)(0.540) = 0.804 - 0.160 = 0.644 \\
+\text{new cos} &= (0.296)(0.841) + (0.955)(0.540) = 0.249 + 0.516 = 0.765
+\end{aligned}
+$$
+
+That is $(\sin 0.7, \cos 0.7)$, this hand's pair at position 7.
+
+Every hand is turned back the same way, so the query of word 10 is the stamp of position 7. Its score against the word at position $s$ is $PE(7) \cdot PE(s)$. Section 9 says that depends only on how far $s$ is from 7, and it is largest when the distance is 0.
+
+<PeFigure name="look" />
+
+| position $s$ |    0 |    1 |    2 |    3 |    4 |    5 |    6 |    7 |    8 |    9 |   10 |
+| :--------------- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| score for $t = 10$ | 23.3 | 23.6 | 23.5 | 23.9 | 25.6 | 28.3 | 30.9 | 32.0 | 30.9 | 28.3 | 25.6 |
+
+The table is the figure's opening state: $d_{\text{model}} = 64$, which has 32 hands, and $t = 10$. The highest score, 32.0, is at position 7, and the scores fall away on both sides of it. Now move $t$ to 30. Nothing in $W_Q$ changed, and the highest score is at position 27. One set of weights means "three back" at every position. That is what the paper calls attending by relative position.
+
+<div class="note">
+
+**Why does the peak need so many hands?**
+
+Press 8 in the figure. With four hands the scores are small enough to add up by hand. At the peak every hand gives $\cos 0 = 1$, so the score is 4. One position away it is $\cos 1 + \cos 0.1 + \cos 0.01 + \cos 0.001$ = 0.540 + 0.995 + 1.000 + 1.000 = 3.535.
+
+Six positions away it is $\cos 6 + \cos 0.6 + \cos 0.06 + \cos 0.006$ = 0.960 + 0.825 + 0.998 + 1.000 = 3.783, a second bump almost as high as the peak. The fastest hand goes round every 6.28 positions, so to that hand a distance of 6 looks almost like a distance of 0, and the other three hands are too slow to object.
+
+With many hands at closely spaced speeds, there is always another hand that disagrees, and the false matches cancel. That is the job of the geometric progression in section 5.
+
+</div>
+
+<p class="note"><strong>This is a toy.</strong> In a real model the stamp is added to the word's embedding, so the two matrices see both mixed together, and training decides what they become. The toy shows that weights for "three back" exist and are simple. Whether training finds them is a separate question.</p>
+
+### 10.4 Why a relative rule would help
+
+Rules in language are mostly relative. In "the big red car", the adjectives sit just before their noun, and that is true whether the phrase starts at word 2 or at word 200.
+
+A model that can say "look one word back" learns the rule once and it works everywhere. A model that knows only absolute positions has to learn "word 3 looks at word 2", "word 4 looks at word 3" and so on as separate facts. It needs more examples to do that, and it has nothing to go on at positions it rarely saw in training.
+
+### 10.5 Did the bet pay off?
+
+The paper does not test the hypothesis directly. In the same section the authors report that learned position vectors, a plain trainable table with one row per position, gave "nearly identical results" (Table 3, row E). On their English-to-German development set the two came out level: 25.8 BLEU for the sinusoid and 25.7 for the learned table.
+
+Later designs build the offset into the attention score directly, so it does not have to be learned. Section 12 names two of them.
+
+## 11. Back to the code
+
+These are the lines that do the work in [`positional_encoding.py`](https://github.com/SamyamoyRakshit/papers-from-scratch/blob/main/transformer/models/modules/positional_encoding.py), read as clocks.
+
+```python
+position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)    # 1
+
+div_term = torch.exp(
+    torch.arange(0, d_model, 2).float() * (- math.log(n) / d_model)    # 2
+)
+
+pe[:, 0::2] = torch.sin(position * div_term)                           # 3, 4
+pe[:, 1::2] = torch.cos(position * div_term)                           # 5
+
+pe = pe.unsqueeze(0)                                                   # 6
+self.register_buffer('pe', pe)                                         # 7
+
+x = x + self.pe[:, :x.size(1)]                                         # 8
+```
+
+1. `position` is the time axis: 0, 1, 2, … with one tick per word. `unsqueeze(1)` stands it up as a column, so that it can be multiplied by every hand's speed at once.
+2. `div_term` is ω for every hand. `torch.arange(0, d_model, 2)` is the list 0, 2, 4, …, which is $2i$. Then $\exp(2i \times -\ln(n) / d_{\text{model}})$ equals $1 / n^{2i/d_{\text{model}}}$, with $n = 10000$. For $d_{\text{model}} = 4$ it comes out as [1.0, 0.01]. The comment above this line in the file names the paper's denominator, $10000^{2i/d_{\text{model}}}$. `div_term` is one over it.
+3. `position * div_term` is $\theta = \omega t$: the angle of every hand at every position, in one table.
+4. The sine of that angle, the height, goes into the even columns.
+5. The cosine, the sideways position, goes into the odd columns.
+6. `unsqueeze(0)` adds a batch axis in front, so the stored table has shape (1, `max_len`, `d_model`). On the stored table, the stamp of position 34 is `pe[0, 34]`.
+7. `register_buffer` keeps the table fixed. It is saved with the model and moves to the GPU with it, but it is never trained.
+8. The stamp is added to the word vectors once, before the first layer. `:x.size(1)` keeps only as many rows as the sentence has words.
+
+### 11.1 Check the numbers yourself
+
+Run these from the root of the repository. The first one reproduces the stamp from section 4.2.
+
+```python
+import math, torch
+from transformer.models.modules.positional_encoding import PositionalEncoding
+
+pe = PositionalEncoding(d_model=4, dropout=0.0).pe[0]   # drop the batch axis: shape (5000, 4)
+pe[34]                                                  # tensor([ 0.5291, -0.8486,  0.3335,  0.9428])
+pe[34, 2:4]                                             # tensor([0.3335, 0.9428])
+```
+
+The second builds the shift matrix of section 8.6 and applies it to every row of the table at once.
+
+```python
+pe = PositionalEncoding(d_model=8, dropout=0.0).pe[0]   # shape (5000, 8)
+k = 3
+M = torch.zeros(8, 8)
+for i in range(4):                                      # one 2 x 2 block per hand
+    w = 10000 ** (-2 * i / 8)                           # this hand's speed
+    c, s = math.cos(w * k), math.sin(w * k)
+    M[2*i:2*i+2, 2*i:2*i+2] = torch.tensor([[c, s], [-s, c]])
+
+torch.allclose(pe[:-k] @ M.T, pe[k:], atol=1e-4)        # True
+```
+
+One matrix, built from $k$ alone, turns every stamp into the stamp three positions later. The third check is section 9: two pairs of positions that are both 4 apart get the same score.
+
+```python
+(pe[3] @ pe[7]).item(), (pe[103] @ pe[107]).item()      # both 2.2666
+```
+
+## 12. What this does not give you
+
+- **It is an absolute stamp.** It says where a word is. Relative position is something the model can work out from it, as sections 8 to 10 show. Nothing forces the model to.
+- **It is added once, at the input.** Later layers see it only because the residual connections carry it forward.
+- **"May" extrapolate.** The paper chose sinusoids because they "may allow the model to extrapolate to sequence lengths longer than the ones encountered during training". Later tests found that this works poorly in practice (Press et al., 2021, the ALiBi paper).
+- **It is not the only option.** BERT and GPT-2 learn a table of position vectors instead, and so do the [BERT](/blog/bert-from-scratch/) and [GPT-2](/blog/gpt2-from-scratch/) rebuilds on this site.
+- **RoPE is the same turn, used differently.** Rotary position embedding (Su et al., 2021), used in Llama, takes the rotation from section 8 and applies it to the query and key vectors inside every attention layer. There, the attention score depends on the offset by construction. The sinusoidal encoding is the older idea it grew from.
+- **ALiBi skips the stamp.** It adds nothing to the word vectors. It lowers each attention score by an amount that grows with the distance between the two words.
+
+## 13. The whole idea on one screen
+
+- A word's position is treated as time.
+- $d_{\text{model}}/2$ clock hands turn at fixed speeds, $\omega_i = 1 / 10000^{2i/d_{\text{model}}}$ radians per position.
+- Each hand reports its height (sin) and its sideways position (cos). Hand $i$ fills columns $2i$ and $2i + 1$.
+- The speeds form a geometric progression: every hand is slower than the last by the same factor. The wavelengths run from 2π for the fastest hand to just under 10000 · 2π for the slowest.
+- Moving $k$ positions turns each hand by a fixed angle $\omega_i k$. A turn is a 2 × 2 matrix that depends only on $k$. So $PE(\mathit{pos}+k)$ is a linear function of $PE(\mathit{pos})$.
+- The dot product of two stamps depends only on the distance between them.
+- The stamp is fixed. Whether a model uses these two properties is up to the weights it learns.
+
+### 13.1 Every symbol in one table
+
+| symbol      | meaning                        | on the wall clock          | in positional encoding                 |
+| :---------- | :----------------------------- | :------------------------- | :------------------------------------- |
+| t or pos    | how many steps have passed     | 20 minutes                 | position 34                            |
+| i           | which hand                     | second, minute or hour     | 0 to d_model/2 − 1                     |
+| ω           | radians turned per step        | 0.1047 for the minute hand | `div_term[i]`                          |
+| θ = ω · t   | where the hand is now          | 2.094 rad after 20 minutes | 0.34 rad for ω = 0.01 at position 34   |
+| f = ω / 2π  | turns per step                 | 1/60                       | 1/628 for ω = 0.01                     |
+| λ = 2π / ω  | steps per full turn            | 60 minutes                 | 628 positions for ω = 0.01             |
+| k           | an offset, in steps            | 3 minutes later            | 3 words later                          |
+| d_model     | how many numbers a stamp holds | 2 per hand                 | 2 per hand, so d_model/2 hands         |
+
+### 13.2 Sources and further reading
+
+- [Vaswani et al., "Attention Is All You Need" (2017)](https://arxiv.org/abs/1706.03762), section 3.5. The original formula and the two sentences decoded here.
+- [papers-from-scratch, `positional_encoding.py`](https://github.com/SamyamoyRakshit/papers-from-scratch/blob/main/transformer/models/modules/positional_encoding.py). The code read in section 11.
+- [Amirhossein Kazemnejad, "Transformer Architecture: The Positional Encoding"](https://kazemnejad.com/blog/transformer_architecture_positional_encoding/). The binary-counter intuition and the list of what a good stamp needs.
+- [Timo Denk, "Linear Relationships in the Transformer's Positional Encoding"](https://blog.timodenk.com/linear-relationships-in-the-transformers-positional-encoding/). The formal proof of section 8, including the block-diagonal matrix.
+- [Hunter Phillips, "Positional Encoding"](https://medium.com/@hunter-j-phillips/positional-encoding-7a93db4109e6). A step-by-step PyTorch walkthrough of the same formula.
+- [Harvard NLP, "The Annotated Transformer"](https://nlp.seas.harvard.edu/annotated-transformer/). The same exp-and-log way of computing `div_term`.
+- [Su et al., "RoFormer: Enhanced Transformer with Rotary Position Embedding" (2021)](https://arxiv.org/abs/2104.09864). Where the rotation idea goes next.
+- [Press et al., "Train Short, Test Long" (2021)](https://arxiv.org/abs/2108.12409). The ALiBi paper, with measurements of how sinusoidal encodings extrapolate.
